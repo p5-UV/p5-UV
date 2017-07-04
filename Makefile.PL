@@ -50,7 +50,7 @@ my %WriteMakefileArgs = (
     XSMULTI => 1,
     CCFLAGS => Alien::libuv->cflags . " -I. -I../.. $Config{ccflags}",
     LIBS    => [ Alien::libuv->libs ],
-    OBJECT  => '$(O_FILES)',
+    OBJECT  => '$(O_FILES) perl_math_int64$(OBJ_EXT)',
 );
 
 my %FallbackPrereqs = (
