@@ -82,6 +82,17 @@
       }
    },
    "release_status" : "stable",
+   "resources" : {
+      "bugtracker" : {
+         "web" : "https://github.com/genio/p5-UV/issues"
+      },
+      "homepage" : "https://github.com/genio/p5-UV",
+      "repository" : {
+         "type" : "git",
+         "url" : "https://github.com/genio/p5-UV.git",
+         "web" : "https://github.com/genio/p5-UV"
+      }
+   },
    "version" : "0.001",
    "x_Dist_Zilla" : {
       "perl" : {
