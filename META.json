@@ -26,15 +26,17 @@
    "prereqs" : {
       "build" : {
          "requires" : {
-            "Alien::libuv" : "0.003",
+            "Alien::libuv" : "0.004",
             "Config" : "0",
-            "ExtUtils::MakeMaker" : "7.12"
+            "ExtUtils::MakeMaker" : "7.12",
+            "Math::Int64" : "0"
          }
       },
       "configure" : {
          "requires" : {
-            "Alien::libuv" : "0",
-            "ExtUtils::MakeMaker" : "0"
+            "Alien::libuv" : "0.004",
+            "ExtUtils::MakeMaker" : "0",
+            "Math::Int64" : "0"
          }
       },
       "develop" : {
@@ -56,7 +58,7 @@
       },
       "runtime" : {
          "requires" : {
-            "Alien::libuv" : "0.003",
+            "Alien::libuv" : "0.004",
             "Exporter" : "5.57",
             "XSLoader" : "0.14",
             "perl" : "5.008001",

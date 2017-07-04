@@ -7,7 +7,6 @@
 #define NEED_sv_2pv_flags
 #include "ppport.h"
 
-#define MATH_INT64_NATIVE_IF_AVAILABLE
 /* define int64_t and uint64_t when using MinGW compiler */
 #ifdef __MINGW32__
 #include <stdint.h>
@@ -20,7 +19,9 @@ typedef __int64 int64_t;
 typedef unsigned __int64 uint64_t;
 #endif
 
+#define MATH_INT64_NATIVE_IF_AVAILABLE
 #include "perl_math_int64.h"
+/* #include "perl_math_int64.c" */
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
