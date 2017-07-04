@@ -1,0 +1,25 @@
+int64_t         T_INT64
+uint64_t        T_UINT64
+
+uv_loop_t *        T_LOOP
+
+INPUT
+
+T_LOOP
+    if (!(SvROK ($arg) && SvOBJECT (SvRV ($arg)) && (SvSTASH (SvRV ($arg)) == stash_loop || sv_derived_from ($arg, \"UV::Loop\"))))
+        croak (\"object is not of type UV::Loop\");
+    $var = ($type)SvIVX (SvRV ($arg));
+
+T_INT64
+    $var = SvI64($arg);
+
+T_UINT64
+    $var = SvU64($arg);
+
+OUTPUT
+
+T_INT64
+    $arg = newSVi64($var);
+
+T_UINT64
+    $arg = newSVu64($var);

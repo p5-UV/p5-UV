@@ -1,0 +1,4 @@
+Revision history for Perl extension {{$dist->name}}
+
+{{$NEXT}}
+    - Implemented and documented the UV::Loop functions
