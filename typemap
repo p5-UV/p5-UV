@@ -1,9 +1,14 @@
-int64_t         T_INT64
-uint64_t        T_UINT64
+uv_run_mode T_RUN_UV
+int64_t             T_INT64
+uint64_t            T_UINT64
 
-uv_loop_t *        T_LOOP
+uv_loop_t *         T_LOOP
+const uv_loop_t *   T_LOOP
 
 INPUT
+
+T_RUN_UV
+    $var = SvIV($arg)
 
 T_LOOP
     if (!(SvROK ($arg) && SvOBJECT (SvRV ($arg)) && (SvSTASH (SvRV ($arg)) == stash_loop || sv_derived_from ($arg, \"UV::Loop\"))))

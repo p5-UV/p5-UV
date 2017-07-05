@@ -60,15 +60,23 @@ MODULE = UV             PACKAGE = UV::Loop      PREFIX = uv_
 
 PROTOTYPES: DISABLE
 
+BOOT:
+{
+    HV *stash = gv_stashpvn("UV::Loop", 8, TRUE);
+    stash_loop = gv_stashpv("UV::Loop", TRUE);
+    newCONSTSUB(stash, "UV_RUN_DEFAULT", newSViv(UV_RUN_DEFAULT));
+    newCONSTSUB(stash, "UV_RUN_ONCE", newSViv(UV_RUN_ONCE));
+    newCONSTSUB(stash, "UV_RUN_NOWAIT", newSViv(UV_RUN_NOWAIT));
+}
+
 SV *new (SV *klass, int want_default = 0)
     ALIAS:
-            UV::Loop::default_loop = 1
+        UV::Loop::default_loop = 1
     CODE:
 {
     uv_loop_t *loop;
     int ret;
     if (ix == 1) want_default = 1;
-    warn("Current value of want_default: %i", want_default);
     if (0 == want_default) {
         Newx(loop, 1, uv_loop_t);
         if (NULL == loop) {
@@ -86,21 +94,18 @@ SV *new (SV *klass, int want_default = 0)
         }
     }
     else {
-        warn("Starting to create a new default loop");
         if (!default_loop_sv) {
-            warn("We don't yet have one, so let's get the default loop");
             uvapi.default_loop = uv_default_loop();
-            warn("Got it");
             if (!uvapi.default_loop) {
                 croak("Error getting a new default loop");
                 XSRETURN_UNDEF;
             }
-            warn("save the default loop as a blessed sv ref");
-            default_loop_sv = sv_bless (newRV_noinc (newSViv (PTR2IV (uvapi.default_loop))), stash_loop);
-            warn("Saved");
+            default_loop_sv = sv_bless(
+                newRV_noinc(newSViv(PTR2IV(uvapi.default_loop))),
+                stash_loop
+            );
         }
-        warn("Return a newSVsv of the default loop");
-        RETVAL = newSVsv (default_loop_sv);
+        RETVAL = newSVsv(default_loop_sv);
     }
 }
     OUTPUT:
@@ -108,9 +113,33 @@ SV *new (SV *klass, int want_default = 0)
 
 void DESTROY (uv_loop_t *loop)
     CODE:
-    warn("Destroying a loop");
     /* 1. the default loop shouldn't be freed by destroying it's perl loop object */
     /* 2. not doing so helps avoid many global destruction bugs in perl, too */
-    if (0 == uv_loop_close(loop)) {
-        Safefree(loop);
+    if (loop == uvapi.default_loop) {
+        SvREFCNT_dec (default_loop_sv);
+        if (PL_dirty) {
+            uv_loop_close((uv_loop_t *) default_loop_sv);
+            default_loop_sv = NULL;
+        }
     }
+    else {
+        if (0 == uv_loop_close(loop)) {
+            Safefree(loop);
+        }
+    }
+
+int uv_backend_fd(const uv_loop_t* loop)
+
+int uv_backend_timeout(const uv_loop_t* loop)
+
+int uv_loop_alive(const uv_loop_t* loop)
+ALIAS:
+    UV::Loop::alive = 1
+
+uint64_t uv_now(const uv_loop_t* loop)
+
+int uv_run(uv_loop_t* loop, uv_run_mode mode=UV_RUN_DEFAULT)
+
+void uv_stop(uv_loop_t* loop)
+
+void uv_update_time(uv_loop_t* loop)
