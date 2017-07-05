@@ -67,9 +67,17 @@ stated otherwise in the function's description.
 
 Get the current Hi-Res time
 
+# AUTHOR
+
+Daisuke Murase <`typester@cpan.org`>
+
+# CONTRIBUTORS
+
+Chase Whitener <`capoeirab@cpan.org`>
+
 # COPYRIGHT AND LICENSE
 
-Copyright 2017, Chase Whitener.
+Copyright 2012, Daisuke Murase.
 
 This library is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.

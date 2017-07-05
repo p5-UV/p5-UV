@@ -89,9 +89,17 @@ stated otherwise in the function's description.
 
 Get the current Hi-Res time
 
+=head1 AUTHOR
+
+Daisuke Murase <F<typester@cpan.org>>
+
+=head1 CONTRIBUTORS
+
+Chase Whitener <F<capoeirab@cpan.org>>
+
 =head1 COPYRIGHT AND LICENSE
 
-Copyright 2017, Chase Whitener.
+Copyright 2012, Daisuke Murase.
 
 This library is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.

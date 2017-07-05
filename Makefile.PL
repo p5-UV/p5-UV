@@ -13,11 +13,12 @@ use Alien::libuv ();
 
 my %WriteMakefileArgs = (
   "ABSTRACT" => "Some utility functions from libUV.",
-  "AUTHOR" => "Chase Whitener <capoeirab\@cpan.org>",
+  "AUTHOR" => "Daisuke Murase <typester\@cpan.org>",
   "BUILD_REQUIRES" => {
     "Alien::libuv" => "0.004",
     "Config" => 0,
-    "ExtUtils::MakeMaker" => "7.12"
+    "ExtUtils::MakeMaker" => "7.12",
+    "Math::Int64" => 0
   },
   "CONFIGURE_REQUIRES" => {
     "Alien::libuv" => "0.004",
@@ -30,6 +31,7 @@ my %WriteMakefileArgs = (
   "PREREQ_PM" => {
     "Alien::libuv" => "0.004",
     "Exporter" => "5.57",
+    "Math::Int64" => 0,
     "XSLoader" => "0.14",
     "strict" => 0,
     "warnings" => 0
@@ -58,6 +60,7 @@ my %FallbackPrereqs = (
   "Exporter" => "5.57",
   "ExtUtils::MakeMaker" => "7.12",
   "File::Spec" => 0,
+  "Math::Int64" => 0,
   "Test::More" => "0.88",
   "XSLoader" => "0.14",
   "strict" => 0,
