@@ -12,7 +12,7 @@ use Config;
 use Alien::libuv ();
 
 my %WriteMakefileArgs = (
-  "ABSTRACT" => "Some utility functions from libUV.",
+  "ABSTRACT" => "Perl interface to libuv",
   "AUTHOR" => "Daisuke Murase <typester\@cpan.org>",
   "BUILD_REQUIRES" => {
     "Alien::libuv" => "0.004",

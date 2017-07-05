@@ -21,25 +21,42 @@ __END__
 
 =head1 NAME
 
-UV - Some utility functions from libUV.
+UV - Perl interface to libuv
 
 =head1 SYNOPSIS
 
   #!/usr/bin/env perl
   use strict;
   use warnings;
-  use feature ':5.14';
 
   use UV;
-  use Syntax::Keyword::Try;
+
+  # hi-resolution time
+  my $hi_res_time = UV::hrtime();
+
+  # A new loop
+  my $loop = UV::Loop->new();
+
+  # default loop
+  my $loop = UV::Loop->default_loop(); # convenience constructor
+  my $loop = UV::Loop->new(1); # Tell the constructor you want the default loop
+
+  # run a loop with one of three options:
+  # UV_RUN_DEFAULT, UV_RUN_ONCE, UV_RUN_NOWAIT
+  $loop->run(); # runs with UV_RUN_DEFAULT
+  $loop->run(UV::Loop::UV_RUN_DEFAULT); # explicitly state UV_RUN_DEFAULT
+  $loop->run(UV::Loop::UV_RUN_ONCE);
+  $loop->run(UV::Loop::UV_RUN_NOWAIT);
 
 
 =head1 DESCRIPTION
 
-This module provides access to a few of the functions in the miscellaneous
-L<libUV|http://docs.libuv.org/en/v1.x/misc.html> utilities. While it's extremely
-unlikely, all functions here can throw an exception on error unless specifically
-stated otherwise in the function's description.
+This module provides an interface to L<libuv|http://libuv.org>. We will try to
+document things here as best as we can, but we also suggest you look at the
+L<libuv docs|http://docs.libuv.org> directly for more details on how things
+work.
+
+Event loops that work properly on all platforms. YAY!
 
 =head1 CONSTANTS
 

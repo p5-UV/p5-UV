@@ -1,5 +1,5 @@
 {
-   "abstract" : "Some utility functions from libUV.",
+   "abstract" : "Perl interface to libuv",
    "author" : [
       "Daisuke Murase <typester@cpan.org>"
    ],
@@ -551,10 +551,11 @@
                   "stopwords" : [
                      "CPAN",
                      "RSS",
+                     "YAY",
                      "getrusage",
                      "github",
                      "hrtime",
-                     "libUV",
+                     "libuv",
                      "loadavg",
                      "stopwords",
                      "uptime",
