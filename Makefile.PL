@@ -17,13 +17,11 @@ my %WriteMakefileArgs = (
   "BUILD_REQUIRES" => {
     "Alien::libuv" => "0.004",
     "Config" => 0,
-    "ExtUtils::MakeMaker" => "7.12",
-    "Math::Int64" => 0
+    "ExtUtils::MakeMaker" => "7.12"
   },
   "CONFIGURE_REQUIRES" => {
     "Alien::libuv" => "0.004",
-    "ExtUtils::MakeMaker" => 0,
-    "Math::Int64" => 0
+    "ExtUtils::MakeMaker" => 0
   },
   "DISTNAME" => "UV",
   "LICENSE" => "perl",
@@ -49,10 +47,9 @@ my %WriteMakefileArgs = (
 
 %WriteMakefileArgs = (
     %WriteMakefileArgs,
-    XSMULTI => 1,
     CCFLAGS => Alien::libuv->cflags . " -I. -I../.. $Config{ccflags}",
     LIBS    => [ Alien::libuv->libs ],
-    OBJECT  => '$(O_FILES) perl_math_int64$(OBJ_EXT)',
+    OBJECT  => '$(O_FILES)',
 );
 
 my %FallbackPrereqs = (
@@ -61,7 +58,6 @@ my %FallbackPrereqs = (
   "Exporter" => "5.57",
   "ExtUtils::MakeMaker" => "7.12",
   "File::Spec" => 0,
-  "Math::Int64" => 0,
   "Test::More" => "0.88",
   "XSLoader" => "0.14",
   "strict" => 0,
