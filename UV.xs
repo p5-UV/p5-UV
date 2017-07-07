@@ -55,6 +55,27 @@ static HV
     *stash_signal,
     *stash_file;
 
+static SV * s_get_cv (SV *cb_sv)
+{
+    dTHX;
+    HV *st;
+    GV *gvp;
+
+    return (SV *)sv_2cv (cb_sv, &st, &gvp, 0);
+}
+
+static SV * s_get_cv_croak (SV *cb_sv)
+{
+    SV *cv = s_get_cv (cb_sv);
+
+    if (!cv) {
+        dTHX;
+        croak ("%s: callback must be a CODE reference or another callable object", SvPV_nolen (cb_sv));
+    }
+
+    return cv;
+}
+
 /* handle functions */
 static SV * handle_bless(uv_handle_t *h)
 {
@@ -67,7 +88,7 @@ static SV * handle_bless(uv_handle_t *h)
     else {
         rv = newRV_noinc(data_ptr->self);
         sv_bless(rv, data_ptr->stash);
-        svREADONLY_on(data_ptr->self);
+        SvREADONLY_on(data_ptr->self);
     }
     return rv;
 }
@@ -218,7 +239,7 @@ static void handle_alloc_cb(uv_handle_t* handle, size_t suggested_size, uv_buf_t
 
     PUSHMARK (SP);
     EXTEND (SP, 2);
-    PUSHs(handle_bless(data_ptr->self)); /* invocant */
+    PUSHs(handle_bless(handle)); /* invocant */
     PUSHs(newSViv(suggested_size));
 
     PUTBACK;
@@ -242,7 +263,7 @@ static void handle_close_cb(uv_handle_t* handle)
 
         PUSHMARK (SP);
         EXTEND (SP, 1);
-        PUSHs(handle_bless(data_ptr->self)); /* invocant */
+        PUSHs(handle_bless(handle)); /* invocant */
 
         PUTBACK;
         call_sv (data_ptr->close_cb, G_VOID);
@@ -269,7 +290,7 @@ static void handle_timer_cb(uv_timer_t* handle)
 
     PUSHMARK (SP);
     EXTEND (SP, 1);
-    PUSHs(handle_bless(data_ptr->self)); /* invocant */
+    PUSHs(handle_bless((uv_handle_t *) handle)); /* invocant */
 
     PUTBACK;
     call_sv (data_ptr->timer_cb, G_VOID);
@@ -336,7 +357,7 @@ uint64_t uv_hrtime()
 
 MODULE = UV             PACKAGE = UV::Loop      PREFIX = uv_
 
-PROTOTYPES: DISABLE
+PROTOTYPES: ENABLE
 
 BOOT:
 {
