@@ -5,6 +5,9 @@ uint64_t            T_UINT64
 uv_loop_t *         T_LOOP
 const uv_loop_t *   T_LOOP
 
+uv_handle_t *       T_HANDLE
+uv_timer_t *        T_HANDLE
+
 INPUT
 
 T_RUN_UV
@@ -15,6 +18,14 @@ T_LOOP
         croak (\"object is not of type UV::Loop\");
     $var = ($type)SvIVX (SvRV ($arg));
 
+T_HANDLE
+    if (!(SvROK ($arg) && SvOBJECT (SvRV ($arg))
+      && (SvSTASH (SvRV ($arg)) == stash_" . ($type =~ /uv_([^_\s]+)/, "$1") . "
+      || sv_derived_from ($arg, \"UV::" . ($type =~ /uv_([^_\s]+)/, ucfirst "$1") . "\"))))
+         croak (\"object is not of type UV::" . ($type =~ /uv_([^_\s]+)/, ucfirst "$1") . "\");
+$var = ($type)SvPVX (SvRV ($arg));
+
+
 T_INT64
     $var = SvI64($arg);
 
@@ -22,6 +33,9 @@ T_UINT64
     $var = SvU64($arg);
 
 OUTPUT
+
+T_HANDLE
+    $arg = handle_bless((uv_handle_t *)$var);
 
 T_INT64
     $arg = newSVi64($var);
