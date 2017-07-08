@@ -79,4 +79,24 @@ my $default_loc; # ${$loop}
     ok($loop->backend_fd, '  ->backend_fd: found the backend FD');
 }
 
+{
+    my $loop = UV::Loop->default();
+    isa_ok($loop, 'UV::Loop', '->default(): got a new default Loop');
+    my $timer = UV::Timer->new();
+    isa_ok($timer, 'UV::Timer', 'timer: got a new timer');
+
+    is($loop->alive(), 0, 'loop->alive: not alive yet');
+    is($loop->backend_timeout(), 0, 'loop->backend_timeout: still zero');
+
+    is(
+        $timer->start(1000, 0, sub {shift->close()}), 0, 'timer: started correctly'
+    );
+
+    ok($loop->backend_timeout() > 100, 'backend_timeout > 0.1 sec' );
+    ok($loop->backend_timeout() <= 1000, 'backend_timeout <= 1 sec');
+
+    is($loop->run(), 0, 'run: ran successfully');
+
+    is($loop->backend_timeout(), 0, "backend_timeout now 0 secs");
+}
 done_testing();

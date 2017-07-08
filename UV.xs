@@ -136,17 +136,9 @@ static void handle_data_destroy(handle_data_t *data_ptr)
     if (NULL != data_ptr->self) {
         data_ptr->self = NULL;
     }
-    if (NULL != data_ptr->loop_sv) {
-        SvREFCNT_dec(data_ptr->loop_sv);
-        data_ptr->loop_sv = NULL;
-    }
     if (NULL != data_ptr->stash) {
         SvREFCNT_dec(data_ptr->stash);
         data_ptr->stash = NULL;
-    }
-    if (NULL != data_ptr->user_data) {
-        SvREFCNT_dec(data_ptr->user_data);
-        data_ptr->user_data = NULL;
     }
 
     /* cleanup any callback references */
@@ -438,7 +430,7 @@ BOOT:
 
 void DESTROY (uv_handle_t *handle)
     CODE:
-    if (NULL != handle && 0 == uv_is_closing(handle)) {
+    if (NULL != handle && 0 == uv_is_closing(handle) && 0 == uv_is_active(handle)) {
         uv_close(handle, handle_close_cb);
     }
 
@@ -450,7 +442,14 @@ SV *uv_handle_loop(uv_handle_t *handle)
     OUTPUT:
     RETVAL
 
-void uv_handle_on(uv_handle_t *handle, const char *name, SV *cb)
+void uv_handle_close(uv_handle_t *handle, SV *cb=NULL)
+    CODE:
+    if (NULL != cb) {
+        handle_on(handle, "close", cb);
+    }
+    uv_close(handle, handle_close_cb);
+
+void uv_handle_on(uv_handle_t *handle, const char *name, SV *cb=NULL)
     CODE:
     handle_on(handle, name, cb);
 
