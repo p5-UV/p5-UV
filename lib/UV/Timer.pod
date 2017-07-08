@@ -1,0 +1,127 @@
+=encoding utf8
+
+=head1 NAME
+
+UV::Timer - Timers in libuv
+
+=head1 SYNOPSIS
+
+  #!/usr/bin/env perl
+  use strict;
+  use warnings;
+
+  use UV;
+
+  # A new timer will give initialize against the default loop
+  my $timer = UV::Timer->new();
+
+  # Use a different loop
+  my $loop = UV::Loop->new(); # non-default loop
+  my $timer = UV::Timer->new($loop);
+
+  # setup the timer callback:
+  $timer->on("timer", sub {"We're TIMING!!!"});
+
+  # start the timer
+  $timer->start(); # same as ->start(0, 0);
+  $timer->start(1, 0);
+  $timer->start(1, 0, sub {"override any TIMER callback we already have"});
+
+  # stop the timer
+  $timer->stop();
+
+=head1 DESCRIPTION
+
+This module provides an interface to
+L<libuv's timer|http://docs.libuv.org/en/v1.x/timer.html>. We will try to
+document things here as best as we can, but we also suggest you look at the
+L<libuv docs|http://docs.libuv.org> directly for more details on how things
+work.
+
+=head1 EVENTS
+
+L<UV::Timer> inherits all events from L<UV::Handle> and also makes the
+following extra events available.
+
+=head2 timer
+
+    $timer->on("timer", sub { my $invocant = shift; say "We are timing!"});
+    my $count = 0;
+    $timer->on("timer", sub {
+        my $invocant = shift; # the timer instance this event fired on
+        if (++$count > 2) {
+            say "We've timed twice. stopping!";
+            $invocant->stop();
+        }
+    });
+
+When the event loop runs and the timer is ready, this event will be fired.
+
+=head1 METHODS
+
+L<UV::Timer> inherits all methods from L<UV::Handle> and also makes the
+following extra methods available.
+
+=head2 new
+
+    my $timer = UV::Timer->new();
+    # Or tell it what loop to initialize against
+    my $timer = UV::Timer->new($loop);
+
+L<Initializes|http://docs.libuv.org/en/v1.x/timer.html#c.uv_timer_init> the
+timer.
+
+=head2 get_repeat
+
+    my $uint64_t = $timer->get_repeat();
+
+L<Get repeat|http://docs.libuv.org/en/v1.x/timer.html#c.uv_timer_get_repeate>
+returns the timer's repeat value.
+
+=head2 start
+
+    # assume no timeout or repeat values
+    $timer->start();
+
+    # explicitly state timeout and repeat values
+    my $timeout = 0;
+    my $repeat = 0;
+    $timer->start($timeout, $repeat);
+
+    # pass a callback for the "timer" event
+    $timer->start(0, 0, sub {say "I overrode the callback set with ->on()"});
+
+L<Start|http://docs.libuv.org/en/v1.x/timer.html#c.uv_timer_start> the timer.
+the C<timeout> and C<repeat> values are in milliseconds.
+
+If C<timeout> is zero, the callback fires on the next event loop iteration. If
+C<repeat> is non-zero, the callback fires first after timeout milliseconds and
+then repeatedly after C<repeat> milliseconds.
+
+B<* Note:> Does not update the event loop's concept of L<UV::Loop/"now">. See
+L<UV::Loop/"update_time"> for more information.
+
+=head2 stop
+
+    $timer->stop();
+
+L<Stop|http://docs.libuv.org/en/v1.x/timer.html#c.uv_timer_stop> the timer, and
+if it is repeating restart it using the repeat value as the timeout. If the
+timer has never been started before it returns C<UV_EINVAL>.
+
+=head1 AUTHOR
+
+Daisuke Murase <F<typester@cpan.org>>
+
+=head1 CONTRIBUTORS
+
+Chase Whitener <F<capoeirab@cpan.org>>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright 2012, Daisuke Murase.
+
+This library is free software; you can redistribute it and/or modify it under
+the same terms as Perl itself.
+
+=cut
