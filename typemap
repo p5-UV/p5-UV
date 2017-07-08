@@ -7,6 +7,7 @@ const uv_loop_t *   T_LOOP
 
 uv_handle_t *       T_HANDLE
 uv_timer_t *        T_HANDLE
+const uv_timer_t *  T_HANDLE
 
 INPUT
 
@@ -23,7 +24,8 @@ T_HANDLE
       && (SvSTASH (SvRV ($arg)) == stash_" . ($type =~ /uv_([^_\s]+)/, "$1") . "
       || sv_derived_from ($arg, \"UV::" . ($type =~ /uv_([^_\s]+)/, ucfirst "$1") . "\"))))
          croak (\"object is not of type UV::" . ($type =~ /uv_([^_\s]+)/, ucfirst "$1") . "\");
-$var = ($type)SvPVX (SvRV ($arg));
+    $var = ($type)SvPVX (SvRV ($arg));
+
 
 
 T_INT64

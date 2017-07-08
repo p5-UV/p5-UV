@@ -80,9 +80,24 @@ Event loops that work properly on all platforms. YAY!
 
 # FUNCTIONS
 
+The following functions are available:
+
+## default\_loop
+
+    my $loop = UV::default_loop();
+    # You can also get it with the UV::Loop methods below:
+    my $loop = UV::Loop->default_loop();
+    my $loop = UV::Loop->default();
+    # Passing a true value as the first arg to the UV::Loop constructor
+    # will also return the default loop
+    my $loop = UV::Loop->new(1);
+
+Returns the default loop (which is a singleton object). This module already
+creates the default loop and you get access to it with this method.
+
 ## hrtime
 
-Get the current Hi-Res time
+Get the current Hi-Res time (`uint64_t`).
 
 # AUTHOR
 

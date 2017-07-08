@@ -9,12 +9,34 @@ use warnings;
 use Exporter qw(import);
 require XSLoader;
 
+XSLoader::load('UV', $XS_VERSION);
+
 our @EXPORT_OK  = qw(
 );
 
-XSLoader::load('UV', $XS_VERSION);
-
+# make sure all sub-classes of uv_handle_t are thought of as such
+@UV::Async::ISA =
+@UV::Check::ISA =
+@UV::FSEvent::ISA =
+@UV::FSPoll::ISA =
+@UV::Idle::ISA =
+@UV::NamedPipe::ISA =
+@UV::Poll::ISA =
+@UV::Prepare::ISA =
+@UV::Process::ISA =
+@UV::Stream::ISA =
+@UV::TCP::ISA =
+@UV::Timer::ISA =
+@UV::TTY::ISA =
+@UV::UDP::ISA =
+@UV::Signal::ISA =
+@UV::File::ISA =
+    "UV::Handle";
 1;
+
+# load up the default loop
+default_loop() or die 'UV: cannot initialise libUV backend.';
+
 __END__
 
 =encoding utf8
@@ -102,9 +124,24 @@ Event loops that work properly on all platforms. YAY!
 
 =head1 FUNCTIONS
 
+The following functions are available:
+
+=head2 default_loop
+
+    my $loop = UV::default_loop();
+    # You can also get it with the UV::Loop methods below:
+    my $loop = UV::Loop->default_loop();
+    my $loop = UV::Loop->default();
+    # Passing a true value as the first arg to the UV::Loop constructor
+    # will also return the default loop
+    my $loop = UV::Loop->new(1);
+
+Returns the default loop (which is a singleton object). This module already
+creates the default loop and you get access to it with this method.
+
 =head2 hrtime
 
-Get the current Hi-Res time
+Get the current Hi-Res time (C<uint64_t>).
 
 =head1 AUTHOR
 

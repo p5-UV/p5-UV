@@ -1,0 +1,192 @@
+=encoding utf8
+
+=head1 NAME
+
+UV::Loop - Looping with libuv
+
+=head1 SYNOPSIS
+
+  #!/usr/bin/env perl
+  use strict;
+  use warnings;
+
+  use UV;
+
+  # A new loop
+  my $loop = UV::Loop->new();
+
+  # default loop
+  my $loop = UV::Loop->default_loop(); # convenience constructor
+  my $loop = UV::Loop->new(1); # Tell the constructor you want the default loop
+
+  # run a loop with one of three options:
+  # UV_RUN_DEFAULT, UV_RUN_ONCE, UV_RUN_NOWAIT
+  $loop->run(); # runs with UV_RUN_DEFAULT
+  $loop->run(UV::Loop::UV_RUN_DEFAULT); # explicitly state UV_RUN_DEFAULT
+  $loop->run(UV::Loop::UV_RUN_ONCE);
+  $loop->run(UV::Loop::UV_RUN_NOWAIT);
+
+
+=head1 DESCRIPTION
+
+This module provides an interface to
+L<libuv's loop|http://docs.libuv.org/en/v1.x/loop.html>. We will try to
+document things here as best as we can, but we also suggest you look at the
+L<libuv docs|http://docs.libuv.org> directly for more details on how things
+work.
+
+Event loops that work properly on all platforms. YAY!
+
+=head1 CONSTANTS
+
+=head2 RUN MODE CONSTANTS
+
+=head3 UV_RUN_DEFAULT
+
+=head3 UV_RUN_NOWAIT
+
+=head3 UV_RUN_ONCE
+
+
+=head1 METHODS
+
+L<UV::Loop> makes the following methods available.
+
+=head2 new
+
+    my $loop = UV::Loop->new();
+    my $default_loop = UV::Loop->new(1);
+    my $default_loop = UV::Loop->default_loop();
+    my $default_loop = UV::Loop->default();
+
+Either return the default loop (singleton object), or create a new event loop.
+Please look at the L<documentation|http://docs.libuv.org/en/v1.x/loop.html>
+from libuv.
+
+=head2 alive
+
+    my $int = $loop->alive();
+
+L<alive|http://docs.libuv.org/en/v1.x/loop.html#c.uv_loop_alive> returns a
+non-zero value if there are active handles or requests in the loop.
+
+=head2 backend_fd
+
+    my $int = $loop->backend_fd();
+
+L<backend_fd|http://docs.libuv.org/en/v1.x/loop.html#c.uv_backend_fd> returns
+the backend file descriptor. Only C<kqueue>, C<epoll> and C<event ports> are
+supported.
+
+This can be used in conjunction with L<UV::Loop/"run"> and C<UV_RUN_NOWAIT> to
+poll in one thread and run the event loop's callbacks in another.
+
+B<* Note:> Embedding a C<kqueue fd> in another C<kqueue pollset> doesn't work
+on all platforms. It's not an error to add the C<fd> but it never generates
+events.
+
+=head2 backend_timeout
+
+    my $int = $loop->backend_timeout();
+
+L<backend_timeout|http://docs.libuv.org/en/v1.x/loop.html#c.uv_backend_timeout>
+returns the poll timeout. The return value is in milliseconds, or C<-1> for no
+timeout.
+
+=head2 loop_alive
+
+    my $int = $loop->loop_alive();
+
+This is just a synonym for L<UV::Loop/"alive">.
+
+=head2 now
+
+    my $uint64_t = $loop->now();
+
+L<now|http://docs.libuv.org/en/v1.x/loop.html#c.uv_now> returns the current
+timestamp in milliseconds. The timestamp is cached at the start of the event
+loop tick, see L<UV::Loop/"update_loop"> for details and rationale.
+
+The timestamp increases monotonically from some arbitrary point in time. Don't
+make assumptions about the starting point, you will only get disappointed.
+
+B<* Note:> Use L<UV/"uv_hrtime"> if you need sub-millisecond granularity.
+
+=head2 run
+
+    # use UV_RUN_DEFAULT by default
+    my $int = $loop->run();
+    # or, explicitly use it:
+    my $int = $loop->run(UV::Loop::UV_RUN_DEFAULT);
+    # run in UV_RUN_NOWAIT mode
+    my $int = $loop->run(UV::Loop::UV_RUN_NOWAIT);
+    # run in UV_RUN_ONCE mode
+    my $int = $loop->run(UV::Loop::UV_RUN_ONCE);
+
+L<run|http://docs.libuv.org/en/v1.x/loop.html#c.uv_run> runs the event loop. It
+will act differently depending on the specified mode:
+
+=over 4
+
+=item
+
+C<UV_RUN_DEFAULT> Runs the event loop until there are no more active and
+referenced handles or requests. Returns non-zero if L<UV::Loop/"stop"> was
+called and there are still active handles or requests. Returns zero in all other
+cases.
+
+=item
+
+C<UV_RUN_NOWAIT> Poll for i/o once but don't block if there are no pending
+callbacks. Returns zero if done (no active handles or requests left), or
+non-zero if more callbacks are expected (meaning you should run the event loop
+again sometime in the future).
+
+=item
+
+C<UV_RUN_ONCE> Poll for i/o once. Note that this function blocks if there are
+no pending callbacks. Returns zero when done (no active handles or requests
+left), or non-zero if more callbacks are expected (meaning you should run the
+event loop again sometime in the future).
+
+=back
+
+=head2 stop
+
+    $loop->stop();
+
+L<stop|http://docs.libuv.org/en/v1.x/loop.html#c.uv_stop> stops the event loop,
+causing L<UV::Loop/"run"> to end as soon as possible. This will happen not
+sooner than the next loop iteration. If this function was called before
+blocking for i/o, the loop won't block for i/o on this iteration.
+
+=head2 update_time
+
+    $loop->update_time();
+
+L<update_time|http://docs.libuv.org/en/v1.x/loop.html#c.uv_update_time> updates
+the event loop's concept of L<UV::Loop/"now">. Libuv caches the current time
+at the start of the event loop tick in order to reduce the number of
+time-related system calls.
+
+You won't normally need to call this function unless you have callbacks that
+block the event loop for longer periods of time, where "longer" is somewhat
+subjective but probably on the order of a millisecond or more.
+
+
+=head1 AUTHOR
+
+Daisuke Murase <F<typester@cpan.org>>
+
+=head1 CONTRIBUTORS
+
+Chase Whitener <F<capoeirab@cpan.org>>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright 2012, Daisuke Murase.
+
+This library is free software; you can redistribute it and/or modify it under
+the same terms as Perl itself.
+
+=cut
