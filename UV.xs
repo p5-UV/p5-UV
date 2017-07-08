@@ -321,8 +321,6 @@ static void handle_close_cb(uv_handle_t* handle)
         FREETMPS;
         LEAVE;
     }
-    handle_data_destroy(data_ptr);
-    Safefree(handle);
 }
 
 static void handle_timer_cb(uv_timer_t* handle)
@@ -432,6 +430,8 @@ void DESTROY (uv_handle_t *handle)
     CODE:
     if (NULL != handle && 0 == uv_is_closing(handle) && 0 == uv_is_active(handle)) {
         uv_close(handle, handle_close_cb);
+        handle_data_destroy(uv_data(handle));
+        Safefree(handle);
     }
 
 SV *uv_handle_loop(uv_handle_t *handle)
