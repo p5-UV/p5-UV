@@ -38,6 +38,10 @@ Event loops that work properly on all platforms. YAY!
 
 # CONSTANTS
 
+## ERROR CONSTANTS
+
+### UV\_EBUSY
+
 ## HANDLE TYPE CONSTANTS
 
 ### UV\_ASYNC

@@ -82,6 +82,10 @@ Event loops that work properly on all platforms. YAY!
 
 =head1 CONSTANTS
 
+=head2 ERROR CONSTANTS
+
+=head3 UV_EBUSY
+
 =head2 HANDLE TYPE CONSTANTS
 
 =head3 UV_ASYNC

@@ -376,6 +376,9 @@ BOOT:
     newCONSTSUB(stash, "UV_FILE", newSViv(UV_FILE));
     newCONSTSUB(stash, "UV_HANDLE_TYPE_MAX", newSViv(UV_HANDLE_TYPE_MAX));
 
+    /* expose the different error constants */
+    newCONSTSUB(stash, "UV_EBUSY", newSViv(UV_EBUSY));
+
     /* build out our stashes */
     stash_loop          = gv_stashpv("UV::Loop",        TRUE);
 
@@ -566,6 +569,12 @@ void DESTROY (uv_loop_t *loop)
 int uv_backend_fd(const uv_loop_t* loop)
 
 int uv_backend_timeout(const uv_loop_t* loop)
+
+int uv_close(uv_loop_t *loop)
+    CODE:
+        RETVAL = uv_loop_close(loop);
+    OUTPUT:
+    RETVAL
 
 int uv_loop_alive(const uv_loop_t* loop)
 ALIAS:
