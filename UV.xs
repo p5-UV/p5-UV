@@ -426,7 +426,7 @@ BOOT:
     HV *stash = gv_stashpvn("UV::Handle", 10, TRUE);
 }
 
-void DESTROY (uv_handle_t *handle)
+void DESTROY(uv_handle_t *handle)
     CODE:
     if (NULL != handle && 0 == uv_is_closing(handle) && 0 == uv_is_active(handle)) {
         uv_close(handle, handle_close_cb);
@@ -436,9 +436,13 @@ void DESTROY (uv_handle_t *handle)
 
 SV *uv_handle_loop(uv_handle_t *handle)
     CODE:
-{
     RETVAL = newSVsv(uv_data(handle)->loop_sv);
-}
+    OUTPUT:
+    RETVAL
+
+int uv_handle_active (uv_handle_t *handle)
+    CODE:
+        RETVAL = uv_is_active(handle);
     OUTPUT:
     RETVAL
 
