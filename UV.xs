@@ -535,6 +535,12 @@ void uv_handle_on(uv_handle_t *handle, const char *name, SV *cb=NULL)
     CODE:
     handle_on(handle, name, cb);
 
+int uv_handle_type(uv_handle_t *handle)
+    CODE:
+    RETVAL = handle->type;
+    OUTPUT:
+    RETVAL
+
 MODULE = UV             PACKAGE = UV::Timer      PREFIX = uv_timer_
 
 PROTOTYPES: ENABLE
@@ -565,6 +571,14 @@ SV * uv_timer_new(SV *klass, uv_loop_t *loop = uvapi.default_loop)
 }
     OUTPUT:
     RETVAL
+
+void DESTROY(uv_timer_t *handle)
+    CODE:
+    if (NULL != handle && 0 == uv_is_closing((uv_handle_t *)handle) && 0 == uv_is_active((uv_handle_t *)handle)) {
+        uv_timer_stop(handle);
+        uv_close((uv_handle_t *)handle, handle_close_cb);
+        handle_data_destroy(uv_data(handle));
+    }
 
 int uv_timer_start(uv_timer_t *handle, uint64_t start=0, uint64_t repeat=0, SV *cb=NULL)
     CODE:

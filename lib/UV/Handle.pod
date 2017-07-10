@@ -130,6 +130,16 @@ handle and the arrival of the C<close> callback.
 The L<loop|http://docs.libuv.org/en/v1.x/handle.html#c.uv_handle_t.loop> method
 returns the L<UV::Loop> object this handle was initialized with.
 
+=head2 type
+
+    my $int = $handle->type();
+    if ($int == UV::UV_TIMER) {
+        say "This handle is a timer";
+    }
+
+The L<type|http://docs.libuv.org/en/v1.x/handle.html#c.uv_handle_t.type> method
+returns the corresponding libuv handle type constant.
+
 =head1 AUTHOR
 
 Daisuke Murase <F<typester@cpan.org>>
