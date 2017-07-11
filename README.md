@@ -340,6 +340,26 @@ Cross-device link not permitted
 
 Unknown error
 
+## REQUEST TYPE CONSTANTS
+
+### UV\_CONNECT
+
+### UV\_FS
+
+### UV\_GETADDRINFO
+
+### UV\_GETNAMEINFO
+
+### UV\_REQ
+
+### UV\_SHUTDOWN
+
+### UV\_UDP\_SEND
+
+### UV\_WORK
+
+### UV\_WRITE
+
 ## HANDLE TYPE CONSTANTS
 
 ### UV\_ASYNC
@@ -353,8 +373,6 @@ Unknown error
 ### UV\_FS\_POLL
 
 ### UV\_HANDLE
-
-### UV\_HANDLE\_TYPE\_MAX
 
 ### UV\_IDLE
 
@@ -377,8 +395,6 @@ Unknown error
 ### UV\_TTY
 
 ### UV\_UDP
-
-### UV\_UNKNOWN\_HANDLE
 
 # FUNCTIONS
 

@@ -59,6 +59,18 @@ static HV
     *stash_signal,
     *stash_file;
 
+/* request stashes */
+static HV
+    *stash_req,
+    *stash_connect,
+    *stash_write,
+    *stash_shutdown,
+    *stash_udp_send,
+    *stash_fs,
+    *stash_work,
+    *stash_getaddrinfo,
+    *stash_getnameinfo;
+
 static SV * s_get_cv (SV *cb_sv)
 {
     dTHX;
@@ -79,6 +91,11 @@ static SV * s_get_cv_croak (SV *cb_sv)
 
     return cv;
 }
+
+/* Handle callback function definitions */
+static void handle_alloc_cb(uv_handle_t* handle, size_t suggested_size, uv_buf_t* buf);
+static void handle_close_cb(uv_handle_t* handle);
+static void handle_timer_cb(uv_timer_t* handle);
 
 /* loop functions */
 static void loop_default_init()
@@ -197,6 +214,16 @@ static handle_data_t* handle_data_new(const uv_handle_type type)
     data_ptr->close_cb = NULL;
     data_ptr->timer_cb = NULL;
     return data_ptr;
+}
+
+static void handle_destroy(uv_handle_t *handle)
+{
+    if (NULL == handle) return;
+    if (0 == uv_is_closing(handle) && 0 == uv_is_active(handle)) {
+        uv_close(handle, handle_close_cb);
+        handle_data_destroy(uv_data(handle));
+        /*Safefree(handle);*/
+    }
 }
 
 static uv_handle_t* handle_new(const uv_handle_type type)
@@ -355,8 +382,18 @@ BOOT:
     PERL_MATH_INT64_LOAD_OR_CROAK;
     HV *stash = gv_stashpvn("UV", 2, TRUE);
 
+    /* expose the different request type constants */
+    newCONSTSUB(stash, "UV_REQ", newSViv(UV_REQ));
+    newCONSTSUB(stash, "UV_CONNECT", newSViv(UV_CONNECT));
+    newCONSTSUB(stash, "UV_WRITE", newSViv(UV_WRITE));
+    newCONSTSUB(stash, "UV_SHUTDOWN", newSViv(UV_SHUTDOWN));
+    newCONSTSUB(stash, "UV_UDP_SEND", newSViv(UV_UDP_SEND));
+    newCONSTSUB(stash, "UV_FS", newSViv(UV_FS));
+    newCONSTSUB(stash, "UV_WORK", newSViv(UV_WORK));
+    newCONSTSUB(stash, "UV_GETADDRINFO", newSViv(UV_GETADDRINFO));
+    newCONSTSUB(stash, "UV_GETNAMEINFO", newSViv(UV_GETNAMEINFO));
+
     /* expose the different handle type constants */
-    newCONSTSUB(stash, "UV_UNKNOWN_HANDLE", newSViv(UV_UNKNOWN_HANDLE));
     newCONSTSUB(stash, "UV_ASYNC", newSViv(UV_ASYNC));
     newCONSTSUB(stash, "UV_CHECK", newSViv(UV_CHECK));
     newCONSTSUB(stash, "UV_FS_EVENT", newSViv(UV_FS_EVENT));
@@ -374,7 +411,6 @@ BOOT:
     newCONSTSUB(stash, "UV_UDP", newSViv(UV_UDP));
     newCONSTSUB(stash, "UV_SIGNAL", newSViv(UV_SIGNAL));
     newCONSTSUB(stash, "UV_FILE", newSViv(UV_FILE));
-    newCONSTSUB(stash, "UV_HANDLE_TYPE_MAX", newSViv(UV_HANDLE_TYPE_MAX));
 
     /* expose the different error constants */
     newCONSTSUB(stash, "UV_E2BIG", newSViv(UV_E2BIG));
@@ -475,6 +511,16 @@ BOOT:
     stash_signal        = gv_stashpv("UV::Signal",      TRUE);
     stash_file          = gv_stashpv("UV::File",        TRUE);
 
+    stash_req           = gv_stashpv("UV::Req",         TRUE);
+    stash_connect       = gv_stashpv("UV::Connect",     TRUE);
+    stash_write         = gv_stashpv("UV::Write",       TRUE);
+    stash_shutdown      = gv_stashpv("UV::Shutdown",    TRUE);
+    stash_udp_send      = gv_stashpv("UV::UDP::Send",   TRUE);
+    stash_fs            = gv_stashpv("UV::FS",          TRUE);
+    stash_work          = gv_stashpv("UV::Work",        TRUE);
+    stash_getaddrinfo   = gv_stashpv("UV::GetAddrInfo", TRUE);
+    stash_getnameinfo   = gv_stashpv("UV::GetNameInfo", TRUE);
+
     {
         SV *sv = perl_get_sv("EV::API", TRUE);
         uvapi.default_loop = NULL;
@@ -506,11 +552,7 @@ BOOT:
 
 void DESTROY(uv_handle_t *handle)
     CODE:
-    if (NULL != handle && 0 == uv_is_closing(handle) && 0 == uv_is_active(handle)) {
-        uv_close(handle, handle_close_cb);
-        handle_data_destroy(uv_data(handle));
-        Safefree(handle);
-    }
+    handle_destroy(handle);
 
 SV *uv_handle_loop(uv_handle_t *handle)
     CODE:
