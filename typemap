@@ -26,8 +26,6 @@ T_HANDLE
          croak (\"object is not of type UV::" . ($type =~ /uv_([^_\s]+)/, ucfirst "$1") . "\");
     $var = ($type)SvPVX (SvRV ($arg));
 
-
-
 T_INT64
     $var = SvI64($arg);
 

@@ -92,9 +92,10 @@ static SV * s_get_cv_croak (SV *cb_sv)
     return cv;
 }
 
-/* Handle callback function definitions */
+/* Handle function definitions for some that aren't alpha ordered later */
 static void handle_alloc_cb(uv_handle_t* handle, size_t suggested_size, uv_buf_t* buf);
 static void handle_close_cb(uv_handle_t* handle);
+static HV * handle_data_stash(const uv_handle_type type);
 static void handle_timer_cb(uv_timer_t* handle);
 
 /* loop functions */
@@ -182,29 +183,15 @@ static handle_data_t* handle_data_new(const uv_handle_type type)
         croak("Cannot allocate space for handle data.");
     }
 
-    /* set the stash location */
-    data_ptr->stash = NULL;
-    if (type == UV_ASYNC) data_ptr->stash = stash_async;
-    if (type == UV_CHECK) data_ptr->stash = stash_check;
-    if (type == UV_FS_EVENT) data_ptr->stash = stash_fs_event;
-    if (type == UV_FS_POLL) data_ptr->stash = stash_fs_poll;
-    if (type == UV_HANDLE) data_ptr->stash = stash_handle;
-    if (type == UV_IDLE) data_ptr->stash = stash_idle;
-    if (type == UV_NAMED_PIPE) data_ptr->stash = stash_named_pipe;
-    if (type == UV_POLL) data_ptr->stash = stash_poll;
-    if (type == UV_PREPARE) data_ptr->stash = stash_prepare;
-    if (type == UV_PROCESS) data_ptr->stash = stash_process;
-    if (type == UV_STREAM) data_ptr->stash = stash_stream;
-    if (type == UV_TCP) data_ptr->stash = stash_tcp;
-    if (type == UV_TIMER) data_ptr->stash = stash_timer;
-    if (type == UV_TTY) data_ptr->stash = stash_tty;
-    if (type == UV_UDP) data_ptr->stash = stash_udp;
-    if (type == UV_SIGNAL) data_ptr->stash = stash_signal;
-    if (type == UV_FILE) data_ptr->stash = stash_file;
+    /* set the stash */
+    data_ptr->stash = handle_data_stash(type);
     if (NULL == data_ptr->stash) {
         free(data_ptr);
-        croak("Invalid Handle type supplied");
+        croak("Invalid handle type supplied (%i)", type);
     }
+
+    /* setup the user data */
+    data_ptr->user_data = NULL;
 
     /* setup the loop_sv slot */
     data_ptr->loop_sv = NULL;
@@ -214,6 +201,27 @@ static handle_data_t* handle_data_new(const uv_handle_type type)
     data_ptr->close_cb = NULL;
     data_ptr->timer_cb = NULL;
     return data_ptr;
+}
+
+static HV * handle_data_stash(const uv_handle_type type)
+{
+    if (type == UV_ASYNC) return stash_async;
+    if (type == UV_CHECK) return stash_check;
+    if (type == UV_FS_EVENT) return stash_check;
+    if (type == UV_FS_POLL) return stash_fs_poll;
+    if (type == UV_IDLE) return stash_idle;
+    if (type == UV_NAMED_PIPE) return stash_named_pipe;
+    if (type == UV_POLL) return stash_poll;
+    if (type == UV_PREPARE) return stash_prepare;
+    if (type == UV_PROCESS) return stash_process;
+    if (type == UV_STREAM) return stash_stream;
+    if (type == UV_TCP) return stash_tcp;
+    if (type == UV_TIMER) return stash_timer;
+    if (type == UV_TTY) return stash_tty;
+    if (type == UV_UDP) return stash_udp;
+    if (type == UV_SIGNAL) return stash_signal;
+    if (type == UV_FILE) return stash_file;
+    return NULL;
 }
 
 static void handle_destroy(uv_handle_t *handle)
@@ -233,7 +241,7 @@ static uv_handle_t* handle_new(const uv_handle_type type)
     handle_data_t *data_ptr = handle_data_new(type);
     size_t size = uv_handle_size(type);
 
-    self = NEWSV (0, size);
+    self = NEWSV(0, size);
     SvPOK_only(self);
     SvCUR_set(self, size);
     handle = (uv_handle_t *) SvPVX(self);
@@ -380,153 +388,153 @@ PROTOTYPES: ENABLE
 BOOT:
 {
     PERL_MATH_INT64_LOAD_OR_CROAK;
-    HV *stash = gv_stashpvn("UV", 2, TRUE);
+    /* grab the PACKAGE hash. If it doesn't yet exist, create it */
+    HV *stash = gv_stashpv("UV", GV_ADD);
 
-    /* expose the different request type constants */
-    newCONSTSUB(stash, "UV_REQ", newSViv(UV_REQ));
-    newCONSTSUB(stash, "UV_CONNECT", newSViv(UV_CONNECT));
-    newCONSTSUB(stash, "UV_WRITE", newSViv(UV_WRITE));
-    newCONSTSUB(stash, "UV_SHUTDOWN", newSViv(UV_SHUTDOWN));
-    newCONSTSUB(stash, "UV_UDP_SEND", newSViv(UV_UDP_SEND));
-    newCONSTSUB(stash, "UV_FS", newSViv(UV_FS));
-    newCONSTSUB(stash, "UV_WORK", newSViv(UV_WORK));
-    newCONSTSUB(stash, "UV_GETADDRINFO", newSViv(UV_GETADDRINFO));
-    newCONSTSUB(stash, "UV_GETNAMEINFO", newSViv(UV_GETNAMEINFO));
-
-    /* expose the different handle type constants */
-    newCONSTSUB(stash, "UV_ASYNC", newSViv(UV_ASYNC));
-    newCONSTSUB(stash, "UV_CHECK", newSViv(UV_CHECK));
-    newCONSTSUB(stash, "UV_FS_EVENT", newSViv(UV_FS_EVENT));
-    newCONSTSUB(stash, "UV_FS_POLL", newSViv(UV_FS_POLL));
-    newCONSTSUB(stash, "UV_HANDLE", newSViv(UV_HANDLE));
-    newCONSTSUB(stash, "UV_IDLE", newSViv(UV_IDLE));
-    newCONSTSUB(stash, "UV_NAMED_PIPE", newSViv(UV_NAMED_PIPE));
-    newCONSTSUB(stash, "UV_POLL", newSViv(UV_POLL));
-    newCONSTSUB(stash, "UV_PREPARE", newSViv(UV_PREPARE));
-    newCONSTSUB(stash, "UV_PROCESS", newSViv(UV_PROCESS));
-    newCONSTSUB(stash, "UV_STREAM", newSViv(UV_STREAM));
-    newCONSTSUB(stash, "UV_TCP", newSViv(UV_TCP));
-    newCONSTSUB(stash, "UV_TIMER", newSViv(UV_TIMER));
-    newCONSTSUB(stash, "UV_TTY", newSViv(UV_TTY));
-    newCONSTSUB(stash, "UV_UDP", newSViv(UV_UDP));
-    newCONSTSUB(stash, "UV_SIGNAL", newSViv(UV_SIGNAL));
-    newCONSTSUB(stash, "UV_FILE", newSViv(UV_FILE));
-
-    /* expose the different error constants */
-    newCONSTSUB(stash, "UV_E2BIG", newSViv(UV_E2BIG));
-    newCONSTSUB(stash, "UV_EACCES", newSViv(UV_EACCES));
-    newCONSTSUB(stash, "UV_EADDRINUSE", newSViv(UV_EADDRINUSE));
-    newCONSTSUB(stash, "UV_EADDRNOTAVAIL", newSViv(UV_EADDRNOTAVAIL));
-    newCONSTSUB(stash, "UV_EAFNOSUPPORT", newSViv(UV_EAFNOSUPPORT));
-    newCONSTSUB(stash, "UV_EAGAIN", newSViv(UV_EAGAIN));
-    newCONSTSUB(stash, "UV_EAI_ADDRFAMILY", newSViv(UV_EAI_ADDRFAMILY));
-    newCONSTSUB(stash, "UV_EAI_AGAIN", newSViv(UV_EAI_AGAIN));
-    newCONSTSUB(stash, "UV_EAI_BADFLAGS", newSViv(UV_EAI_BADFLAGS));
-    newCONSTSUB(stash, "UV_EAI_BADHINTS", newSViv(UV_EAI_BADHINTS));
-    newCONSTSUB(stash, "UV_EAI_CANCELED", newSViv(UV_EAI_CANCELED));
-    newCONSTSUB(stash, "UV_EAI_FAIL", newSViv(UV_EAI_FAIL));
-    newCONSTSUB(stash, "UV_EAI_FAMILY", newSViv(UV_EAI_FAMILY));
-    newCONSTSUB(stash, "UV_EAI_MEMORY", newSViv(UV_EAI_MEMORY));
-    newCONSTSUB(stash, "UV_EAI_NODATA", newSViv(UV_EAI_NODATA));
-    newCONSTSUB(stash, "UV_EAI_NONAME", newSViv(UV_EAI_NONAME));
-    newCONSTSUB(stash, "UV_EAI_OVERFLOW", newSViv(UV_EAI_OVERFLOW));
-    newCONSTSUB(stash, "UV_EAI_PROTOCOL", newSViv(UV_EAI_PROTOCOL));
-    newCONSTSUB(stash, "UV_EAI_SERVICE", newSViv(UV_EAI_SERVICE));
-    newCONSTSUB(stash, "UV_EAI_SOCKTYPE", newSViv(UV_EAI_SOCKTYPE));
-    newCONSTSUB(stash, "UV_EALREADY", newSViv(UV_EALREADY));
-    newCONSTSUB(stash, "UV_EBADF", newSViv(UV_EBADF));
-    newCONSTSUB(stash, "UV_EBUSY", newSViv(UV_EBUSY));
-    newCONSTSUB(stash, "UV_ECANCELED", newSViv(UV_ECANCELED));
-    newCONSTSUB(stash, "UV_ECHARSET", newSViv(UV_ECHARSET));
-    newCONSTSUB(stash, "UV_ECONNABORTED", newSViv(UV_ECONNABORTED));
-    newCONSTSUB(stash, "UV_ECONNREFUSED", newSViv(UV_ECONNREFUSED));
-    newCONSTSUB(stash, "UV_ECONNRESET", newSViv(UV_ECONNRESET));
-    newCONSTSUB(stash, "UV_EDESTADDRREQ", newSViv(UV_EDESTADDRREQ));
-    newCONSTSUB(stash, "UV_EEXIST", newSViv(UV_EEXIST));
-    newCONSTSUB(stash, "UV_EFAULT", newSViv(UV_EFAULT));
-    newCONSTSUB(stash, "UV_EFBIG", newSViv(UV_EFBIG));
-    newCONSTSUB(stash, "UV_EHOSTUNREACH", newSViv(UV_EHOSTUNREACH));
-    newCONSTSUB(stash, "UV_EINTR", newSViv(UV_EINTR));
-    newCONSTSUB(stash, "UV_EINVAL", newSViv(UV_EINVAL));
-    newCONSTSUB(stash, "UV_EIO", newSViv(UV_EIO));
-    newCONSTSUB(stash, "UV_EISCONN", newSViv(UV_EISCONN));
-    newCONSTSUB(stash, "UV_EISDIR", newSViv(UV_EISDIR));
-    newCONSTSUB(stash, "UV_ELOOP", newSViv(UV_ELOOP));
-    newCONSTSUB(stash, "UV_EMFILE", newSViv(UV_EMFILE));
-    newCONSTSUB(stash, "UV_EMSGSIZE", newSViv(UV_EMSGSIZE));
-    newCONSTSUB(stash, "UV_ENAMETOOLONG", newSViv(UV_ENAMETOOLONG));
-    newCONSTSUB(stash, "UV_ENETDOWN", newSViv(UV_ENETDOWN));
-    newCONSTSUB(stash, "UV_ENETUNREACH", newSViv(UV_ENETUNREACH));
-    newCONSTSUB(stash, "UV_ENFILE", newSViv(UV_ENFILE));
-    newCONSTSUB(stash, "UV_ENOBUFS", newSViv(UV_ENOBUFS));
-    newCONSTSUB(stash, "UV_ENODEV", newSViv(UV_ENODEV));
-    newCONSTSUB(stash, "UV_ENOENT", newSViv(UV_ENOENT));
-    newCONSTSUB(stash, "UV_ENOMEM", newSViv(UV_ENOMEM));
-    newCONSTSUB(stash, "UV_ENONET", newSViv(UV_ENONET));
-    newCONSTSUB(stash, "UV_ENOPROTOOPT", newSViv(UV_ENOPROTOOPT));
-    newCONSTSUB(stash, "UV_ENOSPC", newSViv(UV_ENOSPC));
-    newCONSTSUB(stash, "UV_ENOSYS", newSViv(UV_ENOSYS));
-    newCONSTSUB(stash, "UV_ENOTCONN", newSViv(UV_ENOTCONN));
-    newCONSTSUB(stash, "UV_ENOTDIR", newSViv(UV_ENOTDIR));
-    newCONSTSUB(stash, "UV_ENOTEMPTY", newSViv(UV_ENOTEMPTY));
-    newCONSTSUB(stash, "UV_ENOTSOCK", newSViv(UV_ENOTSOCK));
-    newCONSTSUB(stash, "UV_ENOTSUP", newSViv(UV_ENOTSUP));
-    newCONSTSUB(stash, "UV_EPERM", newSViv(UV_EPERM));
-    newCONSTSUB(stash, "UV_EPIPE", newSViv(UV_EPIPE));
-    newCONSTSUB(stash, "UV_EPROTO", newSViv(UV_EPROTO));
-    newCONSTSUB(stash, "UV_EPROTONOSUPPORT", newSViv(UV_EPROTONOSUPPORT));
-    newCONSTSUB(stash, "UV_EPROTOTYPE", newSViv(UV_EPROTOTYPE));
-    newCONSTSUB(stash, "UV_ERANGE", newSViv(UV_ERANGE));
-    newCONSTSUB(stash, "UV_EROFS", newSViv(UV_EROFS));
-    newCONSTSUB(stash, "UV_ESHUTDOWN", newSViv(UV_ESHUTDOWN));
-    newCONSTSUB(stash, "UV_ESPIPE", newSViv(UV_ESPIPE));
-    newCONSTSUB(stash, "UV_ESRCH", newSViv(UV_ESRCH));
-    newCONSTSUB(stash, "UV_ETIMEDOUT", newSViv(UV_ETIMEDOUT));
-    newCONSTSUB(stash, "UV_ETXTBSY", newSViv(UV_ETXTBSY));
-    newCONSTSUB(stash, "UV_EXDEV", newSViv(UV_EXDEV));
-    newCONSTSUB(stash, "UV_UNKNOWN", newSViv(UV_UNKNOWN));
-    newCONSTSUB(stash, "UV_EOF", newSViv(UV_EOF));
-    newCONSTSUB(stash, "UV_ENXIO", newSViv(UV_ENXIO));
-    newCONSTSUB(stash, "UV_EMLINK", newSViv(UV_EMLINK));
-
-
-    /* build out our stashes */
-    stash_loop          = gv_stashpv("UV::Loop",        TRUE);
-
-    stash_async         = gv_stashpv("UV::Async",       TRUE);
-    stash_check         = gv_stashpv("UV::Check",       TRUE);
-    stash_fs_event      = gv_stashpv("UV::FSEvent",     TRUE);
-    stash_fs_poll       = gv_stashpv("UV::FSPoll",      TRUE);
-    stash_handle        = gv_stashpv("UV::Handle",      TRUE);
-    stash_idle          = gv_stashpv("UV::Idle",        TRUE);
-    stash_named_pipe    = gv_stashpv("UV::NamedPipe",   TRUE);
-    stash_poll          = gv_stashpv("UV::Poll",        TRUE);
-    stash_prepare       = gv_stashpv("UV::Prepare",     TRUE);
-    stash_process       = gv_stashpv("UV::Process",     TRUE);
-    stash_stream        = gv_stashpv("UV::Stream",      TRUE);
-    stash_tcp           = gv_stashpv("UV::TCP",         TRUE);
-    stash_timer         = gv_stashpv("UV::Timer",       TRUE);
-    stash_tty           = gv_stashpv("UV::TTY",         TRUE);
-    stash_udp           = gv_stashpv("UV::UDP",         TRUE);
-    stash_signal        = gv_stashpv("UV::Signal",      TRUE);
-    stash_file          = gv_stashpv("UV::File",        TRUE);
-
-    stash_req           = gv_stashpv("UV::Req",         TRUE);
-    stash_connect       = gv_stashpv("UV::Connect",     TRUE);
-    stash_write         = gv_stashpv("UV::Write",       TRUE);
-    stash_shutdown      = gv_stashpv("UV::Shutdown",    TRUE);
-    stash_udp_send      = gv_stashpv("UV::UDP::Send",   TRUE);
-    stash_fs            = gv_stashpv("UV::FS",          TRUE);
-    stash_work          = gv_stashpv("UV::Work",        TRUE);
-    stash_getaddrinfo   = gv_stashpv("UV::GetAddrInfo", TRUE);
-    stash_getnameinfo   = gv_stashpv("UV::GetNameInfo", TRUE);
-
+    /* add some constants to the package stash */
     {
-        SV *sv = perl_get_sv("EV::API", TRUE);
-        uvapi.default_loop = NULL;
-        sv_setiv (sv, (IV)&uvapi);
-        SvREADONLY_on (sv);
+        /* expose the different request type constants */
+        newCONSTSUB(stash, "UV_REQ", newSViv(UV_REQ));
+        newCONSTSUB(stash, "UV_CONNECT", newSViv(UV_CONNECT));
+        newCONSTSUB(stash, "UV_WRITE", newSViv(UV_WRITE));
+        newCONSTSUB(stash, "UV_SHUTDOWN", newSViv(UV_SHUTDOWN));
+        newCONSTSUB(stash, "UV_UDP_SEND", newSViv(UV_UDP_SEND));
+        newCONSTSUB(stash, "UV_FS", newSViv(UV_FS));
+        newCONSTSUB(stash, "UV_WORK", newSViv(UV_WORK));
+        newCONSTSUB(stash, "UV_GETADDRINFO", newSViv(UV_GETADDRINFO));
+        newCONSTSUB(stash, "UV_GETNAMEINFO", newSViv(UV_GETNAMEINFO));
+
+        /* expose the different handle type constants */
+        newCONSTSUB(stash, "UV_ASYNC", newSViv(UV_ASYNC));
+        newCONSTSUB(stash, "UV_CHECK", newSViv(UV_CHECK));
+        newCONSTSUB(stash, "UV_FS_EVENT", newSViv(UV_FS_EVENT));
+        newCONSTSUB(stash, "UV_FS_POLL", newSViv(UV_FS_POLL));
+        newCONSTSUB(stash, "UV_HANDLE", newSViv(UV_HANDLE));
+        newCONSTSUB(stash, "UV_IDLE", newSViv(UV_IDLE));
+        newCONSTSUB(stash, "UV_NAMED_PIPE", newSViv(UV_NAMED_PIPE));
+        newCONSTSUB(stash, "UV_POLL", newSViv(UV_POLL));
+        newCONSTSUB(stash, "UV_PREPARE", newSViv(UV_PREPARE));
+        newCONSTSUB(stash, "UV_PROCESS", newSViv(UV_PROCESS));
+        newCONSTSUB(stash, "UV_STREAM", newSViv(UV_STREAM));
+        newCONSTSUB(stash, "UV_TCP", newSViv(UV_TCP));
+        newCONSTSUB(stash, "UV_TIMER", newSViv(UV_TIMER));
+        newCONSTSUB(stash, "UV_TTY", newSViv(UV_TTY));
+        newCONSTSUB(stash, "UV_UDP", newSViv(UV_UDP));
+        newCONSTSUB(stash, "UV_SIGNAL", newSViv(UV_SIGNAL));
+        newCONSTSUB(stash, "UV_FILE", newSViv(UV_FILE));
+
+        /* expose the different error constants */
+        newCONSTSUB(stash, "UV_E2BIG", newSViv(UV_E2BIG));
+        newCONSTSUB(stash, "UV_EACCES", newSViv(UV_EACCES));
+        newCONSTSUB(stash, "UV_EADDRINUSE", newSViv(UV_EADDRINUSE));
+        newCONSTSUB(stash, "UV_EADDRNOTAVAIL", newSViv(UV_EADDRNOTAVAIL));
+        newCONSTSUB(stash, "UV_EAFNOSUPPORT", newSViv(UV_EAFNOSUPPORT));
+        newCONSTSUB(stash, "UV_EAGAIN", newSViv(UV_EAGAIN));
+        newCONSTSUB(stash, "UV_EAI_ADDRFAMILY", newSViv(UV_EAI_ADDRFAMILY));
+        newCONSTSUB(stash, "UV_EAI_AGAIN", newSViv(UV_EAI_AGAIN));
+        newCONSTSUB(stash, "UV_EAI_BADFLAGS", newSViv(UV_EAI_BADFLAGS));
+        newCONSTSUB(stash, "UV_EAI_BADHINTS", newSViv(UV_EAI_BADHINTS));
+        newCONSTSUB(stash, "UV_EAI_CANCELED", newSViv(UV_EAI_CANCELED));
+        newCONSTSUB(stash, "UV_EAI_FAIL", newSViv(UV_EAI_FAIL));
+        newCONSTSUB(stash, "UV_EAI_FAMILY", newSViv(UV_EAI_FAMILY));
+        newCONSTSUB(stash, "UV_EAI_MEMORY", newSViv(UV_EAI_MEMORY));
+        newCONSTSUB(stash, "UV_EAI_NODATA", newSViv(UV_EAI_NODATA));
+        newCONSTSUB(stash, "UV_EAI_NONAME", newSViv(UV_EAI_NONAME));
+        newCONSTSUB(stash, "UV_EAI_OVERFLOW", newSViv(UV_EAI_OVERFLOW));
+        newCONSTSUB(stash, "UV_EAI_PROTOCOL", newSViv(UV_EAI_PROTOCOL));
+        newCONSTSUB(stash, "UV_EAI_SERVICE", newSViv(UV_EAI_SERVICE));
+        newCONSTSUB(stash, "UV_EAI_SOCKTYPE", newSViv(UV_EAI_SOCKTYPE));
+        newCONSTSUB(stash, "UV_EALREADY", newSViv(UV_EALREADY));
+        newCONSTSUB(stash, "UV_EBADF", newSViv(UV_EBADF));
+        newCONSTSUB(stash, "UV_EBUSY", newSViv(UV_EBUSY));
+        newCONSTSUB(stash, "UV_ECANCELED", newSViv(UV_ECANCELED));
+        newCONSTSUB(stash, "UV_ECHARSET", newSViv(UV_ECHARSET));
+        newCONSTSUB(stash, "UV_ECONNABORTED", newSViv(UV_ECONNABORTED));
+        newCONSTSUB(stash, "UV_ECONNREFUSED", newSViv(UV_ECONNREFUSED));
+        newCONSTSUB(stash, "UV_ECONNRESET", newSViv(UV_ECONNRESET));
+        newCONSTSUB(stash, "UV_EDESTADDRREQ", newSViv(UV_EDESTADDRREQ));
+        newCONSTSUB(stash, "UV_EEXIST", newSViv(UV_EEXIST));
+        newCONSTSUB(stash, "UV_EFAULT", newSViv(UV_EFAULT));
+        newCONSTSUB(stash, "UV_EFBIG", newSViv(UV_EFBIG));
+        newCONSTSUB(stash, "UV_EHOSTUNREACH", newSViv(UV_EHOSTUNREACH));
+        newCONSTSUB(stash, "UV_EINTR", newSViv(UV_EINTR));
+        newCONSTSUB(stash, "UV_EINVAL", newSViv(UV_EINVAL));
+        newCONSTSUB(stash, "UV_EIO", newSViv(UV_EIO));
+        newCONSTSUB(stash, "UV_EISCONN", newSViv(UV_EISCONN));
+        newCONSTSUB(stash, "UV_EISDIR", newSViv(UV_EISDIR));
+        newCONSTSUB(stash, "UV_ELOOP", newSViv(UV_ELOOP));
+        newCONSTSUB(stash, "UV_EMFILE", newSViv(UV_EMFILE));
+        newCONSTSUB(stash, "UV_EMSGSIZE", newSViv(UV_EMSGSIZE));
+        newCONSTSUB(stash, "UV_ENAMETOOLONG", newSViv(UV_ENAMETOOLONG));
+        newCONSTSUB(stash, "UV_ENETDOWN", newSViv(UV_ENETDOWN));
+        newCONSTSUB(stash, "UV_ENETUNREACH", newSViv(UV_ENETUNREACH));
+        newCONSTSUB(stash, "UV_ENFILE", newSViv(UV_ENFILE));
+        newCONSTSUB(stash, "UV_ENOBUFS", newSViv(UV_ENOBUFS));
+        newCONSTSUB(stash, "UV_ENODEV", newSViv(UV_ENODEV));
+        newCONSTSUB(stash, "UV_ENOENT", newSViv(UV_ENOENT));
+        newCONSTSUB(stash, "UV_ENOMEM", newSViv(UV_ENOMEM));
+        newCONSTSUB(stash, "UV_ENONET", newSViv(UV_ENONET));
+        newCONSTSUB(stash, "UV_ENOPROTOOPT", newSViv(UV_ENOPROTOOPT));
+        newCONSTSUB(stash, "UV_ENOSPC", newSViv(UV_ENOSPC));
+        newCONSTSUB(stash, "UV_ENOSYS", newSViv(UV_ENOSYS));
+        newCONSTSUB(stash, "UV_ENOTCONN", newSViv(UV_ENOTCONN));
+        newCONSTSUB(stash, "UV_ENOTDIR", newSViv(UV_ENOTDIR));
+        newCONSTSUB(stash, "UV_ENOTEMPTY", newSViv(UV_ENOTEMPTY));
+        newCONSTSUB(stash, "UV_ENOTSOCK", newSViv(UV_ENOTSOCK));
+        newCONSTSUB(stash, "UV_ENOTSUP", newSViv(UV_ENOTSUP));
+        newCONSTSUB(stash, "UV_EPERM", newSViv(UV_EPERM));
+        newCONSTSUB(stash, "UV_EPIPE", newSViv(UV_EPIPE));
+        newCONSTSUB(stash, "UV_EPROTO", newSViv(UV_EPROTO));
+        newCONSTSUB(stash, "UV_EPROTONOSUPPORT", newSViv(UV_EPROTONOSUPPORT));
+        newCONSTSUB(stash, "UV_EPROTOTYPE", newSViv(UV_EPROTOTYPE));
+        newCONSTSUB(stash, "UV_ERANGE", newSViv(UV_ERANGE));
+        newCONSTSUB(stash, "UV_EROFS", newSViv(UV_EROFS));
+        newCONSTSUB(stash, "UV_ESHUTDOWN", newSViv(UV_ESHUTDOWN));
+        newCONSTSUB(stash, "UV_ESPIPE", newSViv(UV_ESPIPE));
+        newCONSTSUB(stash, "UV_ESRCH", newSViv(UV_ESRCH));
+        newCONSTSUB(stash, "UV_ETIMEDOUT", newSViv(UV_ETIMEDOUT));
+        newCONSTSUB(stash, "UV_ETXTBSY", newSViv(UV_ETXTBSY));
+        newCONSTSUB(stash, "UV_EXDEV", newSViv(UV_EXDEV));
+        newCONSTSUB(stash, "UV_UNKNOWN", newSViv(UV_UNKNOWN));
+        newCONSTSUB(stash, "UV_EOF", newSViv(UV_EOF));
+        newCONSTSUB(stash, "UV_ENXIO", newSViv(UV_ENXIO));
+        newCONSTSUB(stash, "UV_EMLINK", newSViv(UV_EMLINK));
     }
+
+    /* make sure we have a pointer to our other namespace stashes */
+    /* loop stash */
+    stash_loop          = gv_stashpv("UV::Loop",        GV_ADD);
+    /* handle stashes */
+    stash_async         = gv_stashpv("UV::Async",       GV_ADD);
+    stash_check         = gv_stashpv("UV::Check",       GV_ADD);
+    stash_fs_event      = gv_stashpv("UV::FSEvent",     GV_ADD);
+    stash_fs_poll       = gv_stashpv("UV::FSPoll",      GV_ADD);
+    stash_handle        = gv_stashpv("UV::Handle",      GV_ADD);
+    stash_idle          = gv_stashpv("UV::Idle",        GV_ADD);
+    stash_named_pipe    = gv_stashpv("UV::NamedPipe",   GV_ADD);
+    stash_poll          = gv_stashpv("UV::Poll",        GV_ADD);
+    stash_prepare       = gv_stashpv("UV::Prepare",     GV_ADD);
+    stash_process       = gv_stashpv("UV::Process",     GV_ADD);
+    stash_stream        = gv_stashpv("UV::Stream",      GV_ADD);
+    stash_tcp           = gv_stashpv("UV::TCP",         GV_ADD);
+    stash_timer         = gv_stashpv("UV::Timer",       GV_ADD);
+    stash_tty           = gv_stashpv("UV::TTY",         GV_ADD);
+    stash_udp           = gv_stashpv("UV::UDP",         GV_ADD);
+    stash_signal        = gv_stashpv("UV::Signal",      GV_ADD);
+    stash_file          = gv_stashpv("UV::File",        GV_ADD);
+    /* request stashes */
+    stash_req           = gv_stashpv("UV::Req",         GV_ADD);
+    stash_connect       = gv_stashpv("UV::Connect",     GV_ADD);
+    stash_write         = gv_stashpv("UV::Write",       GV_ADD);
+    stash_shutdown      = gv_stashpv("UV::Shutdown",    GV_ADD);
+    stash_udp_send      = gv_stashpv("UV::UDP::Send",   GV_ADD);
+    stash_fs            = gv_stashpv("UV::FS",          GV_ADD);
+    stash_work          = gv_stashpv("UV::Work",        GV_ADD);
+    stash_getaddrinfo   = gv_stashpv("UV::GetAddrInfo", GV_ADD);
+    stash_getnameinfo   = gv_stashpv("UV::GetNameInfo", GV_ADD);
+
+    /* somewhat of an API */
+    uvapi.default_loop = NULL;
 }
 
 
