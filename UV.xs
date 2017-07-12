@@ -19,6 +19,9 @@
 #define uv_data(h)      ((handle_data_t *)((uv_handle_t *)(h))->data)
 #define uv_user_data(h) uv_data(h)->user_data;
 
+#define uv_req_data(r)      ((request_data_t *)((uv_req_t *)(r))->data)
+#define uv_req_user_data(r) uv_req_data(r)->user_data;
+
 struct UVAPI {
     uv_loop_t *default_loop;
 };
@@ -34,6 +37,14 @@ typedef struct handle_data_s {
     SV *close_cb;
     SV *timer_cb;
 } handle_data_t;
+
+/* data to store with a REQUEST */
+typedef struct request_data_s {
+    SV *self;
+    HV *stash;
+    SV *user_data;
+    /* callbacks available */
+} request_data_t;
 
 static struct UVAPI uvapi;
 static SV *default_loop_sv;
@@ -97,6 +108,8 @@ static void handle_alloc_cb(uv_handle_t* handle, size_t suggested_size, uv_buf_t
 static void handle_close_cb(uv_handle_t* handle);
 static HV * handle_data_stash(const uv_handle_type type);
 static void handle_timer_cb(uv_timer_t* handle);
+/* Request function definitions */
+static HV * request_data_stash(const uv_req_type type);
 
 /* loop functions */
 static void loop_default_init()
@@ -381,6 +394,108 @@ static void handle_timer_cb(uv_timer_t* handle)
     LEAVE;
 }
 
+/* Request functions */
+static void request_data_destroy(request_data_t *data_ptr)
+{
+    if (NULL == data_ptr) return;
+
+    /* cleanup self, loop_sv, user_data, and stash */
+    if (NULL != data_ptr->self) {
+        data_ptr->self = NULL;
+    }
+    if (NULL != data_ptr->stash) {
+        SvREFCNT_dec(data_ptr->stash);
+        data_ptr->stash = NULL;
+    }
+
+    /* cleanup any callback references */
+    Safefree(data_ptr);
+    data_ptr = NULL;
+}
+
+static request_data_t* request_data_new(const uv_req_type type)
+{
+    request_data_t *data_ptr = (request_data_t *)malloc(sizeof(request_data_t));
+    if (NULL == data_ptr) {
+        croak("Cannot allocate space for request data.");
+    }
+
+    /* set the stash */
+    data_ptr->stash = request_data_stash(type);
+    if (NULL == data_ptr->stash) {
+        free(data_ptr);
+        croak("Invalid request type supplied (%i)", type);
+    }
+
+    /* setup the user data */
+    data_ptr->user_data = NULL;
+    return data_ptr;
+}
+
+static HV * request_data_stash(const uv_req_type type)
+{
+    if (type == UV_CONNECT) return stash_connect;
+    if (type == UV_WRITE) return stash_write;
+    if (type == UV_SHUTDOWN) return stash_shutdown;
+    if (type == UV_UDP_SEND) return stash_udp_send;
+    if (type == UV_FS) return stash_fs;
+    if (type == UV_WORK) return stash_work;
+    if (type == UV_GETADDRINFO) return stash_getaddrinfo;
+    if (type == UV_GETNAMEINFO) return stash_getnameinfo;
+    return NULL;
+}
+
+static void request_destroy(uv_req_t *req)
+{
+    if (NULL == req) return;
+    if (0 == uv_cancel(req)) {
+        request_data_destroy(uv_req_data(req));
+        /*Safefree(handle);*/
+    }
+}
+
+static uv_req_t* request_new(const uv_req_type type)
+{
+    uv_req_t *req;
+    SV *self;
+    request_data_t *data_ptr = request_data_new(type);
+    size_t size = uv_req_size(type);
+
+    self = NEWSV(0, size);
+    SvPOK_only(self);
+    SvCUR_set(self, size);
+    req = (uv_req_t *) SvPVX(self);
+    if (NULL == req) {
+        Safefree(self);
+        croak("Cannot allocate space for a new uv_req_t");
+    }
+
+    /* add some data to our new handle */
+    data_ptr->self = self;
+    req->data = (void *)data_ptr;
+    return req;
+}
+
+static void request_on(uv_req_t *req, const char *name, SV *cb)
+{
+    SV *callback = NULL;
+    request_data_t *data_ptr;
+
+    if (NULL == req) return;
+    data_ptr = uv_req_data(req);
+    if (NULL == data_ptr) return;
+
+    callback = cb ? s_get_cv_croak(cb) : NULL;
+
+    /* find out which callback to set */
+    if (0 == strcmp(name, "unknown")) {
+    }
+    else {
+        croak("Invalid event name (%s)", name);
+    }
+}
+
+
 MODULE = UV             PACKAGE = UV            PREFIX = uv_
 
 PROTOTYPES: ENABLE
@@ -553,11 +668,6 @@ MODULE = UV             PACKAGE = UV::Handle      PREFIX = uv_handle_
 
 PROTOTYPES: ENABLE
 
-BOOT:
-{
-    HV *stash = gv_stashpvn("UV::Handle", 10, TRUE);
-}
-
 void DESTROY(uv_handle_t *handle)
     CODE:
     handle_destroy(handle);
@@ -591,14 +701,33 @@ int uv_handle_type(uv_handle_t *handle)
     OUTPUT:
     RETVAL
 
-MODULE = UV             PACKAGE = UV::Timer      PREFIX = uv_timer_
+MODULE = UV             PACKAGE = UV::Request      PREFIX = uv_request_
 
 PROTOTYPES: ENABLE
 
-BOOT:
-{
-    HV *stash = gv_stashpvn("UV::Timer", 9, TRUE);
-}
+void DESTROY(uv_req_t *req)
+    CODE:
+    request_destroy(req);
+
+int uv_request_cancel(uv_req_t *req)
+    CODE:
+    RETVAL = uv_cancel(req);
+    OUTPUT:
+    RETVAL
+
+void uv_request_on(uv_req_t *req, const char *name, SV *cb=NULL)
+    CODE:
+    request_on(req, name, cb);
+
+int uv_request_type(uv_req_t *req)
+    CODE:
+    RETVAL = req->type;
+    OUTPUT:
+    RETVAL
+
+MODULE = UV             PACKAGE = UV::Timer      PREFIX = uv_timer_
+
+PROTOTYPES: ENABLE
 
 SV * uv_timer_new(SV *klass, uv_loop_t *loop = uvapi.default_loop)
     CODE:
