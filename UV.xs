@@ -44,6 +44,8 @@ typedef struct request_data_s {
     HV *stash;
     SV *user_data;
     /* callbacks available */
+    SV *after_work_cb;
+    SV *work_cb;
 } request_data_t;
 
 static struct UVAPI uvapi;
@@ -109,7 +111,9 @@ static void handle_close_cb(uv_handle_t* handle);
 static HV * handle_data_stash(const uv_handle_type type);
 static void handle_timer_cb(uv_timer_t* handle);
 /* Request function definitions */
+static void request_after_work_cb(uv_work_t* req, int status);
 static HV * request_data_stash(const uv_req_type type);
+static void request_work_cb(uv_work_t* req);
 
 /* loop functions */
 static void loop_default_init()
@@ -395,6 +399,22 @@ static void handle_timer_cb(uv_timer_t* handle)
 }
 
 /* Request functions */
+static SV * request_bless(uv_req_t *r)
+{
+    SV *rv;
+    handle_data_t *data_ptr = r->data;
+
+    if (SvOBJECT(data_ptr->self)) {
+        rv = newRV_inc(data_ptr->self);
+    }
+    else {
+        rv = newRV_noinc(data_ptr->self);
+        sv_bless(rv, data_ptr->stash);
+        SvREADONLY_on(data_ptr->self);
+    }
+    return rv;
+}
+
 static void request_data_destroy(request_data_t *data_ptr)
 {
     if (NULL == data_ptr) return;
@@ -494,6 +514,56 @@ static void request_on(uv_req_t *req, const char *name, SV *cb)
         croak("Invalid event name (%s)", name);
     }
 }
+
+/* Request Callback functions */
+static void request_after_work_cb(uv_work_t* req, int status)
+{
+    request_data_t *data_ptr = uv_req_data(req);
+
+    /* nothing else to do if we don't have a callback to call */
+    if (NULL == data_ptr || NULL == data_ptr->after_work_cb) return;
+
+    /* provide info to the caller: invocant, status */
+    dSP;
+    ENTER;
+    SAVETMPS;
+
+    PUSHMARK (SP);
+    EXTEND (SP, 2);
+    PUSHs(request_bless((uv_req_t *)req)); /* invocant */
+    PUSHs(newSViv(status));
+
+    PUTBACK;
+    call_sv (data_ptr->after_work_cb, G_VOID);
+    SPAGAIN;
+
+    FREETMPS;
+    LEAVE;
+}
+
+static void request_work_cb(uv_work_t* req)
+{
+    request_data_t *data_ptr = uv_req_data(req);
+    /* nothing else to do if we don't have a callback to call */
+    if (NULL == data_ptr || NULL == data_ptr->work_cb) return;
+
+    /* provide info to the caller: invocant */
+    dSP;
+    ENTER;
+    SAVETMPS;
+
+    PUSHMARK (SP);
+    EXTEND (SP, 1);
+    PUSHs(request_bless((uv_req_t *) req)); /* invocant */
+
+    PUTBACK;
+    call_sv (data_ptr->work_cb, G_VOID);
+    SPAGAIN;
+
+    FREETMPS;
+    LEAVE;
+}
+
 
 
 MODULE = UV             PACKAGE = UV            PREFIX = uv_
@@ -652,17 +722,16 @@ BOOT:
     uvapi.default_loop = NULL;
 }
 
-
 SV *uv_default_loop()
     CODE:
-{
     loop_default_init();
     RETVAL = newSVsv(default_loop_sv);
-}
     OUTPUT:
     RETVAL
 
 uint64_t uv_hrtime()
+
+
 
 MODULE = UV             PACKAGE = UV::Handle      PREFIX = uv_handle_
 
@@ -701,6 +770,8 @@ int uv_handle_type(uv_handle_t *handle)
     OUTPUT:
     RETVAL
 
+
+
 MODULE = UV             PACKAGE = UV::Request      PREFIX = uv_request_
 
 PROTOTYPES: ENABLE
@@ -719,21 +790,24 @@ void uv_request_on(uv_req_t *req, const char *name, SV *cb=NULL)
     CODE:
     request_on(req, name, cb);
 
-int uv_request_type(uv_req_t *req)
+int uv_req_type(uv_req_t *req)
     CODE:
     RETVAL = req->type;
     OUTPUT:
     RETVAL
 
+
+
 MODULE = UV             PACKAGE = UV::Timer      PREFIX = uv_timer_
 
 PROTOTYPES: ENABLE
 
-SV * uv_timer_new(SV *klass, uv_loop_t *loop = uvapi.default_loop)
+SV * uv_timer_new(SV *class, uv_loop_t *loop = uvapi.default_loop)
     CODE:
-{
     int res;
     uv_timer_t *timer = (uv_timer_t *)handle_new(UV_TIMER);
+    PERL_UNUSED_VAR(class);
+
     res = uv_timer_init(loop, timer);
     if (0 != res) {
         Safefree(timer);
@@ -747,7 +821,6 @@ SV * uv_timer_new(SV *klass, uv_loop_t *loop = uvapi.default_loop)
         uv_data(timer)->loop_sv = sv_bless( newRV_noinc( newSViv( PTR2IV(loop))), stash_loop);
     }
     RETVAL = handle_bless((uv_handle_t *)timer);
-}
     OUTPUT:
     RETVAL
 
@@ -780,6 +853,44 @@ uint64_t uv_timer_get_repeat(uv_timer_t* handle)
     OUTPUT:
     RETVAL
 
+
+
+MODULE = UV             PACKAGE = UV::Work      PREFIX = uv_work_
+
+PROTOTYPES: ENABLE
+
+SV * uv_work_new(SV *class)
+    CODE:
+    PERL_UNUSED_VAR(class);
+    uv_work_t *req = (uv_work_t *)request_new(UV_WORK);
+
+    RETVAL = request_bless((uv_req_t *)req);
+    OUTPUT:
+    RETVAL
+
+SV *uv_work_loop(uv_work_t *req)
+    CODE:
+    RETVAL = NULL;
+    if (NULL != req->loop) {
+        RETVAL = sv_bless( newRV_noinc( newSViv( PTR2IV(req->loop))), stash_loop);
+    }
+    OUTPUT:
+    RETVAL
+
+int uv_work_queue_work(uv_work_t *req, uv_loop_t *loop = uvapi.default_loop, SV *work_cb=NULL, SV *after_work_cb=NULL)
+    CODE:
+        if (NULL != work_cb) {
+            request_on((uv_req_t *)req, "work", work_cb);
+        }
+        if (NULL != after_work_cb) {
+            request_on((uv_req_t *)req, "after_work", after_work_cb);
+        }
+        RETVAL = uv_queue_work(loop, req, request_work_cb, request_after_work_cb);
+    OUTPUT:
+    RETVAL
+
+
+
 MODULE = UV             PACKAGE = UV::Loop      PREFIX = uv_
 
 PROTOTYPES: ENABLE
@@ -792,13 +903,13 @@ BOOT:
     newCONSTSUB(stash, "UV_RUN_NOWAIT", newSViv(UV_RUN_NOWAIT));
 }
 
-SV *new (SV *klass, int want_default = 0)
+SV *new (SV *class, int want_default = 0)
     ALIAS:
         UV::Loop::default_loop = 1
         UV::Loop::default = 2
     CODE:
-{
     uv_loop_t *loop;
+    PERL_UNUSED_VAR(class);
     if (ix == 1 || ix == 2) want_default = 1;
     if (0 == want_default) {
         loop = loop_new();
@@ -813,7 +924,6 @@ SV *new (SV *klass, int want_default = 0)
     else {
         RETVAL = newSVsv(default_loop_sv);
     }
-}
     OUTPUT:
     RETVAL
 
@@ -845,7 +955,7 @@ int uv_close(uv_loop_t *loop)
     RETVAL
 
 int uv_loop_alive(const uv_loop_t* loop)
-ALIAS:
+    ALIAS:
     UV::Loop::alive = 1
 
 uint64_t uv_now(const uv_loop_t* loop)

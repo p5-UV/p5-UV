@@ -34,6 +34,10 @@ our @EXPORT_OK  = qw(
     "UV::Handle";
 1;
 
+# make sure all sub-classes of uv_req_t are thought of as such
+@UV::Work::ISA =
+    "UV::Request";
+
 # load up the default loop
 default_loop() or die 'UV: cannot initialise libUV backend.';
 

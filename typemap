@@ -10,6 +10,7 @@ uv_timer_t *        T_HANDLE
 const uv_timer_t *  T_HANDLE
 
 uv_req_t *          T_REQUEST
+uv_work_t *          T_REQUEST
 
 INPUT
 
