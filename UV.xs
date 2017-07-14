@@ -383,10 +383,6 @@ BOOT:
 
     /* add some constants to the package stash */
     {
-        /* expose the Loop configure constants */
-        newCONSTSUB(stash, "UV_LOOP_BLOCK_SIGNAL", newSViv(UV_LOOP_BLOCK_SIGNAL));
-        newCONSTSUB(stash, "SIGPROF", newSViv(SIGPROF));
-
         /* expose the different handle type constants */
         newCONSTSUB(stash, "UV_ASYNC", newSViv(UV_ASYNC));
         newCONSTSUB(stash, "UV_CHECK", newSViv(UV_CHECK));
@@ -624,9 +620,13 @@ PROTOTYPES: ENABLE
 BOOT:
 {
     HV *stash = gv_stashpvn("UV::Loop", 8, TRUE);
+    /* Loop run constants */
     newCONSTSUB(stash, "UV_RUN_DEFAULT", newSViv(UV_RUN_DEFAULT));
     newCONSTSUB(stash, "UV_RUN_ONCE", newSViv(UV_RUN_ONCE));
     newCONSTSUB(stash, "UV_RUN_NOWAIT", newSViv(UV_RUN_NOWAIT));
+    /* expose the Loop configure constants */
+    newCONSTSUB(stash, "UV_LOOP_BLOCK_SIGNAL", newSViv(UV_LOOP_BLOCK_SIGNAL));
+    newCONSTSUB(stash, "SIGPROF", newSViv(SIGPROF));
 }
 
 SV *new (SV *class, int want_default = 0)

@@ -22,10 +22,10 @@ sub timer_cb {
     isa_ok($loop, 'UV::Loop', 'got a new loop');
 
     if (WINLIKE) {
-        is(UV::UV_ENOSYS, $loop->configure(UV::UV_LOOP_BLOCK_SIGNAL, 0), 'Block signal does not work on Windows');
+        is(UV::UV_ENOSYS, $loop->configure(UV::Loop::UV_LOOP_BLOCK_SIGNAL, 0), 'Block signal does not work on Windows');
     }
     else {
-        is(0, $loop->configure(UV::UV_LOOP_BLOCK_SIGNAL, UV::SIGPROF), 'Configure worked properly');
+        is(0, $loop->configure(UV::Loop::UV_LOOP_BLOCK_SIGNAL, UV::Loop::SIGPROF), 'Configure worked properly');
     }
 
     my $timer = UV::Timer->new($loop);

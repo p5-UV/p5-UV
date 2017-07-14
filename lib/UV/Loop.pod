@@ -47,6 +47,11 @@ Event loops that work properly on all platforms. YAY!
 
 =head3 UV_RUN_ONCE
 
+=head2 CONFIGURE CONSTANTS
+
+=head3 SIGPROF
+
+=head3 UV_LOOP_BLOCK_SIGNAL
 
 =head1 METHODS
 
