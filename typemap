@@ -8,6 +8,7 @@ uv_loop_t *         T_LOOP
 const uv_loop_t *   T_LOOP
 
 uv_handle_t *       T_HANDLE
+uv_prepare_t *      T_HANDLE
 uv_timer_t *        T_HANDLE
 const uv_timer_t *  T_HANDLE
 

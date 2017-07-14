@@ -32,6 +32,7 @@ typedef struct handle_data_s {
     /* callbacks available */
     SV *alloc_cb;
     SV *close_cb;
+    SV *prepare_cb;
     SV *timer_cb;
 } handle_data_t;
 
@@ -84,6 +85,7 @@ static SV * s_get_cv_croak (SV *cb_sv)
 static void handle_alloc_cb(uv_handle_t* handle, size_t suggested_size, uv_buf_t* buf);
 static void handle_close_cb(uv_handle_t* handle);
 static HV * handle_data_stash(const uv_handle_type type);
+static void handle_prepare_cb(uv_prepare_t* handle);
 static void handle_timer_cb(uv_timer_t* handle);
 
 /* loop functions */
@@ -187,6 +189,7 @@ static handle_data_t* handle_data_new(const uv_handle_type type)
     /* setup the callback slots */
     data_ptr->alloc_cb = NULL;
     data_ptr->close_cb = NULL;
+    data_ptr->prepare_cb = NULL;
     data_ptr->timer_cb = NULL;
     return data_ptr;
 }
@@ -278,6 +281,17 @@ static void handle_on(uv_handle_t *handle, const char *name, SV *cb)
             data_ptr->close_cb = SvREFCNT_inc(callback);
         }
     }
+    else if (0 == strcmp(name, "prepare")) {
+        /* clear the callback's current value first */
+        if (NULL != data_ptr->prepare_cb) {
+            SvREFCNT_dec(data_ptr->prepare_cb);
+            data_ptr->prepare_cb = NULL;
+        }
+        /* set the CB */
+        if (NULL != callback) {
+            data_ptr->prepare_cb = SvREFCNT_inc(callback);
+        }
+    }
     else if (0 == strcmp(name, "timer")) {
         /* clear the callback's current value first */
         if (NULL != data_ptr->timer_cb) {
@@ -344,6 +358,29 @@ static void handle_close_cb(uv_handle_t* handle)
         FREETMPS;
         LEAVE;
     }
+}
+
+static void handle_prepare_cb(uv_prepare_t* handle)
+{
+    handle_data_t *data_ptr = uv_data(handle);
+    /* nothing else to do if we don't have a callback to call */
+    if (NULL == data_ptr || NULL == data_ptr->prepare_cb) return;
+
+    /* provide info to the caller: invocant */
+    dSP;
+    ENTER;
+    SAVETMPS;
+
+    PUSHMARK (SP);
+    EXTEND (SP, 1);
+    PUSHs(handle_bless((uv_handle_t *) handle)); /* invocant */
+
+    PUTBACK;
+    call_sv (data_ptr->prepare_cb, G_VOID);
+    SPAGAIN;
+
+    FREETMPS;
+    LEAVE;
 }
 
 static void handle_timer_cb(uv_timer_t* handle)
@@ -553,6 +590,53 @@ int uv_handle_type(uv_handle_t *handle)
     RETVAL = handle->type;
     OUTPUT:
     RETVAL
+
+
+
+MODULE = UV             PACKAGE = UV::Prepare      PREFIX = uv_prepare_
+
+PROTOTYPES: ENABLE
+
+SV * uv_prepare_new(SV *class, uv_loop_t *loop = uvapi.default_loop)
+    CODE:
+    int res;
+    uv_prepare_t *prepare = (uv_prepare_t *)handle_new(UV_PREPARE);
+    PERL_UNUSED_VAR(class);
+
+    res = uv_prepare_init(loop, prepare);
+    if (0 != res) {
+        Safefree(prepare);
+        croak("Couldn't initialize prepare (%i): %s", res, uv_strerror(res));
+    }
+
+    if (loop == uvapi.default_loop) {
+        uv_data(prepare)->loop_sv = default_loop_sv;
+    }
+    else {
+        uv_data(prepare)->loop_sv = sv_bless( newRV_noinc( newSViv( PTR2IV(loop))), stash_loop);
+    }
+    RETVAL = handle_bless((uv_handle_t *)prepare);
+    OUTPUT:
+    RETVAL
+
+void DESTROY(uv_prepare_t *handle)
+    CODE:
+    if (NULL != handle && 0 == uv_is_closing((uv_handle_t *)handle) && 0 == uv_is_active((uv_handle_t *)handle)) {
+        uv_prepare_stop(handle);
+        uv_close((uv_handle_t *)handle, handle_close_cb);
+        handle_data_destroy(uv_data(handle));
+    }
+
+int uv_prepare_start(uv_prepare_t *handle, SV *cb=NULL)
+    CODE:
+        if (NULL != cb) {
+            handle_on((uv_handle_t *)handle, "prepare", cb);
+        }
+        RETVAL = uv_prepare_start(handle, handle_prepare_cb);
+    OUTPUT:
+    RETVAL
+
+int uv_prepare_stop(uv_prepare_t *handle)
 
 
 
