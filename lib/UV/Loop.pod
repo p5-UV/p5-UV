@@ -98,11 +98,44 @@ L<backend_timeout|http://docs.libuv.org/en/v1.x/loop.html#c.uv_backend_timeout>
 returns the poll timeout. The return value is in milliseconds, or C<-1> for no
 timeout.
 
+=head2 configure
+
+    my $int = $loop->configure();
+
+L<configure|http://docs.libuv.org/en/v1.x/loop.html#c.uv_loop_configure> sets
+additional loop options. You should normally call this before the first call
+to L<UV::Loop/"run"> unless mentioned otherwise.
+
+Returns C<0> on success or a C<UV/"CONSTANTS"> error code on failure. Be
+prepared to handle C<UV::UV_ENOSYS>; it means the loop option is not supported
+by the platform.
+
+Supported options:
+
+=over
+
+=item
+
+C<UV_LOOP_BLOCK_SIGNAL>: Block a signal when polling for new events. The second
+argument to C<< $loop->configure >> is the signal number.
+
+This operation is currently only implemented for C<SIGPROF> signals, to
+suppress unnecessary wakeups when using a sampling profiler. Requesting other
+signals will fail with C<UV::UV_EINVAL>.
+
+=back
+
 =head2 loop_alive
 
     my $int = $loop->loop_alive();
 
 This is just a synonym for L<UV::Loop/"alive">.
+
+=head2 loop_configure
+
+    my $int = $loop->configure(UV::Loop::UV_LOOP_BLOCK_SIGNAL, SIGPROF);
+
+This is just a synonym for L<UV::Loop/"configure">.
 
 =head2 now
 

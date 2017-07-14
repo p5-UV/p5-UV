@@ -553,8 +553,10 @@
                      "hrtime",
                      "libuv",
                      "loadavg",
+                     "profiler",
                      "stopwords",
                      "uptime",
+                     "wakeups",
                      "wordlist"
                   ],
                   "wordlist" : "Pod::Wordlist"
