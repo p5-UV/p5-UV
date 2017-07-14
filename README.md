@@ -340,26 +340,6 @@ Cross-device link not permitted
 
 Unknown error
 
-## REQUEST TYPE CONSTANTS
-
-### UV\_CONNECT
-
-### UV\_FS
-
-### UV\_GETADDRINFO
-
-### UV\_GETNAMEINFO
-
-### UV\_REQ
-
-### UV\_SHUTDOWN
-
-### UV\_UDP\_SEND
-
-### UV\_WORK
-
-### UV\_WRITE
-
 ## HANDLE TYPE CONSTANTS
 
 ### UV\_ASYNC

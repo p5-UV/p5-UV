@@ -34,16 +34,21 @@ subtest 'loop_alive' => sub {
     $r = UV::default_loop()->run(UV::Loop::UV_RUN_DEFAULT);
     is($r, 0, 'loop ran fine');
     is(UV::default_loop()->alive(), 0, 'default loop is not alive anymore');
-
-    # loops with requests are alive
-    # $r = UV::default_loop->queue_work(uv_queue_work(uv_default_loop(), &work_req, work_cb, after_work_cb);
-    # ASSERT(r == 0);
-    # ASSERT(uv_loop_alive(uv_default_loop()));
-
-    # r = uv_run(uv_default_loop(), UV_RUN_DEFAULT);
-    # ASSERT(r == 0);
-    # ASSERT(!uv_loop_alive(uv_default_loop()));
 };
 
-done_testing();
+# subtest 'work_loop_alive' => sub {
+#     my $r = 0;
+#     # loops with requests are alive
+#     my $work = UV::Work->new();
+#     isa_ok($work, 'UV::Work', 'got a new UV::Work request');
+#
+#     $r = $work->queue_work(UV::default_loop(), \&work_callback, \&after_work_cb);
+#     is($r, 0, 'work queued successfully');
+#     ok(UV::default_loop()->alive(), 'default loop has work and should be alive');
+#
+#     $r = UV::default_loop()->run(UV::Loop::UV_RUN_DEFAULT);
+#     is($r, 0, 'loop ran fine');
+#     is(UV::default_loop()->alive(), 0, 'default loop is not alive anymore');
+# };
 
+done_testing();

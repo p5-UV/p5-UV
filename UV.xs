@@ -19,9 +19,6 @@
 #define uv_data(h)      ((handle_data_t *)((uv_handle_t *)(h))->data)
 #define uv_user_data(h) uv_data(h)->user_data;
 
-#define uv_req_data(r)      ((request_data_t *)((uv_req_t *)(r))->data)
-#define uv_req_user_data(r) uv_req_data(r)->user_data;
-
 struct UVAPI {
     uv_loop_t *default_loop;
 };
@@ -37,16 +34,6 @@ typedef struct handle_data_s {
     SV *close_cb;
     SV *timer_cb;
 } handle_data_t;
-
-/* data to store with a REQUEST */
-typedef struct request_data_s {
-    SV *self;
-    HV *stash;
-    SV *user_data;
-    /* callbacks available */
-    SV *after_work_cb;
-    SV *work_cb;
-} request_data_t;
 
 static struct UVAPI uvapi;
 static SV *default_loop_sv;
@@ -71,18 +58,6 @@ static HV
     *stash_udp,
     *stash_signal,
     *stash_file;
-
-/* request stashes */
-static HV
-    *stash_req,
-    *stash_connect,
-    *stash_write,
-    *stash_shutdown,
-    *stash_udp_send,
-    *stash_fs,
-    *stash_work,
-    *stash_getaddrinfo,
-    *stash_getnameinfo;
 
 static SV * s_get_cv (SV *cb_sv)
 {
@@ -110,10 +85,6 @@ static void handle_alloc_cb(uv_handle_t* handle, size_t suggested_size, uv_buf_t
 static void handle_close_cb(uv_handle_t* handle);
 static HV * handle_data_stash(const uv_handle_type type);
 static void handle_timer_cb(uv_timer_t* handle);
-/* Request function definitions */
-static void request_after_work_cb(uv_work_t* req, int status);
-static HV * request_data_stash(const uv_req_type type);
-static void request_work_cb(uv_work_t* req);
 
 /* loop functions */
 static void loop_default_init()
@@ -398,172 +369,6 @@ static void handle_timer_cb(uv_timer_t* handle)
     LEAVE;
 }
 
-/* Request functions */
-static SV * request_bless(uv_req_t *r)
-{
-    SV *rv;
-    handle_data_t *data_ptr = r->data;
-
-    if (SvOBJECT(data_ptr->self)) {
-        rv = newRV_inc(data_ptr->self);
-    }
-    else {
-        rv = newRV_noinc(data_ptr->self);
-        sv_bless(rv, data_ptr->stash);
-        SvREADONLY_on(data_ptr->self);
-    }
-    return rv;
-}
-
-static void request_data_destroy(request_data_t *data_ptr)
-{
-    if (NULL == data_ptr) return;
-
-    /* cleanup self, loop_sv, user_data, and stash */
-    if (NULL != data_ptr->self) {
-        data_ptr->self = NULL;
-    }
-    if (NULL != data_ptr->stash) {
-        SvREFCNT_dec(data_ptr->stash);
-        data_ptr->stash = NULL;
-    }
-
-    /* cleanup any callback references */
-    Safefree(data_ptr);
-    data_ptr = NULL;
-}
-
-static request_data_t* request_data_new(const uv_req_type type)
-{
-    request_data_t *data_ptr = (request_data_t *)malloc(sizeof(request_data_t));
-    if (NULL == data_ptr) {
-        croak("Cannot allocate space for request data.");
-    }
-
-    /* set the stash */
-    data_ptr->stash = request_data_stash(type);
-    if (NULL == data_ptr->stash) {
-        free(data_ptr);
-        croak("Invalid request type supplied (%i)", type);
-    }
-
-    /* setup the user data */
-    data_ptr->user_data = NULL;
-    return data_ptr;
-}
-
-static HV * request_data_stash(const uv_req_type type)
-{
-    if (type == UV_CONNECT) return stash_connect;
-    if (type == UV_WRITE) return stash_write;
-    if (type == UV_SHUTDOWN) return stash_shutdown;
-    if (type == UV_UDP_SEND) return stash_udp_send;
-    if (type == UV_FS) return stash_fs;
-    if (type == UV_WORK) return stash_work;
-    if (type == UV_GETADDRINFO) return stash_getaddrinfo;
-    if (type == UV_GETNAMEINFO) return stash_getnameinfo;
-    return NULL;
-}
-
-static void request_destroy(uv_req_t *req)
-{
-    if (NULL == req) return;
-    if (0 == uv_cancel(req)) {
-        request_data_destroy(uv_req_data(req));
-        /*Safefree(handle);*/
-    }
-}
-
-static uv_req_t* request_new(const uv_req_type type)
-{
-    uv_req_t *req;
-    SV *self;
-    request_data_t *data_ptr = request_data_new(type);
-    size_t size = uv_req_size(type);
-
-    self = NEWSV(0, size);
-    SvPOK_only(self);
-    SvCUR_set(self, size);
-    req = (uv_req_t *) SvPVX(self);
-    if (NULL == req) {
-        Safefree(self);
-        croak("Cannot allocate space for a new uv_req_t");
-    }
-
-    /* add some data to our new handle */
-    data_ptr->self = self;
-    req->data = (void *)data_ptr;
-    return req;
-}
-
-static void request_on(uv_req_t *req, const char *name, SV *cb)
-{
-    SV *callback = NULL;
-    request_data_t *data_ptr;
-
-    if (NULL == req) return;
-    data_ptr = uv_req_data(req);
-    if (NULL == data_ptr) return;
-
-    callback = cb ? s_get_cv_croak(cb) : NULL;
-
-    /* find out which callback to set */
-    if (0 == strcmp(name, "unknown")) {
-    }
-    else {
-        croak("Invalid event name (%s)", name);
-    }
-}
-
-/* Request Callback functions */
-static void request_after_work_cb(uv_work_t* req, int status)
-{
-    request_data_t *data_ptr = uv_req_data(req);
-
-    /* nothing else to do if we don't have a callback to call */
-    if (NULL == data_ptr || NULL == data_ptr->after_work_cb) return;
-
-    /* provide info to the caller: invocant, status */
-    dSP;
-    ENTER;
-    SAVETMPS;
-
-    PUSHMARK (SP);
-    EXTEND (SP, 2);
-    PUSHs(request_bless((uv_req_t *)req)); /* invocant */
-    PUSHs(newSViv(status));
-
-    PUTBACK;
-    call_sv (data_ptr->after_work_cb, G_VOID);
-    SPAGAIN;
-
-    FREETMPS;
-    LEAVE;
-}
-
-static void request_work_cb(uv_work_t* req)
-{
-    request_data_t *data_ptr = uv_req_data(req);
-    /* nothing else to do if we don't have a callback to call */
-    if (NULL == data_ptr || NULL == data_ptr->work_cb) return;
-
-    /* provide info to the caller: invocant */
-    dSP;
-    ENTER;
-    SAVETMPS;
-
-    PUSHMARK (SP);
-    EXTEND (SP, 1);
-    PUSHs(request_bless((uv_req_t *) req)); /* invocant */
-
-    PUTBACK;
-    call_sv (data_ptr->work_cb, G_VOID);
-    SPAGAIN;
-
-    FREETMPS;
-    LEAVE;
-}
-
 
 
 MODULE = UV             PACKAGE = UV            PREFIX = uv_
@@ -578,17 +383,6 @@ BOOT:
 
     /* add some constants to the package stash */
     {
-        /* expose the different request type constants */
-        newCONSTSUB(stash, "UV_REQ", newSViv(UV_REQ));
-        newCONSTSUB(stash, "UV_CONNECT", newSViv(UV_CONNECT));
-        newCONSTSUB(stash, "UV_WRITE", newSViv(UV_WRITE));
-        newCONSTSUB(stash, "UV_SHUTDOWN", newSViv(UV_SHUTDOWN));
-        newCONSTSUB(stash, "UV_UDP_SEND", newSViv(UV_UDP_SEND));
-        newCONSTSUB(stash, "UV_FS", newSViv(UV_FS));
-        newCONSTSUB(stash, "UV_WORK", newSViv(UV_WORK));
-        newCONSTSUB(stash, "UV_GETADDRINFO", newSViv(UV_GETADDRINFO));
-        newCONSTSUB(stash, "UV_GETNAMEINFO", newSViv(UV_GETNAMEINFO));
-
         /* expose the different handle type constants */
         newCONSTSUB(stash, "UV_ASYNC", newSViv(UV_ASYNC));
         newCONSTSUB(stash, "UV_CHECK", newSViv(UV_CHECK));
@@ -707,16 +501,6 @@ BOOT:
     stash_udp           = gv_stashpv("UV::UDP",         GV_ADD);
     stash_signal        = gv_stashpv("UV::Signal",      GV_ADD);
     stash_file          = gv_stashpv("UV::File",        GV_ADD);
-    /* request stashes */
-    stash_req           = gv_stashpv("UV::Req",         GV_ADD);
-    stash_connect       = gv_stashpv("UV::Connect",     GV_ADD);
-    stash_write         = gv_stashpv("UV::Write",       GV_ADD);
-    stash_shutdown      = gv_stashpv("UV::Shutdown",    GV_ADD);
-    stash_udp_send      = gv_stashpv("UV::UDP::Send",   GV_ADD);
-    stash_fs            = gv_stashpv("UV::FS",          GV_ADD);
-    stash_work          = gv_stashpv("UV::Work",        GV_ADD);
-    stash_getaddrinfo   = gv_stashpv("UV::GetAddrInfo", GV_ADD);
-    stash_getnameinfo   = gv_stashpv("UV::GetNameInfo", GV_ADD);
 
     /* somewhat of an API */
     uvapi.default_loop = NULL;
@@ -767,32 +551,6 @@ void uv_handle_on(uv_handle_t *handle, const char *name, SV *cb=NULL)
 int uv_handle_type(uv_handle_t *handle)
     CODE:
     RETVAL = handle->type;
-    OUTPUT:
-    RETVAL
-
-
-
-MODULE = UV             PACKAGE = UV::Request      PREFIX = uv_request_
-
-PROTOTYPES: ENABLE
-
-void DESTROY(uv_req_t *req)
-    CODE:
-    request_destroy(req);
-
-int uv_request_cancel(uv_req_t *req)
-    CODE:
-    RETVAL = uv_cancel(req);
-    OUTPUT:
-    RETVAL
-
-void uv_request_on(uv_req_t *req, const char *name, SV *cb=NULL)
-    CODE:
-    request_on(req, name, cb);
-
-int uv_req_type(uv_req_t *req)
-    CODE:
-    RETVAL = req->type;
     OUTPUT:
     RETVAL
 
@@ -850,42 +608,6 @@ int uv_timer_stop(uv_timer_t *handle)
 uint64_t uv_timer_get_repeat(uv_timer_t* handle)
     CODE:
         RETVAL = uv_timer_get_repeat(handle);
-    OUTPUT:
-    RETVAL
-
-
-
-MODULE = UV             PACKAGE = UV::Work      PREFIX = uv_work_
-
-PROTOTYPES: ENABLE
-
-SV * uv_work_new(SV *class)
-    CODE:
-    PERL_UNUSED_VAR(class);
-    uv_work_t *req = (uv_work_t *)request_new(UV_WORK);
-
-    RETVAL = request_bless((uv_req_t *)req);
-    OUTPUT:
-    RETVAL
-
-SV *uv_work_loop(uv_work_t *req)
-    CODE:
-    RETVAL = NULL;
-    if (NULL != req->loop) {
-        RETVAL = sv_bless( newRV_noinc( newSViv( PTR2IV(req->loop))), stash_loop);
-    }
-    OUTPUT:
-    RETVAL
-
-int uv_work_queue_work(uv_work_t *req, uv_loop_t *loop = uvapi.default_loop, SV *work_cb=NULL, SV *after_work_cb=NULL)
-    CODE:
-        if (NULL != work_cb) {
-            request_on((uv_req_t *)req, "work", work_cb);
-        }
-        if (NULL != after_work_cb) {
-            request_on((uv_req_t *)req, "after_work", after_work_cb);
-        }
-        RETVAL = uv_queue_work(loop, req, request_work_cb, request_after_work_cb);
     OUTPUT:
     RETVAL
 

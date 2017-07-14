@@ -34,10 +34,6 @@ our @EXPORT_OK  = qw(
     "UV::Handle";
 1;
 
-# make sure all sub-classes of uv_req_t are thought of as such
-@UV::Work::ISA =
-    "UV::Request";
-
 # load up the default loop
 default_loop() or die 'UV: cannot initialise libUV backend.';
 
@@ -387,27 +383,6 @@ Cross-device link not permitted
 =head3 UV_UNKNOWN
 
 Unknown error
-
-=head2 REQUEST TYPE CONSTANTS
-
-=head3 UV_CONNECT
-
-=head3 UV_FS
-
-=head3 UV_GETADDRINFO
-
-=head3 UV_GETNAMEINFO
-
-=head3 UV_REQ
-
-=head3 UV_SHUTDOWN
-
-=head3 UV_UDP_SEND
-
-=head3 UV_WORK
-
-=head3 UV_WRITE
-
 
 =head2 HANDLE TYPE CONSTANTS
 
