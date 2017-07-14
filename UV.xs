@@ -383,6 +383,10 @@ BOOT:
 
     /* add some constants to the package stash */
     {
+        /* expose the Loop configure constants */
+        newCONSTSUB(stash, "UV_LOOP_BLOCK_SIGNAL", newSViv(UV_LOOP_BLOCK_SIGNAL));
+        newCONSTSUB(stash, "SIGPROF", newSViv(SIGPROF));
+
         /* expose the different handle type constants */
         newCONSTSUB(stash, "UV_ASYNC", newSViv(UV_ASYNC));
         newCONSTSUB(stash, "UV_CHECK", newSViv(UV_CHECK));
@@ -679,6 +683,10 @@ int uv_close(uv_loop_t *loop)
 int uv_loop_alive(const uv_loop_t* loop)
     ALIAS:
     UV::Loop::alive = 1
+
+int uv_loop_configure(uv_loop_t* loop, uv_loop_option option, int value)
+    ALIAS:
+    UV::Loop::configure = 1
 
 uint64_t uv_now(const uv_loop_t* loop)
 
