@@ -4,8 +4,6 @@ use warnings;
 use Test::More;
 use UV;
 
-use Data::Dumper;
-
 my $default_loc; # ${$loop}
 
 # default loop run for 1 second

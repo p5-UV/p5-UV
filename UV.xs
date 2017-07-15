@@ -879,6 +879,8 @@ void DESTROY(uv_timer_t *handle)
         handle_data_destroy(uv_data(handle));
     }
 
+int uv_timer_again(uv_timer_t *handle)
+
 int uv_timer_start(uv_timer_t *handle, uint64_t start=0, uint64_t repeat=0, SV *cb=NULL)
     CODE:
         if (NULL != cb) {
@@ -900,6 +902,7 @@ uint64_t uv_timer_get_repeat(uv_timer_t* handle)
     OUTPUT:
     RETVAL
 
+void uv_timer_set_repeat(uv_timer_t *handle, uint64_t repeat)
 
 
 MODULE = UV             PACKAGE = UV::Loop      PREFIX = uv_
