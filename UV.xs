@@ -33,6 +33,7 @@ typedef struct handle_data_s {
     SV *alloc_cb;
     SV *check_cb;
     SV *close_cb;
+    SV *idle_cb;
     SV *prepare_cb;
     SV *timer_cb;
 } handle_data_t;
@@ -87,6 +88,7 @@ static void handle_alloc_cb(uv_handle_t* handle, size_t suggested_size, uv_buf_t
 static void handle_check_cb(uv_check_t* handle);
 static void handle_close_cb(uv_handle_t* handle);
 static HV * handle_data_stash(const uv_handle_type type);
+static void handle_idle_cb(uv_idle_t* handle);
 static void handle_prepare_cb(uv_prepare_t* handle);
 static void handle_timer_cb(uv_timer_t* handle);
 
@@ -164,6 +166,10 @@ static void handle_data_destroy(handle_data_t *data_ptr)
         SvREFCNT_dec(data_ptr->close_cb);
         data_ptr->close_cb = NULL;
     }
+    if (NULL != data_ptr->idle_cb) {
+        SvREFCNT_dec(data_ptr->idle_cb);
+        data_ptr->idle_cb = NULL;
+    }
     if (NULL != data_ptr->prepare_cb) {
         SvREFCNT_dec(data_ptr->prepare_cb);
         data_ptr->prepare_cb = NULL;
@@ -200,6 +206,7 @@ static handle_data_t* handle_data_new(const uv_handle_type type)
     data_ptr->alloc_cb = NULL;
     data_ptr->check_cb = NULL;
     data_ptr->close_cb = NULL;
+    data_ptr->idle_cb = NULL;
     data_ptr->prepare_cb = NULL;
     data_ptr->timer_cb = NULL;
     return data_ptr;
@@ -303,6 +310,17 @@ static void handle_on(uv_handle_t *handle, const char *name, SV *cb)
             data_ptr->close_cb = SvREFCNT_inc(callback);
         }
     }
+    else if (0 == strcmp(name, "idle")) {
+        /* clear the callback's current value first */
+        if (NULL != data_ptr->idle_cb) {
+            SvREFCNT_dec(data_ptr->idle_cb);
+            data_ptr->idle_cb = NULL;
+        }
+        /* set the CB */
+        if (NULL != callback) {
+            data_ptr->idle_cb = SvREFCNT_inc(callback);
+        }
+    }
     else if (0 == strcmp(name, "prepare")) {
         /* clear the callback's current value first */
         if (NULL != data_ptr->prepare_cb) {
@@ -404,6 +422,29 @@ static void handle_close_cb(uv_handle_t* handle)
         FREETMPS;
         LEAVE;
     }
+}
+
+static void handle_idle_cb(uv_idle_t* handle)
+{
+    handle_data_t *data_ptr = uv_data(handle);
+    /* nothing else to do if we don't have a callback to call */
+    if (NULL == data_ptr || NULL == data_ptr->idle_cb) return;
+
+    /* provide info to the caller: invocant */
+    dSP;
+    ENTER;
+    SAVETMPS;
+
+    PUSHMARK (SP);
+    EXTEND (SP, 1);
+    PUSHs(handle_bless((uv_handle_t *) handle)); /* invocant */
+
+    PUTBACK;
+    call_sv (data_ptr->idle_cb, G_VOID);
+    SPAGAIN;
+
+    FREETMPS;
+    LEAVE;
 }
 
 static void handle_prepare_cb(uv_prepare_t* handle)
