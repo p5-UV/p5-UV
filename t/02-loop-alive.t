@@ -36,6 +36,8 @@ subtest 'loop_alive' => sub {
     is(UV::default_loop()->alive(), 0, 'default loop is not alive anymore');
 };
 
+diag("the rest of these tests can't run until we implement uv_req_t objects");
+
 # subtest 'work_loop_alive' => sub {
 #     my $r = 0;
 #     # loops with requests are alive
