@@ -656,8 +656,18 @@ SV *uv_handle_loop(uv_handle_t *handle)
     RETVAL
 
 int uv_handle_active (uv_handle_t *handle)
+    ALIAS:
+        UV::Handle::is_active = 1
     CODE:
         RETVAL = uv_is_active(handle);
+    OUTPUT:
+    RETVAL
+
+int uv_handle_closing(uv_handle_t *handle)
+    ALIAS:
+        UV::Handle::is_closing = 1
+    CODE:
+        RETVAL = uv_is_closing(handle);
     OUTPUT:
     RETVAL
 
@@ -668,9 +678,19 @@ void uv_handle_close(uv_handle_t *handle, SV *cb=NULL)
     }
     uv_close(handle, handle_close_cb);
 
+int uv_handle_has_ref(uv_handle_t *handle)
+    CODE:
+        RETVAL = uv_has_ref(handle);
+    OUTPUT:
+    RETVAL
+
 void uv_handle_on(uv_handle_t *handle, const char *name, SV *cb=NULL)
     CODE:
     handle_on(handle, name, cb);
+
+void uv_handle_ref(uv_handle_t *handle)
+    CODE:
+    uv_ref(handle);
 
 int uv_handle_type(uv_handle_t *handle)
     CODE:
@@ -678,13 +698,17 @@ int uv_handle_type(uv_handle_t *handle)
     OUTPUT:
     RETVAL
 
+void uv_handle_unref(uv_handle_t *handle)
+    CODE:
+    uv_unref(handle);
+
 
 
 MODULE = UV             PACKAGE = UV::Check      PREFIX = uv_check_
 
 PROTOTYPES: ENABLE
 
-SV * uv_check__new(SV *class, uv_loop_t *loop = uvapi.default_loop)
+SV * uv_check_new(SV *class, uv_loop_t *loop = uvapi.default_loop)
     CODE:
     int res;
     uv_check_t *handle = (uv_check_t *)handle_new(UV_CHECK);
@@ -724,6 +748,53 @@ int uv_check_start(uv_check_t *handle, SV *cb=NULL)
     RETVAL
 
 int uv_check_stop(uv_check_t *handle)
+
+
+
+MODULE = UV             PACKAGE = UV::Idle      PREFIX = uv_idle_
+
+PROTOTYPES: ENABLE
+
+SV * uv_idle_new(SV *class, uv_loop_t *loop = uvapi.default_loop)
+    CODE:
+    int res;
+    uv_idle_t *handle = (uv_idle_t *)handle_new(UV_IDLE);
+    PERL_UNUSED_VAR(class);
+
+    res = uv_idle_init(loop, handle);
+    if (0 != res) {
+        Safefree(handle);
+        croak("Couldn't initialize idle (%i): %s", res, uv_strerror(res));
+    }
+
+    if (loop == uvapi.default_loop) {
+        uv_data(handle)->loop_sv = default_loop_sv;
+    }
+    else {
+        uv_data(handle)->loop_sv = sv_bless( newRV_noinc( newSViv( PTR2IV(loop))), stash_loop);
+    }
+    RETVAL = handle_bless((uv_handle_t *)handle);
+    OUTPUT:
+    RETVAL
+
+void DESTROY(uv_idle_t *handle)
+    CODE:
+    if (NULL != handle && 0 == uv_is_closing((uv_handle_t *)handle) && 0 == uv_is_active((uv_handle_t *)handle)) {
+        uv_idle_stop(handle);
+        uv_close((uv_handle_t *)handle, handle_close_cb);
+        handle_data_destroy(uv_data(handle));
+    }
+
+int uv_idle_start(uv_idle_t *handle, SV *cb=NULL)
+    CODE:
+        if (NULL != cb) {
+            handle_on((uv_handle_t *)handle, "idle", cb);
+        }
+        RETVAL = uv_idle_start(handle, handle_idle_cb);
+    OUTPUT:
+    RETVAL
+
+int uv_idle_stop(uv_idle_t *handle)
 
 
 
