@@ -31,6 +31,7 @@ typedef struct handle_data_s {
     SV *user_data;
     /* callbacks available */
     SV *alloc_cb;
+    SV *check_cb;
     SV *close_cb;
     SV *prepare_cb;
     SV *timer_cb;
@@ -83,6 +84,7 @@ static SV * s_get_cv_croak (SV *cb_sv)
 
 /* Handle function definitions for some that aren't alpha ordered later */
 static void handle_alloc_cb(uv_handle_t* handle, size_t suggested_size, uv_buf_t* buf);
+static void handle_check_cb(uv_check_t* handle);
 static void handle_close_cb(uv_handle_t* handle);
 static HV * handle_data_stash(const uv_handle_type type);
 static void handle_prepare_cb(uv_prepare_t* handle);
@@ -154,9 +156,17 @@ static void handle_data_destroy(handle_data_t *data_ptr)
         SvREFCNT_dec(data_ptr->alloc_cb);
         data_ptr->alloc_cb = NULL;
     }
+    if (NULL != data_ptr->check_cb) {
+        SvREFCNT_dec(data_ptr->check_cb);
+        data_ptr->check_cb = NULL;
+    }
     if (NULL != data_ptr->close_cb) {
         SvREFCNT_dec(data_ptr->close_cb);
         data_ptr->close_cb = NULL;
+    }
+    if (NULL != data_ptr->prepare_cb) {
+        SvREFCNT_dec(data_ptr->prepare_cb);
+        data_ptr->prepare_cb = NULL;
     }
     if (NULL != data_ptr->timer_cb) {
         SvREFCNT_dec(data_ptr->timer_cb);
@@ -188,6 +198,7 @@ static handle_data_t* handle_data_new(const uv_handle_type type)
 
     /* setup the callback slots */
     data_ptr->alloc_cb = NULL;
+    data_ptr->check_cb = NULL;
     data_ptr->close_cb = NULL;
     data_ptr->prepare_cb = NULL;
     data_ptr->timer_cb = NULL;
@@ -270,6 +281,17 @@ static void handle_on(uv_handle_t *handle, const char *name, SV *cb)
             data_ptr->alloc_cb = SvREFCNT_inc(callback);
         }
     }
+    else if (0 == strcmp(name, "check")) {
+        /* clear the callback's current value first */
+        if (NULL != data_ptr->check_cb) {
+            SvREFCNT_dec(data_ptr->check_cb);
+            data_ptr->check_cb = NULL;
+        }
+        /* set the CB */
+        if (NULL != callback) {
+            data_ptr->check_cb = SvREFCNT_inc(callback);
+        }
+    }
     else if (0 == strcmp(name, "close")) {
         /* clear the callback's current value first */
         if (NULL != data_ptr->close_cb) {
@@ -334,6 +356,30 @@ static void handle_alloc_cb(uv_handle_t* handle, size_t suggested_size, uv_buf_t
 
     FREETMPS;
     LEAVE;
+}
+
+static void handle_check_cb(uv_check_t* handle)
+{
+    handle_data_t *data_ptr = uv_data(handle);
+
+    /* call the close_cb if we have one */
+    if (NULL != data_ptr && NULL != data_ptr->check_cb) {
+        /* provide info to the caller: invocant */
+        dSP;
+        ENTER;
+        SAVETMPS;
+
+        PUSHMARK (SP);
+        EXTEND (SP, 1);
+        PUSHs(handle_bless((uv_handle_t *)handle)); /* invocant */
+
+        PUTBACK;
+        call_sv (data_ptr->check_cb, G_VOID);
+        SPAGAIN;
+
+        FREETMPS;
+        LEAVE;
+    }
 }
 
 static void handle_close_cb(uv_handle_t* handle)
@@ -590,6 +636,53 @@ int uv_handle_type(uv_handle_t *handle)
     RETVAL = handle->type;
     OUTPUT:
     RETVAL
+
+
+
+MODULE = UV             PACKAGE = UV::Check      PREFIX = uv_check_
+
+PROTOTYPES: ENABLE
+
+SV * uv_check__new(SV *class, uv_loop_t *loop = uvapi.default_loop)
+    CODE:
+    int res;
+    uv_check_t *handle = (uv_check_t *)handle_new(UV_CHECK);
+    PERL_UNUSED_VAR(class);
+
+    res = uv_check_init(loop, handle);
+    if (0 != res) {
+        Safefree(handle);
+        croak("Couldn't initialize check (%i): %s", res, uv_strerror(res));
+    }
+
+    if (loop == uvapi.default_loop) {
+        uv_data(handle)->loop_sv = default_loop_sv;
+    }
+    else {
+        uv_data(handle)->loop_sv = sv_bless( newRV_noinc( newSViv( PTR2IV(loop))), stash_loop);
+    }
+    RETVAL = handle_bless((uv_handle_t *)handle);
+    OUTPUT:
+    RETVAL
+
+void DESTROY(uv_check_t *handle)
+    CODE:
+    if (NULL != handle && 0 == uv_is_closing((uv_handle_t *)handle) && 0 == uv_is_active((uv_handle_t *)handle)) {
+        uv_check_stop(handle);
+        uv_close((uv_handle_t *)handle, handle_close_cb);
+        handle_data_destroy(uv_data(handle));
+    }
+
+int uv_check_start(uv_check_t *handle, SV *cb=NULL)
+    CODE:
+        if (NULL != cb) {
+            handle_on((uv_handle_t *)handle, "check", cb);
+        }
+        RETVAL = uv_check_start(handle, handle_check_cb);
+    OUTPUT:
+    RETVAL
+
+int uv_check_stop(uv_check_t *handle)
 
 
 
