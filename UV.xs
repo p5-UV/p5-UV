@@ -676,6 +676,25 @@ void uv_handle_close(uv_handle_t *handle, SV *cb=NULL)
     }
     uv_close(handle, handle_close_cb);
 
+SV * uv_handle_data(uv_handle_t *handle, SV *new_val = NULL)
+    CODE:
+        handle_data_t *data_ptr = uv_data(handle);
+        RETVAL = data_ptr->user_data ? newSVsv(data_ptr->user_data) : &PL_sv_undef;
+        if (items > 1) {
+            if (NULL != data_ptr->user_data) {
+                SvREFCNT_dec(data_ptr->user_data);
+                data_ptr->user_data = NULL;
+            }
+
+            if (new_val != &PL_sv_undef) {
+                data_ptr->user_data = newSVsv(new_val);
+            }
+            /* chainable setter */
+            RETVAL = handle_bless(handle);
+        }
+    OUTPUT:
+    RETVAL
+
 int uv_handle_has_ref(uv_handle_t *handle)
     CODE:
         RETVAL = uv_has_ref(handle);
