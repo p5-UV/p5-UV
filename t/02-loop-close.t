@@ -4,14 +4,9 @@ use warnings;
 use Test::More;
 use UV;
 
-use Data::Dumper;
-
-my $loop_loc; # ${$loop}
-
 {
     my $loop = UV::Loop->new();
     isa_ok($loop, 'UV::Loop', 'UV::Loop->new(): got a new Loop');
-    $loop_loc = ${$loop};
 
     my $timer = UV::Timer->new($loop);
     isa_ok($timer, 'UV::Timer', 'timer: got a new timer');
