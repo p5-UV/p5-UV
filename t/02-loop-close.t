@@ -26,7 +26,7 @@ my $loop_loc; # ${$loop}
 
     $loop->run();
 
-    $timer->close(sub {});
+    $timer->close(undef);
 
     is($loop->run(), 0, 'loop run: got zero');
 }

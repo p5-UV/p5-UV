@@ -11,7 +11,6 @@
 #include "perl_math_int64.h"
 #include <assert.h>
 #include <stdlib.h>
-#include <string.h>
 
 #include <uv.h>
 
