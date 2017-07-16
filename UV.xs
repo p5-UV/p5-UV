@@ -268,16 +268,13 @@ static uv_handle_t* handle_new(const uv_handle_type type)
 static void handle_on(uv_handle_t *handle, const char *name, SV *cb)
 {
     SV *callback = NULL;
-    handle_data_t *data_ptr;
-
-    if (NULL == handle) return;
-    data_ptr = uv_data(handle);
-    if (NULL == data_ptr) return;
+    handle_data_t *data_ptr = uv_data(handle);
+    if (!data_ptr) return;
 
     callback = cb ? s_get_cv_croak(cb) : NULL;
 
     /* find out which callback to set */
-    if (0 == strcmp(name, "alloc")) {
+    if (strEQ(name, "alloc")) {
         /* clear the callback's current value first */
         if (NULL != data_ptr->alloc_cb) {
             SvREFCNT_dec(data_ptr->alloc_cb);
@@ -288,7 +285,7 @@ static void handle_on(uv_handle_t *handle, const char *name, SV *cb)
             data_ptr->alloc_cb = SvREFCNT_inc(callback);
         }
     }
-    else if (0 == strcmp(name, "check")) {
+    else if (strEQ(name, "check")) {
         /* clear the callback's current value first */
         if (NULL != data_ptr->check_cb) {
             SvREFCNT_dec(data_ptr->check_cb);
@@ -299,7 +296,7 @@ static void handle_on(uv_handle_t *handle, const char *name, SV *cb)
             data_ptr->check_cb = SvREFCNT_inc(callback);
         }
     }
-    else if (0 == strcmp(name, "close")) {
+    else if (strEQ(name, "close")) {
         /* clear the callback's current value first */
         if (NULL != data_ptr->close_cb) {
             SvREFCNT_dec(data_ptr->close_cb);
@@ -310,7 +307,7 @@ static void handle_on(uv_handle_t *handle, const char *name, SV *cb)
             data_ptr->close_cb = SvREFCNT_inc(callback);
         }
     }
-    else if (0 == strcmp(name, "idle")) {
+    else if (strEQ(name, "idle")) {
         /* clear the callback's current value first */
         if (NULL != data_ptr->idle_cb) {
             SvREFCNT_dec(data_ptr->idle_cb);
@@ -321,7 +318,7 @@ static void handle_on(uv_handle_t *handle, const char *name, SV *cb)
             data_ptr->idle_cb = SvREFCNT_inc(callback);
         }
     }
-    else if (0 == strcmp(name, "prepare")) {
+    else if (strEQ(name, "prepare")) {
         /* clear the callback's current value first */
         if (NULL != data_ptr->prepare_cb) {
             SvREFCNT_dec(data_ptr->prepare_cb);
@@ -332,7 +329,7 @@ static void handle_on(uv_handle_t *handle, const char *name, SV *cb)
             data_ptr->prepare_cb = SvREFCNT_inc(callback);
         }
     }
-    else if (0 == strcmp(name, "timer")) {
+    else if (strEQ(name, "timer")) {
         /* clear the callback's current value first */
         if (NULL != data_ptr->timer_cb) {
             SvREFCNT_dec(data_ptr->timer_cb);
@@ -366,7 +363,7 @@ static void handle_alloc_cb(uv_handle_t* handle, size_t suggested_size, uv_buf_t
     PUSHMARK (SP);
     EXTEND (SP, 2);
     PUSHs(handle_bless(handle)); /* invocant */
-    PUSHs(newSViv(suggested_size));
+    mPUSHi(suggested_size);
 
     PUTBACK;
     call_sv (data_ptr->alloc_cb, G_VOID);
@@ -673,7 +670,8 @@ int uv_handle_closing(uv_handle_t *handle)
 
 void uv_handle_close(uv_handle_t *handle, SV *cb=NULL)
     CODE:
-    if (NULL != cb) {
+    if (items > 1) {
+        cb = cb == &PL_sv_undef ? NULL : cb;
         handle_on(handle, "close", cb);
     }
     uv_close(handle, handle_close_cb);
@@ -686,6 +684,7 @@ int uv_handle_has_ref(uv_handle_t *handle)
 
 void uv_handle_on(uv_handle_t *handle, const char *name, SV *cb=NULL)
     CODE:
+    cb = cb == &PL_sv_undef ? NULL : cb;
     handle_on(handle, name, cb);
 
 void uv_handle_ref(uv_handle_t *handle)
@@ -740,7 +739,8 @@ void DESTROY(uv_check_t *handle)
 
 int uv_check_start(uv_check_t *handle, SV *cb=NULL)
     CODE:
-        if (NULL != cb) {
+        if (items > 1) {
+            cb = cb == &PL_sv_undef ? NULL : cb;
             handle_on((uv_handle_t *)handle, "check", cb);
         }
         RETVAL = uv_check_start(handle, handle_check_cb);
@@ -787,7 +787,11 @@ void DESTROY(uv_idle_t *handle)
 
 int uv_idle_start(uv_idle_t *handle, SV *cb=NULL)
     CODE:
-        if (NULL != cb) {
+        if (uv_is_closing((uv_handle_t *)handle)) {
+            croak("You can't call start on a closed handle");
+        }
+        if (items > 1) {
+            cb = cb == &PL_sv_undef ? NULL : cb;
             handle_on((uv_handle_t *)handle, "idle", cb);
         }
         RETVAL = uv_idle_start(handle, handle_idle_cb);
@@ -834,7 +838,11 @@ void DESTROY(uv_prepare_t *handle)
 
 int uv_prepare_start(uv_prepare_t *handle, SV *cb=NULL)
     CODE:
-        if (NULL != cb) {
+        if (uv_is_closing((uv_handle_t *)handle)) {
+            croak("You can't call start on a closed handle");
+        }
+        if (items > 1) {
+            cb = cb == &PL_sv_undef ? NULL : cb;
             handle_on((uv_handle_t *)handle, "prepare", cb);
         }
         RETVAL = uv_prepare_start(handle, handle_prepare_cb);
@@ -883,7 +891,11 @@ int uv_timer_again(uv_timer_t *handle)
 
 int uv_timer_start(uv_timer_t *handle, uint64_t start=0, uint64_t repeat=0, SV *cb=NULL)
     CODE:
-        if (NULL != cb) {
+        if (uv_is_closing((uv_handle_t *)handle)) {
+            croak("You can't call start on a closed handle");
+        }
+        if (items > 3) {
+            cb = cb == &PL_sv_undef ? NULL : cb;
             handle_on((uv_handle_t *)handle, "timer", cb);
         }
         RETVAL = uv_timer_start(handle, handle_timer_cb, start, repeat);
