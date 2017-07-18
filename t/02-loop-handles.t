@@ -175,7 +175,7 @@ sub prepare_1_cb {
 
     $prepare_1_cb_called++;
     $loop_iteration++;
-    diag("Loop iteration $loop_iteration of ". ITERATIONS);
+    # diag("Loop iteration $loop_iteration of ". ITERATIONS);
 }
 
 

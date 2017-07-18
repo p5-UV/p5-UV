@@ -33,13 +33,15 @@ my %WriteMakefileArgs = (
     "Exporter" => "5.57",
     "Math::Int64" => 0,
     "XSLoader" => "0.14",
+    "parent" => 0,
     "strict" => 0,
     "warnings" => 0
   },
   "TEST_REQUIRES" => {
     "ExtUtils::MakeMaker" => "7.12",
     "File::Spec" => 0,
-    "Test::More" => "0.88"
+    "Test::More" => "0.88",
+    "Try::Tiny" => 0
   },
   "VERSION" => "1.000",
   "test" => {
@@ -62,7 +64,9 @@ my %FallbackPrereqs = (
   "File::Spec" => 0,
   "Math::Int64" => 0,
   "Test::More" => "0.88",
+  "Try::Tiny" => 0,
   "XSLoader" => "0.14",
+  "parent" => 0,
   "strict" => 0,
   "warnings" => 0
 );

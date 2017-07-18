@@ -1,5 +1,6 @@
 on 'runtime' => sub {
     requires 'perl' => '5.008001';
+    requires 'parent';
     requires 'strict';
     requires 'warnings';
     requires 'Alien::libuv' => '0.004';
@@ -21,6 +22,7 @@ on 'configure' => sub {
 
 on 'test' => sub {
     requires 'Test::More' => '0.88';
+    requires 'Try::Tiny';
 };
 
 on 'develop' => sub {

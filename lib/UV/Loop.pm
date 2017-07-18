@@ -1,3 +1,23 @@
+package UV::Loop;
+
+our $VERSION = '1.000';
+our $XS_VERSION = $VERSION;
+$VERSION = eval $VERSION;
+
+use strict;
+use warnings;
+use Exporter qw(import);
+
+use UV;
+
+our @EXPORT_OK  = qw(
+    UV_RUN_DEFAULT UV_RUN_ONCE UV_RUN_NOWAIT UV_LOOP_BLOCK_SIGNAL SIGPROF
+);
+
+1;
+
+__END__
+
 =encoding utf8
 
 =head1 NAME
@@ -53,6 +73,25 @@ Event loops that work properly on all platforms. YAY!
 
 =head3 UV_LOOP_BLOCK_SIGNAL
 
+=head1 EVENTS
+
+L<UV::Loop> makes the following events available.
+
+=head2 walk
+
+    # clean up a loop completely.
+    $loop->on(walk => sub {
+        my $handle = shift;
+        # check to make sure the handle can stop
+        $handle->stop() if $handle->can('stop');
+        $handle->close() unless $handle->closing();
+        $loop->run(UV::Loop::UV_RUN_DEFAULT);
+        $loop->close();
+    });
+
+The L<walk|http://docs.libuv.org/en/v1.x/loop.html#c.uv_walk_cb> callback
+fires on a call to C<< $loop->walk() >>.
+
 =head1 METHODS
 
 L<UV::Loop> makes the following methods available.
@@ -64,7 +103,10 @@ L<UV::Loop> makes the following methods available.
     my $default_loop = UV::Loop->default_loop();
     my $default_loop = UV::Loop->default();
 
-Either return the default loop (singleton object), or create a new event loop.
+This constructor either returns the default loop (singleton object), or creates
+a new event loop and
+L<initializes|http://docs.libuv.org/en/v1.x/loop.html#c.uv_loop_init> it.
+
 Please look at the L<documentation|http://docs.libuv.org/en/v1.x/loop.html>
 from libuv.
 
@@ -72,16 +114,16 @@ from libuv.
 
     my $int = $loop->alive();
 
-L<alive|http://docs.libuv.org/en/v1.x/loop.html#c.uv_loop_alive> returns a
-non-zero value if there are active handles or requests in the loop.
+The L<alive|http://docs.libuv.org/en/v1.x/loop.html#c.uv_loop_alive> method
+returns a non-zero value if there are active handles or requests in the loop.
 
 =head2 backend_fd
 
     my $int = $loop->backend_fd();
 
-L<backend_fd|http://docs.libuv.org/en/v1.x/loop.html#c.uv_backend_fd> returns
-the backend file descriptor. Only C<kqueue>, C<epoll> and C<event ports> are
-supported.
+The L<backend_fd|http://docs.libuv.org/en/v1.x/loop.html#c.uv_backend_fd>
+method returns the backend file descriptor. Only C<kqueue>, C<epoll> and
+C<event ports> are supported.
 
 This can be used in conjunction with L<UV::Loop/"run"> and C<UV_RUN_NOWAIT> to
 poll in one thread and run the event loop's callbacks in another.
@@ -94,17 +136,27 @@ events.
 
     my $int = $loop->backend_timeout();
 
-L<backend_timeout|http://docs.libuv.org/en/v1.x/loop.html#c.uv_backend_timeout>
-returns the poll timeout. The return value is in milliseconds, or C<-1> for no
-timeout.
+The L<backend_timeout|http://docs.libuv.org/en/v1.x/loop.html#c.uv_backend_timeout>
+method returns the poll timeout. The return value is in milliseconds, or C<-1>
+for no timeout.
+
+=head2 close
+
+    $loop->close();
+
+The L<close|http://docs.libuv.org/en/v1.x/loop.html#c.uv_loop_close> method
+releases all internal loop resources. Call this method only when the loop has
+finished executing and all open handles and requests have been closed, or it
+will return C<UV::UV_EBUSY>. After this method returns, the user can free the
+memory allocated for the loop.
 
 =head2 configure
 
     my $int = $loop->configure();
 
-L<configure|http://docs.libuv.org/en/v1.x/loop.html#c.uv_loop_configure> sets
-additional loop options. You should normally call this before the first call
-to L<UV::Loop/"run"> unless mentioned otherwise.
+The L<configure|http://docs.libuv.org/en/v1.x/loop.html#c.uv_loop_configure>
+method sets additional loop options. You should normally call this before the
+first call to L<UV::Loop/"run"> unless mentioned otherwise.
 
 Returns C<0> on success or a C<UV/"CONSTANTS"> error code on failure. Be
 prepared to handle C<UV::UV_ENOSYS>; it means the loop option is not supported
@@ -125,6 +177,20 @@ signals will fail with C<UV::UV_EINVAL>.
 
 =back
 
+=head2 default
+
+    # simply a synonym for ->new(1)
+    my $default_loop = UV::Loop->default();
+
+A synonym for the L<UV::Loop/"new"> constructor.
+
+=head2 default_loop
+
+    # simply a synonym for ->new(1)
+    my $default_loop = UV::Loop->default_loop();
+
+A synonym for the L<UV::Loop/"new"> constructor.
+
 =head2 loop_alive
 
     my $int = $loop->loop_alive();
@@ -141,14 +207,14 @@ This is just a synonym for L<UV::Loop/"configure">.
 
     my $uint64_t = $loop->now();
 
-L<now|http://docs.libuv.org/en/v1.x/loop.html#c.uv_now> returns the current
-timestamp in milliseconds. The timestamp is cached at the start of the event
-loop tick, see L<UV::Loop/"update_loop"> for details and rationale.
+The L<now|http://docs.libuv.org/en/v1.x/loop.html#c.uv_now> method returns the
+current timestamp in milliseconds. The timestamp is cached at the start of the
+event loop tick, see L<UV::Loop/"update_loop"> for details and rationale.
 
 The timestamp increases monotonically from some arbitrary point in time. Don't
 make assumptions about the starting point, you will only get disappointed.
 
-B<* Note:> Use L<UV/"uv_hrtime"> if you need sub-millisecond granularity.
+B<* Note:> Use L<UV/"hrtime"> if you need sub-millisecond granularity.
 
 =head2 run
 
@@ -161,8 +227,8 @@ B<* Note:> Use L<UV/"uv_hrtime"> if you need sub-millisecond granularity.
     # run in UV_RUN_ONCE mode
     my $int = $loop->run(UV::Loop::UV_RUN_ONCE);
 
-L<run|http://docs.libuv.org/en/v1.x/loop.html#c.uv_run> runs the event loop. It
-will act differently depending on the specified mode:
+The L<run|http://docs.libuv.org/en/v1.x/loop.html#c.uv_run> method runs the
+event loop. It will act differently depending on the specified mode:
 
 =over 4
 
@@ -193,23 +259,47 @@ event loop again sometime in the future).
 
     $loop->stop();
 
-L<stop|http://docs.libuv.org/en/v1.x/loop.html#c.uv_stop> stops the event loop,
-causing L<UV::Loop/"run"> to end as soon as possible. This will happen not
-sooner than the next loop iteration. If this function was called before
-blocking for i/o, the loop won't block for i/o on this iteration.
+The L<stop|http://docs.libuv.org/en/v1.x/loop.html#c.uv_stop> method stops the
+event loop, causing L<UV::Loop/"run"> to end as soon as possible. This will
+happen not sooner than the next loop iteration. If this function was called
+before blocking for i/o, the loop won't block for i/o on this iteration.
 
 =head2 update_time
 
     $loop->update_time();
 
-L<update_time|http://docs.libuv.org/en/v1.x/loop.html#c.uv_update_time> updates
-the event loop's concept of L<UV::Loop/"now">. Libuv caches the current time
-at the start of the event loop tick in order to reduce the number of
-time-related system calls.
+The L<update_time|http://docs.libuv.org/en/v1.x/loop.html#c.uv_update_time>
+method updates the event loop's concept of L<UV::Loop/"now">. Libuv caches the
+current time at the start of the event loop tick in order to reduce the number
+of time-related system calls.
 
-You won't normally need to call this function unless you have callbacks that
+You won't normally need to call this method unless you have callbacks that
 block the event loop for longer periods of time, where "longer" is somewhat
 subjective but probably on the order of a millisecond or more.
+
+=head2 walk
+
+    # call with whatever callback we wanted with ->on(walk => sub {...});
+    $loop->walk();
+    # call with no callback
+    $loop->walk(undef);
+    # call with an empty callback
+    $loop->walk(sub {});
+    # call with a callback
+    $loop->walk(sub {
+        my $handle = shift;
+        # check to make sure the handle can stop
+        $handle->stop() if $handle->can('stop');
+        $handle->close() unless $handle->closing();
+        $loop->run(UV::Loop::UV_RUN_DEFAULT);
+        $loop->close();
+    });
+
+The L<walk|http://docs.libuv.org/en/v1.x/loop.html#c.uv_walk> method will
+C<walk> the list of handles and fire off the L<UV::Loop/"EVENTS/walk"> event
+and call the callback associated with it.
+
+This is an excellent way to ensure your loop is completely cleaned up.
 
 
 =head1 AUTHOR
