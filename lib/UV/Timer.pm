@@ -27,7 +27,7 @@ UV::Timer - Timers in libuv
 
   use UV;
 
-  # A new timer will give initialize against the default loop
+  # A new timer will be initialized against the default loop
   my $timer = UV::Timer->new();
 
   # Use a different loop
@@ -138,8 +138,8 @@ used to schedule the next timeout.
     $timer->on(timer => sub {say "yay"});
     $timer->start(0, 0);
 
-L<Start|http://docs.libuv.org/en/v1.x/timer.html#c.uv_timer_start> the timer.
-the C<timeout> and C<repeat> values are in milliseconds.
+The L<start|http://docs.libuv.org/en/v1.x/timer.html#c.uv_timer_start> method
+starts the timer. The C<timeout> and C<repeat> values are in milliseconds.
 
 If C<timeout> is zero, the callback fires on the next event loop iteration. If
 C<repeat> is non-zero, the callback fires first after timeout milliseconds and
@@ -152,9 +152,10 @@ L<UV::Loop/"update_time"> for more information.
 
     $timer->stop();
 
-L<Stop|http://docs.libuv.org/en/v1.x/timer.html#c.uv_timer_stop> the timer, and
-if it is repeating restart it using the repeat value as the timeout. If the
-timer has never been started before it returns C<UV_EINVAL>.
+The L<stop|http://docs.libuv.org/en/v1.x/timer.html#c.uv_timer_stop> method
+stops the timer, and if it is repeating, restarts it using the repeat value
+as the timeout. If the timer has never been started before it returns
+C<UV_EINVAL>.
 
 =head1 AUTHOR
 

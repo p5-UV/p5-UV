@@ -91,12 +91,24 @@
          "file" : "lib/UV.pm",
          "version" : "1.000"
       },
+      "UV::Check" : {
+         "file" : "lib/UV/Check.pm",
+         "version" : "1.000"
+      },
       "UV::Handle" : {
          "file" : "lib/UV/Handle.pm",
          "version" : "1.000"
       },
+      "UV::Idle" : {
+         "file" : "lib/UV/Idle.pm",
+         "version" : "1.000"
+      },
       "UV::Loop" : {
          "file" : "lib/UV/Loop.pm",
+         "version" : "1.000"
+      },
+      "UV::Prepare" : {
+         "file" : "lib/UV/Prepare.pm",
          "version" : "1.000"
       },
       "UV::Timer" : {
