@@ -49,15 +49,53 @@ method gets called.
 
 =head2 close
 
-$handle->on("close", sub { say "We are closing!"});
-$handle->on("close", sub {
-    # the handle instance this event fired on
-    my $invocant = shift;
-    say "The handle is closing";
-});
+    $handle->on("close", sub { say "We are closing!"});
+    $handle->on("close", sub {
+        # the handle instance this event fired on
+        my $invocant = shift;
+        say "The handle is closing";
+    });
 
 The L<close|http://docs.libuv.org/en/v1.x/handle.html#c.uv_close_cb> callback
 fires when a C<< $handle->close() >> method gets called.
+
+=head1 ATTRIBUTES
+
+L<UV::Handle> implements the following attributes.
+
+=head2 data
+
+    $handle = $handle->data(23); # allows for method chaining.
+    $handle = $handle->data("Some stringy stuff");
+    $handle = $handle->data(Foo::Bar->new());
+    $handle = $handle->data(undef);
+    my $data = $handle->data();
+
+The L<data|http://docs.libuv.org/en/v1.x/handle.html#c.uv_handle_t.data>
+attribute allows you to store some information along with your L<UV::Handle>
+object. Since libuv does not make use of this attribute in any way, you're free
+to use it for your own purposes.
+
+=head2 loop
+
+    # read-only attribute
+    my $loop = $handle->loop();
+
+The L<loop|http://docs.libuv.org/en/v1.x/handle.html#c.uv_handle_t.loop>
+attribute is a B<read-only> attribute that returns the L<UV::Loop> object this
+handle was initialized with.
+
+=head2 type
+
+    # read-only attribute
+    my $int = $handle->type();
+    if ($int == UV::UV_TIMER) {
+        say "This handle is a timer";
+    }
+
+The L<type|http://docs.libuv.org/en/v1.x/handle.html#c.uv_handle_t.type>
+attribute is a B<read-only> attribute that returns the corresponding libuv
+handle type constant.
 
 =head1 METHODS
 
@@ -67,27 +105,27 @@ L<UV::Handle> makes the following methods available.
 
     my $int = $handle->active();
 
-L<active|http://docs.libuv.org/en/v1.x/handle.html#c.uv_is_active> returns
-non-zero if the handle is active, zero if it's inactive. What "active" means
-depends on the type of handle:
+The L<active|http://docs.libuv.org/en/v1.x/handle.html#c.uv_is_active> method
+returns non-zero if the handle is active, zero if it's inactive. What "active"
+means depends on the type of handle:
 
 =over 4
 
 =item
 
-    A L<UV::Async> handle is always active and cannot be deactivated, except by
-    closing it with C<< $handle->close() >>.
+A L<UV::Async> handle is always active and cannot be deactivated, except by
+closing it with C<< $handle->close() >>.
 
 =item
 
-    A L<UV::Pipe>, L<UV::TCP>, L<UV::UDP>, etc. handle - basically any handle
-    that deals with i/o - is active when it is doing something that involves
-    i/o, like reading, writing, connecting, accepting new connections, etc.
+A L<UV::Pipe>, L<UV::TCP>, L<UV::UDP>, etc. handle - basically any handle
+that deals with i/o - is active when it is doing something that involves
+i/o, like reading, writing, connecting, accepting new connections, etc.
 
 =item
 
-    A L<UV::Check>, L<UV::Idle>, L<UV::Timer>, etc. handle is active when it
-    has been started with a call to C<< $handle->start() >>, etc.
+A L<UV::Check>, L<UV::Idle>, L<UV::Timer>, etc. handle is active when it
+has been started with a call to C<< $handle->start() >>, etc.
 
 =back
 
@@ -123,22 +161,67 @@ method returns non-zero if the handle is closing or closed, zero otherwise.
 B<* Note:> This function should only be used between the initialization of the
 handle and the arrival of the C<close> callback.
 
-=head2 loop
+=head2 has_ref
 
-    my $loop = $handle->loop();
+    my $int = $handle->has_ref();
 
-The L<loop|http://docs.libuv.org/en/v1.x/handle.html#c.uv_handle_t.loop> method
-returns the L<UV::Loop> object this handle was initialized with.
+The L<has_ref|http://docs.libuv.org/en/v1.x/handle.html#c.uv_has_ref>
+method returns non-zero if the handle is referenced, zero otherwise.
 
-=head2 type
+See L<Reference Counting|http://docs.libuv.org/en/v1.x/handle.html#refcount>.
 
-    my $int = $handle->type();
-    if ($int == UV::UV_TIMER) {
-        say "This handle is a timer";
-    }
+=head2 is_active
 
-The L<type|http://docs.libuv.org/en/v1.x/handle.html#c.uv_handle_t.type> method
-returns the corresponding libuv handle type constant.
+    # simply a synonym for ->active()
+    my $int = $handle->is_active();
+
+A synonym for L<UV::Handle/"active">.
+
+=head2 is_closing
+
+    # simply a synonym for ->closing()
+    my $int = $handle->is_closing();
+
+A synonym for L<UV::Handle/"closing">.
+
+=head2 on
+
+    # set a close event callback to print the handle's data attribute
+    $handle->on('close', sub {
+        my $hndl = shift;
+        say $hndl->data();
+        say "closing!"
+    });
+
+    # clear out the close event callback for the handle
+    $handle->on(close => undef);
+    $handle->on(close => sub {});
+
+The C<on> method allows you to subscribe to L<UV::Handle/"EVENTS"> emitted by
+any UV::Handle or subclass.
+
+=head2 ref
+
+    $handle->ref();
+
+The L<ref|http://docs.libuv.org/en/v1.x/handle.html#c.uv_ref>
+method references the given handle. References are idempotent, that is, if a
+handle is already referenced, then calling this function again will have no
+effect.
+
+See L<Reference Counting|http://docs.libuv.org/en/v1.x/handle.html#refcount>.
+
+=head2 unref
+
+    $handle->unref();
+
+The L<ref|http://docs.libuv.org/en/v1.x/handle.html#c.uv_unref>
+method un-references the given handle. References are idempotent, that is, if a
+handle is not referenced, then calling this function again will have no
+effect.
+
+See L<Reference Counting|http://docs.libuv.org/en/v1.x/handle.html#refcount>.
+
 
 =head1 AUTHOR
 
