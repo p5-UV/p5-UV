@@ -1,3 +1,18 @@
+package UV::Timer;
+
+our $VERSION = '1.000';
+our $XS_VERSION = $VERSION;
+$VERSION = eval $VERSION;
+
+use strict;
+use warnings;
+
+use parent 'UV::Handle';
+
+1;
+
+__END__
+
 =encoding utf8
 
 =head1 NAME
@@ -68,15 +83,43 @@ following extra methods available.
     # Or tell it what loop to initialize against
     my $timer = UV::Timer->new($loop);
 
-L<Initializes|http://docs.libuv.org/en/v1.x/timer.html#c.uv_timer_init> the
-timer.
+This constructor method creates a new L<UV::Timer> object and
+L<initializes|http://docs.libuv.org/en/v1.x/timer.html#c.uv_timer_init> the
+timer with the given L<UV::Loop>. If no L<UV::Loop> is provided, then the
+L<UV::Loop/"default_loop"> is assumed.
+
+=head2 again
+
+    my $int = $timer->again();
+
+The L<again|http://docs.libuv.org/en/v1.x/timer.html#c.uv_timer_again> method
+stops the timer, and if it is repeating, restarts it using the repeat value as
+the timeout.  If the timer has never been started, it returns C<UV::UV_EINVAL>.
 
 =head2 get_repeat
 
     my $uint64_t = $timer->get_repeat();
 
-L<Get repeat|http://docs.libuv.org/en/v1.x/timer.html#c.uv_timer_get_repeate>
-returns the timer's repeat value.
+The L<get_repeat|http://docs.libuv.org/en/v1.x/timer.html#c.uv_timer_get_repeat>
+method returns the timer's repeat value.
+
+=head2 set_repeat
+
+    $timer->set_repeat(12345);
+
+The L<set repeat|http://docs.libuv.org/en/v1.x/timer.html#c.uv_timer_set_repeat>
+method sets the repeat interval in I<milliseconds>. The timer will be scheduled
+to run on the given interval, regardless of the callback execution duration,
+and will follow normal timer semantics in the case of a time-slice overrun.
+
+For example, if a 50ms repeating timer first runs for 17ms, it will be scheduled
+to run again 33ms later. If other tasks consume more than the 33ms following
+the first timer callback, then the callback will run as soon as possible.
+
+B<* Note:> If the repeat value is set from a timer callback it does not
+immediately take effect. If the timer was non-repeating before, it will have
+been stopped. If it was repeating, then the old repeat value will have been
+used to schedule the next timeout.
 
 =head2 start
 
@@ -89,7 +132,11 @@ returns the timer's repeat value.
     $timer->start($timeout, $repeat);
 
     # pass a callback for the "timer" event
-    $timer->start(0, 0, sub {say "I overrode the callback set with ->on()"});
+    $timer->start(0, 0, sub {say "yay"});
+    # providing the callback above completely overrides any callback previously
+    # set in the ->on() method. It's equivalent to:
+    $timer->on(timer => sub {say "yay"});
+    $timer->start(0, 0);
 
 L<Start|http://docs.libuv.org/en/v1.x/timer.html#c.uv_timer_start> the timer.
 the C<timeout> and C<repeat> values are in milliseconds.

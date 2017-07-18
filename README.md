@@ -340,42 +340,6 @@ Cross-device link not permitted
 
 Unknown error
 
-## HANDLE TYPE CONSTANTS
-
-### UV\_ASYNC
-
-### UV\_CHECK
-
-### UV\_FILE
-
-### UV\_FS\_EVENT
-
-### UV\_FS\_POLL
-
-### UV\_HANDLE
-
-### UV\_IDLE
-
-### UV\_NAMED\_PIPE
-
-### UV\_POLL
-
-### UV\_PREPARE
-
-### UV\_PROCESS
-
-### UV\_SIGNAL
-
-### UV\_STREAM
-
-### UV\_TCP
-
-### UV\_TIMER
-
-### UV\_TTY
-
-### UV\_UDP
-
 # FUNCTIONS
 
 The following functions are available:

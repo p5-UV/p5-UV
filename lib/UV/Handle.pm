@@ -1,3 +1,25 @@
+package UV::Handle;
+
+our $VERSION = '1.000';
+our $XS_VERSION = $VERSION;
+$VERSION = eval $VERSION;
+
+use strict;
+use warnings;
+use Exporter qw(import);
+
+use UV;
+
+our @EXPORT_OK  = qw(
+    UV_ASYNC UV_CHECK UV_FS_EVENT UV_FS_POLL
+    UV_IDLE UV_NAMED_PIPE UV_POLL UV_PREPARE UV_PROCESS
+    UV_STREAM UV_TCP UV_TIMER UV_TTY UV_UDP UV_SIGNAL UV_FILE
+);
+
+1;
+
+__END__
+
 =encoding utf8
 
 =head1 NAME
@@ -29,6 +51,42 @@ work.
 You will likely never use this class directly. You will use the different handle
 sub-classes directly. Some of these methods or events will be called or fired
 from those sub-classes.
+
+=head1 CONSTANTS
+
+=head2 HANDLE TYPE CONSTANTS
+
+=head3 UV_ASYNC
+
+=head3 UV_CHECK
+
+=head3 UV_FILE
+
+=head3 UV_FS_EVENT
+
+=head3 UV_FS_POLL
+
+=head3 UV_IDLE
+
+=head3 UV_NAMED_PIPE
+
+=head3 UV_POLL
+
+=head3 UV_PREPARE
+
+=head3 UV_PROCESS
+
+=head3 UV_SIGNAL
+
+=head3 UV_STREAM
+
+=head3 UV_TCP
+
+=head3 UV_TIMER
+
+=head3 UV_TTY
+
+=head3 UV_UDP
 
 =head1 EVENTS
 
@@ -89,7 +147,7 @@ handle was initialized with.
 
     # read-only attribute
     my $int = $handle->type();
-    if ($int == UV::UV_TIMER) {
+    if ($int == UV::Handle::UV_TIMER) {
         say "This handle is a timer";
     }
 
