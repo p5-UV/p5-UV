@@ -1,7 +1,6 @@
 package UV::Idle;
 
 our $VERSION = '1.000';
-our $XS_VERSION = $VERSION;
 $VERSION = eval $VERSION;
 
 use strict;
