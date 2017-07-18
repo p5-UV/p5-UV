@@ -72,25 +72,6 @@ Event loops that work properly on all platforms. YAY!
 
 =head3 UV_LOOP_BLOCK_SIGNAL
 
-=head1 EVENTS
-
-L<UV::Loop> makes the following events available.
-
-=head2 walk
-
-    # clean up a loop completely.
-    $loop->on(walk => sub {
-        my $handle = shift;
-        # check to make sure the handle can stop
-        $handle->stop() if $handle->can('stop');
-        $handle->close() unless $handle->closing();
-        $loop->run(UV::Loop::UV_RUN_DEFAULT);
-        $loop->close();
-    });
-
-The L<walk|http://docs.libuv.org/en/v1.x/loop.html#c.uv_walk_cb> callback
-fires on a call to C<< $loop->walk() >>.
-
 =head1 METHODS
 
 L<UV::Loop> makes the following methods available.
@@ -278,13 +259,15 @@ subjective but probably on the order of a millisecond or more.
 
 =head2 walk
 
-    # call with whatever callback we wanted with ->on(walk => sub {...});
-    $loop->walk();
+    # although you can do it, calling ->walk() without a callback is pretty
+    # useless.
     # call with no callback
+    $loop->walk();
     $loop->walk(undef);
-    # call with an empty callback
     $loop->walk(sub {});
-    # call with a callback
+
+    # instead, let's walk the loop and cleanup any handles attached and then
+    # completely close the loop.
     $loop->walk(sub {
         my $handle = shift;
         # check to make sure the handle can stop
@@ -295,8 +278,7 @@ subjective but probably on the order of a millisecond or more.
     });
 
 The L<walk|http://docs.libuv.org/en/v1.x/loop.html#c.uv_walk> method will
-C<walk> the list of handles and fire off the L<UV::Loop/"EVENTS/walk"> event
-and call the callback associated with it.
+C<walk> the list of handles and fire off the callback supplied.
 
 This is an excellent way to ensure your loop is completely cleaned up.
 
