@@ -215,7 +215,7 @@ See L<Reference Counting|http://docs.libuv.org/en/v1.x/handle.html#refcount>.
 
     $handle->unref();
 
-The L<ref|http://docs.libuv.org/en/v1.x/handle.html#c.uv_unref>
+The L<unref|http://docs.libuv.org/en/v1.x/handle.html#c.uv_unref>
 method un-references the given handle. References are idempotent, that is, if a
 handle is not referenced, then calling this function again will have no
 effect.
