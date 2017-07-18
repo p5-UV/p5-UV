@@ -4,6 +4,13 @@ use warnings;
 use Test::More;
 use UV;
 
+sub _cleanup_loop {
+    my $loop = shift;
+    $loop->walk(sub {shift->close()});
+    $loop->run(UV::Loop::UV_RUN_DEFAULT);
+    $loop->close();
+}
+
 my $close_cb_called = 0;
 my $repeat_1_cb_called = 0;
 my $repeat_2_cb_called = 0;
@@ -93,6 +100,7 @@ sub repeat_2_cb {
 
     my $ms = UV::default_loop()->now() - $start_time;
     diag("Test took $ms ms (expected ~700ms)");
+    _cleanup_loop(UV::default_loop());
 }
 
 done_testing();

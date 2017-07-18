@@ -8,6 +8,13 @@ use constant IDLE_COUNT => 7;
 use constant ITERATIONS => 21;
 use constant TIMEOUT => 100;
 
+sub _cleanup_loop {
+    my $loop = shift;
+    $loop->walk(sub {shift->close()});
+    $loop->run(UV::Loop::UV_RUN_DEFAULT);
+    $loop->close();
+}
+
 # prepare handles
 my $prepare_1_handle;
 my $prepare_2_handle;
@@ -220,6 +227,7 @@ sub prepare_1_cb {
 
     is($idle_2_close_cb_called, $idle_2_cb_started, 'Idle 2 closes = idle 2 starts');
     is($idle_2_is_active, 0, 'no idle 2 active');
+    _cleanup_loop(UV::default_loop());
 }
 
 done_testing();

@@ -84,12 +84,14 @@ static SV * s_get_cv_croak (SV *cb_sv)
 
 /* Handle function definitions for some that aren't alpha ordered later */
 static void handle_alloc_cb(uv_handle_t* handle, size_t suggested_size, uv_buf_t* buf);
+static SV * handle_bless(uv_handle_t *h);
 static void handle_check_cb(uv_check_t* handle);
 static void handle_close_cb(uv_handle_t* handle);
 static HV * handle_data_stash(const uv_handle_type type);
 static void handle_idle_cb(uv_idle_t* handle);
 static void handle_prepare_cb(uv_prepare_t* handle);
 static void handle_timer_cb(uv_timer_t* handle);
+static void loop_walk_cb(uv_handle_t* handle, void* arg);
 
 /* loop functions */
 static void loop_default_init()
@@ -120,6 +122,30 @@ static uv_loop_t * loop_new()
         croak("Error initializing loop (%i): %s", ret, uv_strerror(ret));
     }
     return loop;
+}
+
+static void loop_walk_cb(uv_handle_t* handle, void* arg)
+{
+    SV *callback;
+    if (NULL == arg || (SV *)arg == &PL_sv_undef) return;
+    callback = arg ? s_get_cv_croak((SV *)arg) : NULL;
+    if (NULL == callback) return;
+
+    /* provide info to the caller: invocant, suggested_size */
+    dSP;
+    ENTER;
+    SAVETMPS;
+
+    PUSHMARK (SP);
+    EXTEND (SP, 1);
+    PUSHs(handle_bless(handle)); /* invocant */
+
+    PUTBACK;
+    call_sv (callback, G_VOID);
+    SPAGAIN;
+
+    FREETMPS;
+    LEAVE;
 }
 
 /* handle functions */
@@ -730,6 +756,9 @@ SV * uv_check_new(SV *class, uv_loop_t *loop = uvapi.default_loop)
     int res;
     uv_check_t *handle = (uv_check_t *)handle_new(UV_CHECK);
     PERL_UNUSED_VAR(class);
+    loop_default_init();
+    if (NULL == loop) loop = uvapi.default_loop;
+
 
     res = uv_check_init(loop, handle);
     if (0 != res) {
@@ -778,6 +807,9 @@ SV * uv_idle_new(SV *class, uv_loop_t *loop = uvapi.default_loop)
     int res;
     uv_idle_t *handle = (uv_idle_t *)handle_new(UV_IDLE);
     PERL_UNUSED_VAR(class);
+    loop_default_init();
+    if (NULL == loop) loop = uvapi.default_loop;
+
 
     res = uv_idle_init(loop, handle);
     if (0 != res) {
@@ -824,11 +856,13 @@ MODULE = UV             PACKAGE = UV::Prepare      PREFIX = uv_prepare_
 
 PROTOTYPES: ENABLE
 
-SV * uv_prepare_new(SV *class, uv_loop_t *loop = uvapi.default_loop)
+SV * uv_prepare_new(SV *class, uv_loop_t *loop = NULL)
     CODE:
     int res;
     uv_prepare_t *prepare = (uv_prepare_t *)handle_new(UV_PREPARE);
     PERL_UNUSED_VAR(class);
+    loop_default_init();
+    if (NULL == loop) loop = uvapi.default_loop;
 
     res = uv_prepare_init(loop, prepare);
     if (0 != res) {
@@ -875,11 +909,13 @@ MODULE = UV             PACKAGE = UV::Timer      PREFIX = uv_timer_
 
 PROTOTYPES: ENABLE
 
-SV * uv_timer_new(SV *class, uv_loop_t *loop = uvapi.default_loop)
+SV * uv_timer_new(SV *class, uv_loop_t *loop = NULL)
     CODE:
     int res;
     uv_timer_t *timer = (uv_timer_t *)handle_new(UV_TIMER);
     PERL_UNUSED_VAR(class);
+    loop_default_init();
+    if (NULL == loop) loop = uvapi.default_loop;
 
     res = uv_timer_init(loop, timer);
     if (0 != res) {
@@ -970,6 +1006,7 @@ SV *new (SV *class, int want_default = 0)
         );
     }
     else {
+        loop_default_init();
         RETVAL = newSVsv(default_loop_sv);
     }
     OUTPUT:
@@ -980,7 +1017,7 @@ void DESTROY (uv_loop_t *loop)
     /* 1. the default loop shouldn't be freed by destroying it's perl loop object */
     /* 2. not doing so helps avoid many global destruction bugs in perl, too */
     if (loop == uvapi.default_loop) {
-        SvREFCNT_dec (default_loop_sv);
+        SvREFCNT_dec(default_loop_sv);
         if (PL_dirty) {
             uv_loop_close((uv_loop_t *) default_loop_sv);
             default_loop_sv = NULL;
@@ -999,6 +1036,11 @@ int uv_backend_timeout(const uv_loop_t* loop)
 int uv_close(uv_loop_t *loop)
     CODE:
         RETVAL = uv_loop_close(loop);
+        if (loop == uvapi.default_loop) {
+            SvREFCNT_dec(default_loop_sv);
+            default_loop_sv = NULL;
+            uvapi.default_loop = NULL;
+        }
     OUTPUT:
     RETVAL
 
@@ -1017,3 +1059,8 @@ int uv_run(uv_loop_t* loop, uv_run_mode mode=UV_RUN_DEFAULT)
 void uv_stop(uv_loop_t* loop)
 
 void uv_update_time(uv_loop_t* loop)
+
+void uv_walk(uv_loop_t *loop, SV *cb=NULL)
+    CODE:
+        cb = cb == &PL_sv_undef ? NULL : cb;
+        uv_walk(loop, loop_walk_cb, (void *)cb);
