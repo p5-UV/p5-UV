@@ -1,6 +1,7 @@
 {
    "abstract" : "Perl interface to libuv",
    "author" : [
+      "Chase Whitener <capoeirab@cpan.org>",
       "Daisuke Murase <typester@cpan.org>"
    ],
    "dynamic_config" : 0,
@@ -669,7 +670,6 @@
       }
    },
    "x_contributors" : [
-      "Chase Whitener <capoeirab@cpan.org>",
       "Dan Book <grinnz@gmail.com>"
    ],
    "x_serialization_backend" : "Cpanel::JSON::XS version 3.0233"

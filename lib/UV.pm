@@ -424,11 +424,11 @@ Get the current Hi-Res time (C<uint64_t>).
 
 =head1 AUTHOR
 
-Daisuke Murase <F<typester@cpan.org>>
-
-=head1 CONTRIBUTORS
-
 Chase Whitener <F<capoeirab@cpan.org>>
+
+=head1 AUTHOR EMERITUS
+
+Daisuke Murase <F<typester@cpan.org>>
 
 =head1 COPYRIGHT AND LICENSE
 

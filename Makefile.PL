@@ -5,7 +5,6 @@
 use strict;
 use warnings;
 
-use 5.008001;
 use ExtUtils::MakeMaker;
 
 use Config;
@@ -13,7 +12,7 @@ use Alien::libuv ();
 
 my %WriteMakefileArgs = (
   "ABSTRACT" => "Perl interface to libuv",
-  "AUTHOR" => "Daisuke Murase <typester\@cpan.org>",
+  "AUTHOR" => "Chase Whitener <capoeirab\@cpan.org>, Daisuke Murase <typester\@cpan.org>",
   "BUILD_REQUIRES" => {
     "Alien::libuv" => "0.004",
     "Config" => 0,
@@ -26,7 +25,6 @@ my %WriteMakefileArgs = (
   },
   "DISTNAME" => "UV",
   "LICENSE" => "perl",
-  "MIN_PERL_VERSION" => "5.008001",
   "NAME" => "UV",
   "PREREQ_PM" => {
     "Alien::libuv" => "0.004",

@@ -111,11 +111,11 @@ stops the check handle. The callback will no longer be called.
 
 =head1 AUTHOR
 
-Daisuke Murase <F<typester@cpan.org>>
-
-=head1 CONTRIBUTORS
-
 Chase Whitener <F<capoeirab@cpan.org>>
+
+=head1 AUTHOR EMERITUS
+
+Daisuke Murase <F<typester@cpan.org>>
 
 =head1 COPYRIGHT AND LICENSE
 

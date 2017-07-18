@@ -365,11 +365,11 @@ Get the current Hi-Res time (`uint64_t`).
 
 # AUTHOR
 
-Daisuke Murase <`typester@cpan.org`>
-
-# CONTRIBUTORS
-
 Chase Whitener <`capoeirab@cpan.org`>
+
+# AUTHOR EMERITUS
+
+Daisuke Murase <`typester@cpan.org`>
 
 # COPYRIGHT AND LICENSE
 

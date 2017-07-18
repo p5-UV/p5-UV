@@ -303,11 +303,11 @@ This is an excellent way to ensure your loop is completely cleaned up.
 
 =head1 AUTHOR
 
-Daisuke Murase <F<typester@cpan.org>>
-
-=head1 CONTRIBUTORS
-
 Chase Whitener <F<capoeirab@cpan.org>>
+
+=head1 AUTHOR EMERITUS
+
+Daisuke Murase <F<typester@cpan.org>>
 
 =head1 COPYRIGHT AND LICENSE
 
