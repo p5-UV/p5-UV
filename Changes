@@ -7,6 +7,7 @@ Revision history for Perl extension {{$dist->name}}
     - Dropped the included src of libuv
     - Dropped the libuv license since we no longer include their source
     - Use Alien::libuv for ensuring we have a libuv to build against
+    - Completely rewrote the software due to massive changes between 0.x - 1.x
     - Added Math::Int64 for proper uint64_t support
     - Reworked the UV::loop into a new UV::Loop area
     - Added the ability to get non-default loops
