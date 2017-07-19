@@ -26,7 +26,7 @@ UV::Idle - Idle handles in libuv
 
   use UV;
 
-  # A new idle hadnle will be initialized against the default loop
+  # A new handle will be initialized against the default loop
   my $idle = UV::Idle->new();
 
   # Use a different loop
@@ -34,12 +34,12 @@ UV::Idle - Idle handles in libuv
   my $idle = UV::Idle->new($loop);
 
   # setup the idle callback:
-  $idle->on(idle => sub {"We're IDLING!!!"});
+  $idle->on(idle => sub {say "We're IDLING!!!"});
 
   # start the handle
   $idle->start();
   # or, with an explicit callback defined
-  $idle->start(sub {"override any 'idle' callback we already have"});
+  $idle->start(sub {say "override any 'idle' callback we already have"});
 
   # stop the check
   $idle->stop();

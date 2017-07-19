@@ -108,6 +108,10 @@
          "file" : "lib/UV/Loop.pm",
          "version" : "1.000"
       },
+      "UV::Poll" : {
+         "file" : "lib/UV/Poll.pm",
+         "version" : "1.000"
+      },
       "UV::Prepare" : {
          "file" : "lib/UV/Prepare.pm",
          "version" : "1.000"
@@ -571,10 +575,14 @@
                   ],
                   "spell_cmd" : "aspell list",
                   "stopwords" : [
+                     "AIX",
                      "CPAN",
                      "RSS",
                      "SIGPROF",
+                     "TCP",
                      "YAY",
+                     "bitmask",
+                     "busyloop",
                      "getrusage",
                      "github",
                      "hrtime",
@@ -582,12 +590,14 @@
                      "loadavg",
                      "profiler",
                      "ref",
+                     "scalable",
                      "stopwords",
                      "un",
                      "unref",
                      "uptime",
                      "wakeups",
-                     "wordlist"
+                     "wordlist",
+                     "writability"
                   ],
                   "wordlist" : "Pod::Wordlist"
                }

@@ -26,7 +26,7 @@ UV::Prepare - Prepare handles in libuv
 
   use UV;
 
-  # A new handle will give initialize against the default loop
+  # A new handle will be initialized against the default loop
   my $prepare = UV::Prepare->new();
 
   # Use a different loop
@@ -34,12 +34,12 @@ UV::Prepare - Prepare handles in libuv
   my $prepare = UV::Prepare->new($loop);
 
   # setup the handle's callback:
-  $prepare->on(prepare => sub {"We're prepared!!!"});
+  $prepare->on(prepare => sub {say "We're prepared!!!"});
 
   # start the handle
   $prepare->start();
   # or, with an explicit callback defined
-  $prepare->start(sub {"override any other callback we already have"});
+  $prepare->start(sub {say "override any other callback we already have"});
 
   # stop the handle
   $prepare->stop();

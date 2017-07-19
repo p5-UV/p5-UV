@@ -26,7 +26,7 @@ UV::Timer - Timers in libuv
 
   use UV;
 
-  # A new timer will be initialized against the default loop
+  # A new handle will be initialized against the default loop
   my $timer = UV::Timer->new();
 
   # Use a different loop
@@ -34,12 +34,12 @@ UV::Timer - Timers in libuv
   my $timer = UV::Timer->new($loop);
 
   # setup the timer callback:
-  $timer->on("timer", sub {"We're TIMING!!!"});
+  $timer->on("timer", sub {say "We're TIMING!!!"});
 
   # start the timer
   $timer->start(); # same as ->start(0, 0);
   $timer->start(1, 0);
-  $timer->start(1, 0, sub {"override any TIMER callback we already have"});
+  $timer->start(1, 0, sub {say "override any TIMER callback we already have"});
 
   # stop the timer
   $timer->stop();

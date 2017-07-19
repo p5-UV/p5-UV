@@ -26,7 +26,7 @@ UV::Check - Check handles in libuv
 
   use UV;
 
-  # A new check will be initialized against the default loop
+  # A new handle will be initialized against the default loop
   my $check = UV::Check->new();
 
   # Use a different loop
@@ -34,12 +34,12 @@ UV::Check - Check handles in libuv
   my $check = UV::Check->new($loop);
 
   # setup the check callback:
-  $check->on(check => sub {"We're CHECKING!!!"});
+  $check->on(check => sub {say "We're CHECKING!!!"});
 
   # start the check
   $check->start();
   # or, with an explicit callback defined
-  $check->start(sub {"override any 'check' callback we already have"});
+  $check->start(sub {say "override any 'check' callback we already have"});
 
   # stop the check
   $check->stop();

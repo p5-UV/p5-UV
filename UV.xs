@@ -14,6 +14,10 @@
 
 #include <uv.h>
 
+#if !defined(UV_PRIORITIZED)
+#define UV_PRIORITIZED 8
+#endif
+
 #define uv_loop(h)      INT2PTR (uv_loop_t *, SvIVX (((uv_handle_t *)(h))->loop))
 #define uv_data(h)      ((handle_data_t *)((uv_handle_t *)(h))->data)
 #define uv_user_data(h) uv_data(h)->user_data;
@@ -33,6 +37,7 @@ typedef struct handle_data_s {
     SV *check_cb;
     SV *close_cb;
     SV *idle_cb;
+    SV *poll_cb;
     SV *prepare_cb;
     SV *timer_cb;
 } handle_data_t;
@@ -89,6 +94,7 @@ static void handle_check_cb(uv_check_t* handle);
 static void handle_close_cb(uv_handle_t* handle);
 static HV * handle_data_stash(const uv_handle_type type);
 static void handle_idle_cb(uv_idle_t* handle);
+static void handle_poll_cb(uv_poll_t* handle, int status, int events);
 static void handle_prepare_cb(uv_prepare_t* handle);
 static void handle_timer_cb(uv_timer_t* handle);
 static void loop_walk_cb(uv_handle_t* handle, void* arg);
@@ -195,6 +201,10 @@ static void handle_data_destroy(handle_data_t *data_ptr)
         SvREFCNT_dec(data_ptr->idle_cb);
         data_ptr->idle_cb = NULL;
     }
+    if (NULL != data_ptr->poll_cb) {
+        SvREFCNT_dec(data_ptr->poll_cb);
+        data_ptr->poll_cb = NULL;
+    }
     if (NULL != data_ptr->prepare_cb) {
         SvREFCNT_dec(data_ptr->prepare_cb);
         data_ptr->prepare_cb = NULL;
@@ -232,6 +242,7 @@ static handle_data_t* handle_data_new(const uv_handle_type type)
     data_ptr->check_cb = NULL;
     data_ptr->close_cb = NULL;
     data_ptr->idle_cb = NULL;
+    data_ptr->poll_cb = NULL;
     data_ptr->prepare_cb = NULL;
     data_ptr->timer_cb = NULL;
     return data_ptr;
@@ -341,6 +352,17 @@ static void handle_on(uv_handle_t *handle, const char *name, SV *cb)
         /* set the CB */
         if (NULL != callback) {
             data_ptr->idle_cb = SvREFCNT_inc(callback);
+        }
+    }
+    else if (strEQ(name, "poll")) {
+        /* clear the callback's current value first */
+        if (NULL != data_ptr->poll_cb) {
+            SvREFCNT_dec(data_ptr->poll_cb);
+            data_ptr->poll_cb = NULL;
+        }
+        /* set the CB */
+        if (NULL != callback) {
+            data_ptr->poll_cb = SvREFCNT_inc(callback);
         }
     }
     else if (strEQ(name, "prepare")) {
@@ -463,6 +485,32 @@ static void handle_idle_cb(uv_idle_t* handle)
 
     PUTBACK;
     call_sv (data_ptr->idle_cb, G_VOID);
+    SPAGAIN;
+
+    FREETMPS;
+    LEAVE;
+}
+
+static void handle_poll_cb(uv_poll_t* handle, int status, int events)
+{
+    handle_data_t *data_ptr = uv_data(handle);
+
+    /* nothing else to do if we don't have a callback to call */
+    if (NULL == data_ptr || NULL == data_ptr->poll_cb) return;
+
+    /* provide info to the caller: invocant, status, events */
+    dSP;
+    ENTER;
+    SAVETMPS;
+
+    PUSHMARK (SP);
+    EXTEND (SP, 3);
+    PUSHs(handle_bless((uv_handle_t *)handle)); /* invocant */
+    mPUSHi(status);
+    mPUSHi(events);
+
+    PUTBACK;
+    call_sv (data_ptr->poll_cb, G_VOID);
     SPAGAIN;
 
     FREETMPS;
@@ -856,6 +904,70 @@ int uv_idle_start(uv_idle_t *handle, SV *cb=NULL)
     RETVAL
 
 int uv_idle_stop(uv_idle_t *handle)
+
+
+
+MODULE = UV             PACKAGE = UV::Poll      PREFIX = uv_poll_
+
+PROTOTYPES: ENABLE
+
+BOOT:
+{
+    HV *stash = gv_stashpvn("UV::Poll", 8, TRUE);
+    /* Poll Event Types */
+    newCONSTSUB(stash, "UV_READABLE", newSViv(UV_READABLE));
+    newCONSTSUB(stash, "UV_WRITABLE", newSViv(UV_WRITABLE));
+    newCONSTSUB(stash, "UV_DISCONNECT", newSViv(UV_DISCONNECT));
+    newCONSTSUB(stash, "UV_PRIORITIZED", newSViv(UV_PRIORITIZED));
+}
+
+
+SV * uv_poll_new(SV *class, int fd, uv_loop_t *loop = NULL)
+    CODE:
+    int res;
+    uv_poll_t *handle = (uv_poll_t *)handle_new(UV_POLL);
+    PERL_UNUSED_VAR(class);
+    loop_default_init();
+    if (NULL == loop) loop = uvapi.default_loop;
+
+    res = uv_poll_init(loop, handle, fd);
+    if (0 != res) {
+        Safefree(handle);
+        croak("Couldn't initialize prepare (%i): %s", res, uv_strerror(res));
+    }
+
+    if (loop == uvapi.default_loop) {
+        uv_data(handle)->loop_sv = default_loop_sv;
+    }
+    else {
+        uv_data(handle)->loop_sv = sv_bless( newRV_noinc( newSViv( PTR2IV(loop))), stash_loop);
+    }
+    RETVAL = handle_bless((uv_handle_t *)handle);
+    OUTPUT:
+    RETVAL
+
+void DESTROY(uv_poll_t *handle)
+    CODE:
+    if (NULL != handle && 0 == uv_is_closing((uv_handle_t *)handle) && 0 == uv_is_active((uv_handle_t *)handle)) {
+        uv_poll_stop(handle);
+        uv_close((uv_handle_t *)handle, handle_close_cb);
+        handle_data_destroy(uv_data(handle));
+    }
+
+int uv_poll_start(uv_poll_t *handle, int events = UV_READABLE, SV *cb=NULL)
+    CODE:
+        if (uv_is_closing((uv_handle_t *)handle)) {
+            croak("You can't call start on a closed handle");
+        }
+        if (items > 2) {
+            cb = cb == &PL_sv_undef ? NULL : cb;
+            handle_on((uv_handle_t *)handle, "poll", cb);
+        }
+        RETVAL = uv_poll_start(handle, events, handle_poll_cb);
+    OUTPUT:
+    RETVAL
+
+int uv_poll_stop(uv_poll_t *handle)
 
 
 
