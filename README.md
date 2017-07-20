@@ -357,11 +357,43 @@ The following functions are available:
 Returns the default loop (which is a singleton object). This module already
 creates the default loop and you get access to it with this method.
 
+## err\_name
+
+    my $error_name = UV::err_name(UV::UV_EAI_BADFLAGS);
+    say $error_name; # EAI_BADFLAGS
+
+The [err\_name](http://docs.libuv.org/en/v1.x/errors.html#c.uv_err_name)
+function returns the error name for the given error code. Leaks a few bytes of
+memory when you call it with an unknown error code.
+
+In libuv errors are negative numbered constants. As a rule of thumb, whenever
+there is a status parameter, or an API functions returns an integer, a negative
+number will imply an error.
+
+When a function which takes a callback returns an error, the callback will
+never be called.
+
 ## hrtime
 
     my $uint64_t = UV::hrtime();
 
 Get the current Hi-Res time (`uint64_t`).
+
+## strerror
+
+    my $error = UV::strerror(UV::UV_EAI_BADFLAGS);
+    say $error; # bad ai_flags value
+
+The [strerror](http://docs.libuv.org/en/v1.x/errors.html#c.uv_strerror)
+function returns the error message for the given error code. Leaks a few bytes
+of memory when you call it with an unknown error code.
+
+In libuv errors are negative numbered constants. As a rule of thumb, whenever
+there is a status parameter, or an API functions returns an integer, a negative
+number will imply an error.
+
+When a function which takes a callback returns an error, the callback will
+never be called.
 
 # AUTHOR
 

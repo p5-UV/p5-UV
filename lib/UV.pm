@@ -26,6 +26,8 @@ our @EXPORT_OK  = qw(
     UV_EPROTONOSUPPORT UV_EPROTOTYPE UV_ERANGE UV_EROFS UV_ESHUTDOWN UV_ESPIPE
     UV_ESRCH UV_ETIMEDOUT UV_ETXTBSY UV_EXDEV UV_UNKNOWN UV_EOF UV_ENXIO
     UV_EMLINK
+
+    default_loop err_name hrtime strerr translate_sys_error
 );
 
 # make sure all sub-classes of uv_handle_t are thought of as such
@@ -416,11 +418,43 @@ The following functions are available:
 Returns the default loop (which is a singleton object). This module already
 creates the default loop and you get access to it with this method.
 
+=head2 err_name
+
+    my $error_name = UV::err_name(UV::UV_EAI_BADFLAGS);
+    say $error_name; # EAI_BADFLAGS
+
+The L<err_name|http://docs.libuv.org/en/v1.x/errors.html#c.uv_err_name>
+function returns the error name for the given error code. Leaks a few bytes of
+memory when you call it with an unknown error code.
+
+In libuv errors are negative numbered constants. As a rule of thumb, whenever
+there is a status parameter, or an API functions returns an integer, a negative
+number will imply an error.
+
+When a function which takes a callback returns an error, the callback will
+never be called.
+
 =head2 hrtime
 
     my $uint64_t = UV::hrtime();
 
 Get the current Hi-Res time (C<uint64_t>).
+
+=head2 strerror
+
+    my $error = UV::strerror(UV::UV_EAI_BADFLAGS);
+    say $error; # bad ai_flags value
+
+The L<strerror|http://docs.libuv.org/en/v1.x/errors.html#c.uv_strerror>
+function returns the error message for the given error code. Leaks a few bytes
+of memory when you call it with an unknown error code.
+
+In libuv errors are negative numbered constants. As a rule of thumb, whenever
+there is a status parameter, or an API functions returns an integer, a negative
+number will imply an error.
+
+When a function which takes a callback returns an error, the callback will
+never be called.
 
 =head1 AUTHOR
 

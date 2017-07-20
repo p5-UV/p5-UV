@@ -688,8 +688,11 @@ SV *uv_default_loop()
     OUTPUT:
     RETVAL
 
+const char* uv_err_name(int err)
+
 uint64_t uv_hrtime()
 
+const char* uv_strerror(int err)
 
 
 MODULE = UV             PACKAGE = UV::Handle      PREFIX = uv_handle_
