@@ -12,6 +12,9 @@ require XSLoader;
 XSLoader::load('UV', $XS_VERSION);
 
 our @EXPORT_OK  = qw(
+    UV_VERSION_MAJOR UV_VERSION_MINOR UV_VERSION_PATCH UV_VERSION_IS_RELEASE
+    UV_VERSION_SUFFIX UV_VERSION_HEX
+
     UV_E2BIG UV_EACCES UV_EADDRINUSE UV_EADDRNOTAVAIL UV_EAFNOSUPPORT UV_EAGAIN
     UV_EAI_ADDRFAMILY UV_EAI_AGAIN UV_EAI_BADFLAGS" UV_EAI_BADHINTS
     UV_EAI_CANCELED UV_EAI_FAIL UV_EAI_FAMILY UV_EAI_MEMORY UV_EAI_NODATA
@@ -97,6 +100,20 @@ work.
 Event loops that work properly on all platforms. YAY!
 
 =head1 CONSTANTS
+
+=head2 VERSION CONSTANTS
+
+=head3 UV_VERSION_MAJOR
+
+=head3 UV_VERSION_MINOR
+
+=head3 UV_VERSION_PATCH
+
+=head3 UV_VERSION_IS_RELEASE
+
+=head3 UV_VERSION_SUFFIX
+
+=head3 UV_VERSION_HEX
 
 =head2 ERROR CONSTANTS
 
@@ -455,6 +472,24 @@ number will imply an error.
 
 When a function which takes a callback returns an error, the callback will
 never be called.
+
+=head2 version
+
+    my $int = UV::version();
+
+The L<version|http://docs.libuv.org/en/v1.x/version.html#c.uv_version> function
+returns C<UV::UV_VERSION_HEX>, the libuv version packed into a single integer.
+8 bits are used for each component, with the patch number stored in the 8 least
+significant bits. E.g. for libuv 1.2.3 this would be C<0x010203>.
+
+=head2 version_string
+
+    say UV::version_string();
+    # 1.13.1
+
+The L<version_string|http://docs.libuv.org/en/v1.x/version.html#c.uv_version_string>
+function returns the libuv version number as a string. For non-release versions
+the version suffix is included.
 
 =head1 AUTHOR
 

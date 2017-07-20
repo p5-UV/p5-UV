@@ -17,6 +17,11 @@
 #if !defined(UV_PRIORITIZED)
 #define UV_PRIORITIZED 8
 #endif
+#if !defined(UV_VERSION_HEX)
+#define UV_VERSION_HEX  ((UV_VERSION_MAJOR << 16) | \
+                         (UV_VERSION_MINOR <<  8) | \
+                         (UV_VERSION_PATCH))
+#endif
 
 #define uv_loop(h)      INT2PTR (uv_loop_t *, SvIVX (((uv_handle_t *)(h))->loop))
 #define uv_data(h)      ((handle_data_t *)((uv_handle_t *)(h))->data)
@@ -577,6 +582,14 @@ BOOT:
 
     /* add some constants to the package stash */
     {
+        /* expose the VERSION macros */
+        newCONSTSUB(stash, "UV_VERSION_MAJOR", newSViv(UV_VERSION_MAJOR));
+        newCONSTSUB(stash, "UV_VERSION_MINOR", newSViv(UV_VERSION_MINOR));
+        newCONSTSUB(stash, "UV_VERSION_PATCH", newSViv(UV_VERSION_PATCH));
+        newCONSTSUB(stash, "UV_VERSION_IS_RELEASE", newSViv(UV_VERSION_IS_RELEASE));
+        newCONSTSUB(stash, "UV_VERSION_SUFFIX", newSVpvf("%s", UV_VERSION_SUFFIX));
+        newCONSTSUB(stash, "UV_VERSION_HEX", newSViv(UV_VERSION_HEX));
+
         /* expose the different error constants */
         newCONSTSUB(stash, "UV_E2BIG", newSViv(UV_E2BIG));
         newCONSTSUB(stash, "UV_EACCES", newSViv(UV_EACCES));
@@ -693,6 +706,10 @@ const char* uv_err_name(int err)
 uint64_t uv_hrtime()
 
 const char* uv_strerror(int err)
+
+unsigned int uv_version()
+
+const char* uv_version_string()
 
 
 MODULE = UV             PACKAGE = UV::Handle      PREFIX = uv_handle_

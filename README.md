@@ -38,6 +38,20 @@ Event loops that work properly on all platforms. YAY!
 
 # CONSTANTS
 
+## VERSION CONSTANTS
+
+### UV\_VERSION\_MAJOR
+
+### UV\_VERSION\_MINOR
+
+### UV\_VERSION\_PATCH
+
+### UV\_VERSION\_IS\_RELEASE
+
+### UV\_VERSION\_SUFFIX
+
+### UV\_VERSION\_HEX
+
 ## ERROR CONSTANTS
 
 ### UV\_E2BIG
@@ -394,6 +408,24 @@ number will imply an error.
 
 When a function which takes a callback returns an error, the callback will
 never be called.
+
+## version
+
+    my $int = UV::version();
+
+The [version](http://docs.libuv.org/en/v1.x/version.html#c.uv_version) function
+returns `UV::UV_VERSION_HEX`, the libuv version packed into a single integer.
+8 bits are used for each component, with the patch number stored in the 8 least
+significant bits. E.g. for libuv 1.2.3 this would be `0x010203`.
+
+## version\_string
+
+    say UV::version_string();
+    # 1.13.1
+
+The [version\_string](http://docs.libuv.org/en/v1.x/version.html#c.uv_version_string)
+function returns the libuv version number as a string. For non-release versions
+the version suffix is included.
 
 # AUTHOR
 
