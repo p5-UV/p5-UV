@@ -21,6 +21,7 @@ on 'configure' => sub {
 };
 
 on 'test' => sub {
+    requires 'IO::Socket::INET';
     requires 'Test::More' => '0.88';
     requires 'Try::Tiny';
 };

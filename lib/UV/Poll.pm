@@ -7,6 +7,11 @@ use strict;
 use warnings;
 
 use parent 'UV::Handle';
+our @EXPORT_OK  = qw(
+    UV_READABLE UV_WRITABLE UV_DISCONNECT UV_PRIORITIZED
+);
+
+
 
 1;
 
@@ -134,6 +139,26 @@ handle with the given L<UV::Loop> to poll for a file descriptor. If no
 L<UV::Loop> is provided, then the L<UV::Loop/"default_loop"> is assumed.
 
 B<* Note:> As of libuv v1.2.2: the file descriptor is set to non-blocking mode.
+
+=head2 new_socket
+
+    use IO::Socket::INET;
+    use UV;
+    use UV::Poll qw(UV_READABLE UV_WRITABLE);
+
+    my $socket = IO::Socket::INET->new(Type => SOCK_STREAM);
+
+    my $poll = UV::Poll->new_socket(fileno($socket));
+    my $poll = UV::Poll->new_socket(fileno($socket), $some_loop); # or another loop
+
+    $poll->run(UV_READABLE | UV_WRITABLE, sub { ... });
+
+This constructor method creates a new L<UV::Poll> object and
+L<initializes|http://docs.libuv.org/en/v1.x/poll.html#c.uv_poll_init_socket> the
+handle with the given L<UV::Loop> to poll for a socket handle. If no
+L<UV::Loop> is provided, then the L<UV::Loop/"default_loop"> is assumed.
+
+B<* Note:> As of libuv v1.2.2: the file socket is set to non-blocking mode.
 
 =head2 start
 

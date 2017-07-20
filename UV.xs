@@ -921,7 +921,6 @@ BOOT:
     newCONSTSUB(stash, "UV_PRIORITIZED", newSViv(UV_PRIORITIZED));
 }
 
-
 SV * uv_poll_new(SV *class, int fd, uv_loop_t *loop = NULL)
     CODE:
     int res;
@@ -931,6 +930,30 @@ SV * uv_poll_new(SV *class, int fd, uv_loop_t *loop = NULL)
     if (NULL == loop) loop = uvapi.default_loop;
 
     res = uv_poll_init(loop, handle, fd);
+    if (0 != res) {
+        Safefree(handle);
+        croak("Couldn't initialize prepare (%i): %s", res, uv_strerror(res));
+    }
+
+    if (loop == uvapi.default_loop) {
+        uv_data(handle)->loop_sv = default_loop_sv;
+    }
+    else {
+        uv_data(handle)->loop_sv = sv_bless( newRV_noinc( newSViv( PTR2IV(loop))), stash_loop);
+    }
+    RETVAL = handle_bless((uv_handle_t *)handle);
+    OUTPUT:
+    RETVAL
+
+SV * uv_poll_new_socket(SV *class, int fd, uv_loop_t *loop = NULL)
+    CODE:
+    int res;
+    uv_poll_t *handle = (uv_poll_t *)handle_new(UV_POLL);
+    PERL_UNUSED_VAR(class);
+    loop_default_init();
+    if (NULL == loop) loop = uvapi.default_loop;
+
+    res = uv_poll_init_socket(loop, handle, fd);
     if (0 != res) {
         Safefree(handle);
         croak("Couldn't initialize prepare (%i): %s", res, uv_strerror(res));
