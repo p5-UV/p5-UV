@@ -756,6 +756,7 @@ int uv_handle_active (uv_handle_t *handle)
     ALIAS:
         UV::Handle::is_active = 1
     CODE:
+        PERL_UNUSED_VAR(ix);
         RETVAL = uv_is_active(handle);
     OUTPUT:
     RETVAL
@@ -764,6 +765,7 @@ int uv_handle_closing(uv_handle_t *handle)
     ALIAS:
         UV::Handle::is_closing = 1
     CODE:
+        PERL_UNUSED_VAR(ix);
         RETVAL = uv_is_closing(handle);
     OUTPUT:
     RETVAL
@@ -1206,13 +1208,21 @@ int uv_close(uv_loop_t *loop)
     OUTPUT:
     RETVAL
 
+int uv_alive(const uv_loop_t* loop)
+    CODE:
+    RETVAL = uv_loop_alive(loop);
+    OUTPUT:
+    RETVAL
+
 int uv_loop_alive(const uv_loop_t* loop)
-    ALIAS:
-    UV::Loop::alive = 1
+
+int uv_configure(uv_loop_t *loop, uv_loop_option option, int value)
+    CODE:
+    RETVAL = uv_loop_configure(loop, option, value);
+    OUTPUT:
+    RETVAL
 
 int uv_loop_configure(uv_loop_t* loop, uv_loop_option option, int value)
-    ALIAS:
-    UV::Loop::configure = 1
 
 uint64_t uv_now(const uv_loop_t* loop)
 
