@@ -14,6 +14,9 @@
 
 #include <uv.h>
 
+#if !defined(UV_DISCONNECT)
+#define UV_DISCONNECT 4
+#endif
 #if !defined(UV_PRIORITIZED)
 #define UV_PRIORITIZED 8
 #endif
