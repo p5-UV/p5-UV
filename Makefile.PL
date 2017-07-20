@@ -38,6 +38,7 @@ my %WriteMakefileArgs = (
   "TEST_REQUIRES" => {
     "ExtUtils::MakeMaker" => "7.12",
     "File::Spec" => 0,
+    "IO::Socket::INET" => 0,
     "Test::More" => "0.88",
     "Try::Tiny" => 0
   },
@@ -60,6 +61,7 @@ my %FallbackPrereqs = (
   "Exporter" => "5.57",
   "ExtUtils::MakeMaker" => "7.12",
   "File::Spec" => 0,
+  "IO::Socket::INET" => 0,
   "Math::Int64" => 0,
   "Test::More" => "0.88",
   "Try::Tiny" => 0,

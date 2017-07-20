@@ -932,7 +932,7 @@ SV * uv_poll_new(SV *class, int fd, uv_loop_t *loop = NULL)
     res = uv_poll_init(loop, handle, fd);
     if (0 != res) {
         Safefree(handle);
-        croak("Couldn't initialize prepare (%i): %s", res, uv_strerror(res));
+        croak("Couldn't initialize handle (%i): %s", res, uv_strerror(res));
     }
 
     if (loop == uvapi.default_loop) {
@@ -956,7 +956,7 @@ SV * uv_poll_new_socket(SV *class, int fd, uv_loop_t *loop = NULL)
     res = uv_poll_init_socket(loop, handle, fd);
     if (0 != res) {
         Safefree(handle);
-        croak("Couldn't initialize prepare (%i): %s", res, uv_strerror(res));
+        croak("Couldn't initialize handle (%i): %s", res, uv_strerror(res));
     }
 
     if (loop == uvapi.default_loop) {

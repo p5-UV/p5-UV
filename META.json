@@ -82,6 +82,7 @@
          "requires" : {
             "ExtUtils::MakeMaker" : "7.12",
             "File::Spec" : "0",
+            "IO::Socket::INET" : "0",
             "Test::More" : "0.88",
             "Try::Tiny" : "0"
          }
