@@ -33,7 +33,7 @@ sub repeat_1_cb {
     is($handle, $repeat_1, 'Got the right handle in the repeat_1 cb');
 
     my $ms = UV::default_loop()->now() - $start_time;
-    diag("repeat_1_cb called after $ms ms");
+    # diag("repeat_1_cb called after $ms ms");
 
     is($handle->get_repeat(), 50, 'Got the right timer repeat value');
     $repeat_1_cb_called++;
@@ -53,7 +53,7 @@ sub repeat_2_cb {
     ok($repeat_2_cb_allowed, 'repeat 2 cb allowed');
 
     my $ms = UV::default_loop()->now() - $start_time;
-    diag("repeat_2_cb called after $ms ms");
+    #diag("repeat_2_cb called after $ms ms");
     $repeat_2_cb_called++;
 
     if (0 == $repeat_2->get_repeat()) {

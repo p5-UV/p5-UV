@@ -77,12 +77,19 @@
       },
       "test" : {
          "recommends" : {
-            "CPAN::Meta" : "2.120900"
+            "CPAN::Meta" : "2.120900",
+            "IO::Epoll" : "0",
+            "IO::KQueue" : "0"
          },
          "requires" : {
+            "Errno" : "0",
             "ExtUtils::MakeMaker" : "7.12",
             "File::Spec" : "0",
+            "FindBin" : "0",
+            "IO::Handle" : "0",
             "IO::Socket::INET" : "0",
+            "POSIX" : "0",
+            "Socket" : "0",
             "Test::More" : "0.88",
             "Try::Tiny" : "0"
          }

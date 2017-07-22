@@ -21,9 +21,17 @@ on 'configure' => sub {
 };
 
 on 'test' => sub {
+    requires 'Errno';
+    requires 'FindBin';
+    requires 'IO::Handle';
     requires 'IO::Socket::INET';
+    requires 'POSIX';
+    requires 'Socket';
     requires 'Test::More' => '0.88';
     requires 'Try::Tiny';
+
+    recommends 'IO::Epoll';
+    recommends 'IO::KQueue';
 };
 
 on 'develop' => sub {
