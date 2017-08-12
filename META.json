@@ -585,6 +585,7 @@
                   "stopwords" : [
                      "AIX",
                      "CPAN",
+                     "PRs",
                      "RSS",
                      "SIGPROF",
                      "TCP",
