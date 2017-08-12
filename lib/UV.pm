@@ -1,6 +1,6 @@
 package UV;
 
-our $VERSION = '1.000';
+our $VERSION = '1.000000_01';
 our $XS_VERSION = $VERSION;
 $VERSION = eval $VERSION;
 
@@ -98,6 +98,18 @@ L<libuv docs|http://docs.libuv.org> directly for more details on how things
 work.
 
 Event loops that work properly on all platforms. YAY!
+
+=head1 HELP NEEDED
+
+If you are a C/XS developer, I'm pleading for help. While the test cases so far
+function as expected, some design decisions I've made up to this point have
+become somewhat untenable.
+
+Please submit PRs, yell at me on IRC, email me, call me, contact me by any means
+available to you to help me fix this and get the entirety of the libuv project
+ready for Perl use.
+
+Thanks!!
 
 =head1 CONSTANTS
 

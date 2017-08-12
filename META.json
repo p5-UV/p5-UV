@@ -98,38 +98,38 @@
    "provides" : {
       "UV" : {
          "file" : "lib/UV.pm",
-         "version" : "1.000"
+         "version" : "1.000000_01"
       },
       "UV::Check" : {
          "file" : "lib/UV/Check.pm",
-         "version" : "1.000"
+         "version" : "1.000000_01"
       },
       "UV::Handle" : {
          "file" : "lib/UV/Handle.pm",
-         "version" : "1.000"
+         "version" : "1.000000_01"
       },
       "UV::Idle" : {
          "file" : "lib/UV/Idle.pm",
-         "version" : "1.000"
+         "version" : "1.000000_01"
       },
       "UV::Loop" : {
          "file" : "lib/UV/Loop.pm",
-         "version" : "1.000"
+         "version" : "1.000000_01"
       },
       "UV::Poll" : {
          "file" : "lib/UV/Poll.pm",
-         "version" : "1.000"
+         "version" : "1.000000_01"
       },
       "UV::Prepare" : {
          "file" : "lib/UV/Prepare.pm",
-         "version" : "1.000"
+         "version" : "1.000000_01"
       },
       "UV::Timer" : {
          "file" : "lib/UV/Timer.pm",
-         "version" : "1.000"
+         "version" : "1.000000_01"
       }
    },
-   "release_status" : "stable",
+   "release_status" : "testing",
    "resources" : {
       "bugtracker" : {
          "web" : "https://github.com/genio/p5-UV/issues"
@@ -141,7 +141,7 @@
          "web" : "https://github.com/genio/p5-UV"
       }
    },
-   "version" : "1.000",
+   "version" : "1.000000_01",
    "x_Dist_Zilla" : {
       "perl" : {
          "version" : "5.026000"
@@ -448,7 +448,7 @@
                   "branch" : null,
                   "changelog" : "Changes",
                   "signed" : 0,
-                  "tag" : "v1.000",
+                  "tag" : "v1.000000_01",
                   "tag_format" : "v%v",
                   "tag_message" : "v%v"
                },
@@ -682,7 +682,7 @@
       "zilla" : {
          "class" : "Dist::Zilla::Dist::Builder",
          "config" : {
-            "is_trial" : 0
+            "is_trial" : 1
          },
          "version" : "6.010"
       }
@@ -690,6 +690,6 @@
    "x_contributors" : [
       "Dan Book <grinnz@gmail.com>"
    ],
-   "x_serialization_backend" : "Cpanel::JSON::XS version 3.0233"
+   "x_serialization_backend" : "Cpanel::JSON::XS version 3.0237"
 }
 
