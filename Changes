@@ -1,6 +1,8 @@
 Revision history for Perl extension {{$dist->name}}
 
 {{$NEXT}}
+
+1.000000_01 2017-08-12
     - ****** MAJOR, BREAKING CHANGES AHEAD ******
     - Migrated to Dist::Zilla
     - Moved the version of libuv from 0.x to 1.x
