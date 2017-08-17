@@ -14,20 +14,20 @@ my %WriteMakefileArgs = (
   "ABSTRACT" => "Perl interface to libuv",
   "AUTHOR" => "Chase Whitener <capoeirab\@cpan.org>, Daisuke Murase <typester\@cpan.org>",
   "BUILD_REQUIRES" => {
-    "Alien::libuv" => "0.004",
+    "Alien::libuv" => "0.006",
     "Config" => 0,
     "ExtUtils::MakeMaker" => "7.12",
     "Math::Int64" => 0
   },
   "CONFIGURE_REQUIRES" => {
-    "Alien::libuv" => "0.004",
+    "Alien::libuv" => "0.006",
     "ExtUtils::MakeMaker" => 0
   },
   "DISTNAME" => "UV",
   "LICENSE" => "perl",
   "NAME" => "UV",
   "PREREQ_PM" => {
-    "Alien::libuv" => "0.004",
+    "Alien::libuv" => "0.006",
     "Exporter" => "5.57",
     "Math::Int64" => 0,
     "XSLoader" => "0.14",
@@ -36,6 +36,7 @@ my %WriteMakefileArgs = (
     "warnings" => 0
   },
   "TEST_REQUIRES" => {
+    "Alien::libuv" => "0.006",
     "Errno" => 0,
     "ExtUtils::MakeMaker" => "7.12",
     "File::Spec" => 0,
@@ -47,7 +48,7 @@ my %WriteMakefileArgs = (
     "Test::More" => "0.88",
     "Try::Tiny" => 0
   },
-  "VERSION" => "1.000000_01",
+  "VERSION" => "1.000001",
   "test" => {
     "TESTS" => "t/*.t"
   }
@@ -61,7 +62,7 @@ my %WriteMakefileArgs = (
 );
 
 my %FallbackPrereqs = (
-  "Alien::libuv" => "0.004",
+  "Alien::libuv" => "0.006",
   "Config" => 0,
   "Errno" => 0,
   "Exporter" => "5.57",

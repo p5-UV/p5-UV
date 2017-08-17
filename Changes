@@ -1,6 +1,7 @@
 Revision history for Perl extension {{$dist->name}}
 
 {{$NEXT}}
+    - Update some prereqs
 
 1.000000_01 2017-08-12
     - ****** MAJOR, BREAKING CHANGES AHEAD ******

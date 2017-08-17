@@ -1,6 +1,6 @@
 package UV::Timer;
 
-our $VERSION = '1.000000_01';
+our $VERSION = '1.000001';
 $VERSION = eval $VERSION;
 
 use strict;

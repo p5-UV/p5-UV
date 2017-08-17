@@ -27,7 +27,7 @@
    "prereqs" : {
       "build" : {
          "requires" : {
-            "Alien::libuv" : "0.004",
+            "Alien::libuv" : "0.006",
             "Config" : "0",
             "ExtUtils::MakeMaker" : "7.12",
             "Math::Int64" : "0"
@@ -35,7 +35,7 @@
       },
       "configure" : {
          "requires" : {
-            "Alien::libuv" : "0.004",
+            "Alien::libuv" : "0.006",
             "ExtUtils::MakeMaker" : "0"
          }
       },
@@ -65,7 +65,7 @@
       },
       "runtime" : {
          "requires" : {
-            "Alien::libuv" : "0.004",
+            "Alien::libuv" : "0.006",
             "Exporter" : "5.57",
             "Math::Int64" : "0",
             "XSLoader" : "0.14",
@@ -82,6 +82,7 @@
             "IO::KQueue" : "0"
          },
          "requires" : {
+            "Alien::libuv" : "0.006",
             "Errno" : "0",
             "ExtUtils::MakeMaker" : "7.12",
             "File::Spec" : "0",
@@ -98,38 +99,38 @@
    "provides" : {
       "UV" : {
          "file" : "lib/UV.pm",
-         "version" : "1.000000_01"
+         "version" : "1.000001"
       },
       "UV::Check" : {
          "file" : "lib/UV/Check.pm",
-         "version" : "1.000000_01"
+         "version" : "1.000001"
       },
       "UV::Handle" : {
          "file" : "lib/UV/Handle.pm",
-         "version" : "1.000000_01"
+         "version" : "1.000001"
       },
       "UV::Idle" : {
          "file" : "lib/UV/Idle.pm",
-         "version" : "1.000000_01"
+         "version" : "1.000001"
       },
       "UV::Loop" : {
          "file" : "lib/UV/Loop.pm",
-         "version" : "1.000000_01"
+         "version" : "1.000001"
       },
       "UV::Poll" : {
          "file" : "lib/UV/Poll.pm",
-         "version" : "1.000000_01"
+         "version" : "1.000001"
       },
       "UV::Prepare" : {
          "file" : "lib/UV/Prepare.pm",
-         "version" : "1.000000_01"
+         "version" : "1.000001"
       },
       "UV::Timer" : {
          "file" : "lib/UV/Timer.pm",
-         "version" : "1.000000_01"
+         "version" : "1.000001"
       }
    },
-   "release_status" : "testing",
+   "release_status" : "stable",
    "resources" : {
       "bugtracker" : {
          "web" : "https://github.com/genio/p5-UV/issues"
@@ -141,7 +142,7 @@
          "web" : "https://github.com/genio/p5-UV"
       }
    },
-   "version" : "1.000000_01",
+   "version" : "1.000001",
    "x_Dist_Zilla" : {
       "perl" : {
          "version" : "5.026000"
@@ -448,7 +449,7 @@
                   "branch" : null,
                   "changelog" : "Changes",
                   "signed" : 0,
-                  "tag" : "v1.000000_01",
+                  "tag" : "v1.000001",
                   "tag_format" : "v%v",
                   "tag_message" : "v%v"
                },
@@ -683,7 +684,7 @@
       "zilla" : {
          "class" : "Dist::Zilla::Dist::Builder",
          "config" : {
-            "is_trial" : 1
+            "is_trial" : 0
          },
          "version" : "6.010"
       }
