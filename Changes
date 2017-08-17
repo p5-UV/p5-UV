@@ -2,6 +2,7 @@ Revision history for Perl extension {{$dist->name}}
 
 {{$NEXT}}
     - Update some prereqs
+    - Remove use of SO_REUSEPORT in the tests. We store the port already.
 
 1.000000_01 2017-08-12
     - ****** MAJOR, BREAKING CHANGES AHEAD ******

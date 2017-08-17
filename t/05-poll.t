@@ -398,7 +398,7 @@ sub start_server {
     my $sock = IO::Socket::INET->new(
         Type=>SOCK_STREAM,
         LocalAddr => '127.0.0.1',
-        ReusePort => 1,
+        # ReusePort => 1,
         Blocking => 0,
         Proto => Socket::IPPROTO_IP,
         Listen => 100,
@@ -420,7 +420,7 @@ sub start_client {
         Type=>SOCK_STREAM,
         PeerAddr => '127.0.0.1',
         PeerPort => $TEST_PORT,
-        ReusePort => 1,
+        # ReusePort => 1,
         Blocking => 0,
         Proto => Socket::IPPROTO_IP,
     );
