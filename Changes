@@ -1,6 +1,8 @@
 Revision history for Perl extension {{$dist->name}}
 
 {{$NEXT}}
+
+1.000001  2017-08-17
     - Update some prereqs
     - Remove use of SO_REUSEPORT in the tests. We store the port already.
     - Made 05-poll-closesocket.t a windows-only test
