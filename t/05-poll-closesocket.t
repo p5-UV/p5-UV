@@ -45,6 +45,7 @@ sub poll_cb {
 }
 
 subtest 'poll_closesocket' => sub {
+    plan skip_all => 'Windows only tests' unless WINLIKE();
     $sock = IO::Socket::INET->new(Type => SOCK_STREAM);
     $handle = UV::Poll->new_socket(fileno($sock));
     isa_ok($handle, 'UV::Handle', 'Got a new POLL socket handle');
