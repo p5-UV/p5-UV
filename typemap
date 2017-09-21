@@ -21,14 +21,13 @@ T_RUN_UV
     $var = SvIV($arg)
 
 T_LOOP
-    if (!(SvROK ($arg) && SvOBJECT (SvRV ($arg)) && (SvSTASH (SvRV ($arg)) == stash_loop || sv_derived_from ($arg, \"UV::Loop\"))))
+    if (!(SvROK($arg) && SvOBJECT(SvRV ($arg)) && sv_derived_from($arg, \"UV::Loop\")))
         croak (\"object is not of type UV::Loop\");
     $var = ($type)SvIVX (SvRV ($arg));
 
 T_HANDLE
     if (!(SvROK ($arg) && SvOBJECT (SvRV ($arg))
-      && (SvSTASH (SvRV ($arg)) == stash_" . ($type =~ /uv_([^_\s]+)/, "$1") . "
-      || sv_derived_from ($arg, \"UV::" . ($type =~ /uv_([^_\s]+)/, ucfirst "$1") . "\"))))
+      && (sv_derived_from ($arg, \"UV::" . ($type =~ /uv_([^_\s]+)/, ucfirst "$1") . "\"))))
          croak (\"object is not of type UV::" . ($type =~ /uv_([^_\s]+)/, ucfirst "$1") . "\");
     $var = ($type)SvPVX (SvRV ($arg));
 

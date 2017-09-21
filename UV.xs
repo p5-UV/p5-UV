@@ -52,27 +52,6 @@ typedef struct handle_data_s {
 
 static struct UVAPI uvapi;
 static SV *default_loop_sv;
-static HV *stash_loop;
-
-/* handle stashes */
-static HV
-    *stash_async,
-    *stash_check,
-    *stash_fs_event,
-    *stash_fs_poll,
-    *stash_handle,
-    *stash_idle,
-    *stash_named_pipe,
-    *stash_poll,
-    *stash_prepare,
-    *stash_process,
-    *stash_stream,
-    *stash_tcp,
-    *stash_timer,
-    *stash_tty,
-    *stash_udp,
-    *stash_signal,
-    *stash_file;
 
 static SV * s_get_cv (SV *cb_sv)
 {
@@ -100,8 +79,8 @@ static void handle_alloc_cb(uv_handle_t* handle, size_t suggested_size, uv_buf_t
 static SV * handle_bless(uv_handle_t *h);
 static void handle_check_cb(uv_check_t* handle);
 static void handle_close_cb(uv_handle_t* handle);
-static HV * handle_data_stash(const uv_handle_type type);
 static void handle_idle_cb(uv_idle_t* handle);
+static const char* handle_namespace(const uv_handle_type type);
 static void handle_poll_cb(uv_poll_t* handle, int status, int events);
 static void handle_prepare_cb(uv_prepare_t* handle);
 static void handle_timer_cb(uv_timer_t* handle);
@@ -117,7 +96,7 @@ static void loop_default_init()
         }
         default_loop_sv = sv_bless(
             newRV_noinc(newSViv(PTR2IV(uvapi.default_loop))),
-            stash_loop
+            gv_stashpv("UV::Loop", GV_ADD)
         );
     }
 }
@@ -233,7 +212,7 @@ static handle_data_t* handle_data_new(const uv_handle_type type)
     }
 
     /* set the stash */
-    data_ptr->stash = handle_data_stash(type);
+    data_ptr->stash = gv_stashpv(handle_namespace(type), GV_ADD);
     if (NULL == data_ptr->stash) {
         free(data_ptr);
         croak("Invalid handle type supplied (%i)", type);
@@ -254,27 +233,6 @@ static handle_data_t* handle_data_new(const uv_handle_type type)
     data_ptr->prepare_cb = NULL;
     data_ptr->timer_cb = NULL;
     return data_ptr;
-}
-
-static HV * handle_data_stash(const uv_handle_type type)
-{
-    if (type == UV_ASYNC) return stash_async;
-    if (type == UV_CHECK) return stash_check;
-    if (type == UV_FS_EVENT) return stash_check;
-    if (type == UV_FS_POLL) return stash_fs_poll;
-    if (type == UV_IDLE) return stash_idle;
-    if (type == UV_NAMED_PIPE) return stash_named_pipe;
-    if (type == UV_POLL) return stash_poll;
-    if (type == UV_PREPARE) return stash_prepare;
-    if (type == UV_PROCESS) return stash_process;
-    if (type == UV_STREAM) return stash_stream;
-    if (type == UV_TCP) return stash_tcp;
-    if (type == UV_TIMER) return stash_timer;
-    if (type == UV_TTY) return stash_tty;
-    if (type == UV_UDP) return stash_udp;
-    if (type == UV_SIGNAL) return stash_signal;
-    if (type == UV_FILE) return stash_file;
-    return NULL;
 }
 
 static void handle_destroy(uv_handle_t *handle)
@@ -307,6 +265,30 @@ static uv_handle_t* handle_new(const uv_handle_type type)
     data_ptr->self = self;
     handle->data = (void *)data_ptr;
     return handle;
+}
+
+static const char * handle_namespace(const uv_handle_type type)
+{
+    switch (type) {
+        case UV_ASYNC: return "UV::Async"; break;
+        case UV_CHECK: return "UV::Check"; break;
+        case UV_FS_EVENT: return "UV::FSEvent"; break;
+        case UV_FS_POLL: return "UV::FSPoll"; break;
+        case UV_IDLE: return "UV::Idle"; break;
+        case UV_NAMED_PIPE: return "UV::NamedPipe"; break;
+        case UV_POLL: return "UV::Poll"; break;
+        case UV_PREPARE: return "UV::Prepare"; break;
+        case UV_PROCESS: return "UV::Process"; break;
+        case UV_STREAM: return "UV::Stream"; break;
+        case UV_TCP: return "UV::TCP"; break;
+        case UV_TIMER: return "UV::Timer"; break;
+        case UV_TTY: return "UV::TTY"; break;
+        case UV_UDP: return "UV::UDP"; break;
+        case UV_SIGNAL: return "UV::Signal"; break;
+        default:
+            croak("Invalid handle type supplied");
+    }
+    return NULL;
 }
 
 static void handle_on(uv_handle_t *handle, const char *name, SV *cb)
@@ -671,28 +653,6 @@ BOOT:
         newCONSTSUB(stash, "UV_EMLINK", newSViv(UV_EMLINK));
     }
 
-    /* make sure we have a pointer to our other namespace stashes */
-    /* loop stash */
-    stash_loop          = gv_stashpv("UV::Loop",        GV_ADD);
-    /* handle stashes */
-    stash_async         = gv_stashpv("UV::Async",       GV_ADD);
-    stash_check         = gv_stashpv("UV::Check",       GV_ADD);
-    stash_fs_event      = gv_stashpv("UV::FSEvent",     GV_ADD);
-    stash_fs_poll       = gv_stashpv("UV::FSPoll",      GV_ADD);
-    stash_handle        = gv_stashpv("UV::Handle",      GV_ADD);
-    stash_idle          = gv_stashpv("UV::Idle",        GV_ADD);
-    stash_named_pipe    = gv_stashpv("UV::NamedPipe",   GV_ADD);
-    stash_poll          = gv_stashpv("UV::Poll",        GV_ADD);
-    stash_prepare       = gv_stashpv("UV::Prepare",     GV_ADD);
-    stash_process       = gv_stashpv("UV::Process",     GV_ADD);
-    stash_stream        = gv_stashpv("UV::Stream",      GV_ADD);
-    stash_tcp           = gv_stashpv("UV::TCP",         GV_ADD);
-    stash_timer         = gv_stashpv("UV::Timer",       GV_ADD);
-    stash_tty           = gv_stashpv("UV::TTY",         GV_ADD);
-    stash_udp           = gv_stashpv("UV::UDP",         GV_ADD);
-    stash_signal        = gv_stashpv("UV::Signal",      GV_ADD);
-    stash_file          = gv_stashpv("UV::File",        GV_ADD);
-
     /* somewhat of an API */
     uvapi.default_loop = NULL;
 }
@@ -850,7 +810,7 @@ SV * uv_check_new(SV *class, uv_loop_t *loop = uvapi.default_loop)
         uv_data(handle)->loop_sv = default_loop_sv;
     }
     else {
-        uv_data(handle)->loop_sv = sv_bless( newRV_noinc( newSViv( PTR2IV(loop))), stash_loop);
+        uv_data(handle)->loop_sv = sv_bless( newRV_noinc( newSViv( PTR2IV(loop))), gv_stashpv("UV::Loop", GV_ADD));
     }
     RETVAL = handle_bless((uv_handle_t *)handle);
     OUTPUT:
@@ -901,7 +861,7 @@ SV * uv_idle_new(SV *class, uv_loop_t *loop = uvapi.default_loop)
         uv_data(handle)->loop_sv = default_loop_sv;
     }
     else {
-        uv_data(handle)->loop_sv = sv_bless( newRV_noinc( newSViv( PTR2IV(loop))), stash_loop);
+        uv_data(handle)->loop_sv = sv_bless( newRV_noinc( newSViv( PTR2IV(loop))), gv_stashpv("UV::Loop", GV_ADD));
     }
     RETVAL = handle_bless((uv_handle_t *)handle);
     OUTPUT:
@@ -964,7 +924,7 @@ SV * uv_poll_new(SV *class, int fd, uv_loop_t *loop = NULL)
         uv_data(handle)->loop_sv = default_loop_sv;
     }
     else {
-        uv_data(handle)->loop_sv = sv_bless( newRV_noinc( newSViv( PTR2IV(loop))), stash_loop);
+        uv_data(handle)->loop_sv = sv_bless( newRV_noinc( newSViv( PTR2IV(loop))), gv_stashpv("UV::Loop", GV_ADD));
     }
     RETVAL = handle_bless((uv_handle_t *)handle);
     OUTPUT:
@@ -988,7 +948,7 @@ SV * uv_poll_new_socket(SV *class, int fd, uv_loop_t *loop = NULL)
         uv_data(handle)->loop_sv = default_loop_sv;
     }
     else {
-        uv_data(handle)->loop_sv = sv_bless( newRV_noinc( newSViv( PTR2IV(loop))), stash_loop);
+        uv_data(handle)->loop_sv = sv_bless( newRV_noinc( newSViv( PTR2IV(loop))), gv_stashpv("UV::Loop", GV_ADD));
     }
     RETVAL = handle_bless((uv_handle_t *)handle);
     OUTPUT:
@@ -1041,7 +1001,7 @@ SV * uv_prepare_new(SV *class, uv_loop_t *loop = NULL)
         uv_data(prepare)->loop_sv = default_loop_sv;
     }
     else {
-        uv_data(prepare)->loop_sv = sv_bless( newRV_noinc( newSViv( PTR2IV(loop))), stash_loop);
+        uv_data(prepare)->loop_sv = sv_bless( newRV_noinc( newSViv( PTR2IV(loop))), gv_stashpv("UV::Loop", GV_ADD));
     }
     RETVAL = handle_bless((uv_handle_t *)prepare);
     OUTPUT:
@@ -1094,7 +1054,7 @@ SV * uv_timer_new(SV *class, uv_loop_t *loop = NULL)
         uv_data(timer)->loop_sv = default_loop_sv;
     }
     else {
-        uv_data(timer)->loop_sv = sv_bless( newRV_noinc( newSViv( PTR2IV(loop))), stash_loop);
+        uv_data(timer)->loop_sv = sv_bless( newRV_noinc( newSViv( PTR2IV(loop))), gv_stashpv("UV::Loop", GV_ADD));
     }
     RETVAL = handle_bless((uv_handle_t *)timer);
     OUTPUT:
@@ -1169,7 +1129,7 @@ SV *new (SV *class, int want_default = 0)
                 newSViv(
                     PTR2IV(loop)
                 )
-            ), stash_loop
+            ), gv_stashpv("UV::Loop", GV_ADD)
         );
     }
     else {
