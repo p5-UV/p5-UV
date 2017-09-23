@@ -1,6 +1,8 @@
 Revision history for Perl extension {{$dist->name}}
 
 {{$NEXT}}
+    - Remove some of the predeclaration of stashes for Handle types to move
+      towards thread safety.
 
 1.000001  2017-08-17 (TRIAL)
     - Update some prereqs
