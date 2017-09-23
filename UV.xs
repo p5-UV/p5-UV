@@ -26,9 +26,7 @@
                          (UV_VERSION_PATCH))
 #endif
 
-#define uv_loop(h)      INT2PTR (uv_loop_t *, SvIVX (((uv_handle_t *)(h))->loop))
-#define uv_data(h)      ((handle_data_t *)((uv_handle_t *)(h))->data)
-#define uv_user_data(h) uv_data(h)->user_data;
+#define handle_data(h)      ((handle_data_t *)((uv_handle_t *)(h))->data)
 
 struct UVAPI {
     uv_loop_t *default_loop;
@@ -240,7 +238,7 @@ static void handle_destroy(uv_handle_t *handle)
     if (NULL == handle) return;
     if (0 == uv_is_closing(handle) && 0 == uv_is_active(handle)) {
         uv_close(handle, handle_close_cb);
-        handle_data_destroy(uv_data(handle));
+        handle_data_destroy(handle_data(handle));
         /*Safefree(handle);*/
     }
 }
@@ -294,7 +292,7 @@ static const char * handle_namespace(const uv_handle_type type)
 static void handle_on(uv_handle_t *handle, const char *name, SV *cb)
 {
     SV *callback = NULL;
-    handle_data_t *data_ptr = uv_data(handle);
+    handle_data_t *data_ptr = handle_data(handle);
     if (!data_ptr) return;
 
     callback = cb ? s_get_cv_croak(cb) : NULL;
@@ -385,7 +383,7 @@ static void handle_on(uv_handle_t *handle, const char *name, SV *cb)
 /* HANDLE callbacks */
 static void handle_alloc_cb(uv_handle_t* handle, size_t suggested_size, uv_buf_t* buf)
 {
-    handle_data_t *data_ptr = uv_data(handle);
+    handle_data_t *data_ptr = handle_data(handle);
     buf->base = malloc(suggested_size);
     buf->len = suggested_size;
 
@@ -412,7 +410,7 @@ static void handle_alloc_cb(uv_handle_t* handle, size_t suggested_size, uv_buf_t
 
 static void handle_check_cb(uv_check_t* handle)
 {
-    handle_data_t *data_ptr = uv_data(handle);
+    handle_data_t *data_ptr = handle_data(handle);
 
     /* call the close_cb if we have one */
     if (NULL != data_ptr && NULL != data_ptr->check_cb) {
@@ -436,7 +434,7 @@ static void handle_check_cb(uv_check_t* handle)
 
 static void handle_close_cb(uv_handle_t* handle)
 {
-    handle_data_t *data_ptr = uv_data(handle);
+    handle_data_t *data_ptr = handle_data(handle);
 
     /* call the close_cb if we have one */
     if (NULL != data_ptr && NULL != data_ptr->close_cb) {
@@ -460,7 +458,7 @@ static void handle_close_cb(uv_handle_t* handle)
 
 static void handle_idle_cb(uv_idle_t* handle)
 {
-    handle_data_t *data_ptr = uv_data(handle);
+    handle_data_t *data_ptr = handle_data(handle);
     /* nothing else to do if we don't have a callback to call */
     if (NULL == data_ptr || NULL == data_ptr->idle_cb) return;
 
@@ -483,7 +481,7 @@ static void handle_idle_cb(uv_idle_t* handle)
 
 static void handle_poll_cb(uv_poll_t* handle, int status, int events)
 {
-    handle_data_t *data_ptr = uv_data(handle);
+    handle_data_t *data_ptr = handle_data(handle);
 
     /* nothing else to do if we don't have a callback to call */
     if (NULL == data_ptr || NULL == data_ptr->poll_cb) return;
@@ -509,7 +507,7 @@ static void handle_poll_cb(uv_poll_t* handle, int status, int events)
 
 static void handle_prepare_cb(uv_prepare_t* handle)
 {
-    handle_data_t *data_ptr = uv_data(handle);
+    handle_data_t *data_ptr = handle_data(handle);
     /* nothing else to do if we don't have a callback to call */
     if (NULL == data_ptr || NULL == data_ptr->prepare_cb) return;
 
@@ -532,7 +530,7 @@ static void handle_prepare_cb(uv_prepare_t* handle)
 
 static void handle_timer_cb(uv_timer_t* handle)
 {
-    handle_data_t *data_ptr = uv_data(handle);
+    handle_data_t *data_ptr = handle_data(handle);
     /* nothing else to do if we don't have a callback to call */
     if (NULL == data_ptr || NULL == data_ptr->timer_cb) return;
 
@@ -657,13 +655,6 @@ BOOT:
     uvapi.default_loop = NULL;
 }
 
-SV *uv_default_loop()
-    CODE:
-    loop_default_init();
-    RETVAL = newSVsv(default_loop_sv);
-    OUTPUT:
-    RETVAL
-
 const char* uv_err_name(int err)
 
 uint64_t uv_hrtime()
@@ -711,7 +702,7 @@ void DESTROY(uv_handle_t *handle)
 
 SV *uv_handle_loop(uv_handle_t *handle)
     CODE:
-    RETVAL = newSVsv(uv_data(handle)->loop_sv);
+    RETVAL = newSVsv(handle_data(handle)->loop_sv);
     OUTPUT:
     RETVAL
 
@@ -743,7 +734,7 @@ void uv_handle_close(uv_handle_t *handle, SV *cb=NULL)
 
 SV * uv_handle_data(uv_handle_t *handle, SV *new_val = NULL)
     CODE:
-        handle_data_t *data_ptr = uv_data(handle);
+        handle_data_t *data_ptr = handle_data(handle);
         RETVAL = data_ptr->user_data ? newSVsv(data_ptr->user_data) : &PL_sv_undef;
         if (items > 1) {
             if (NULL != data_ptr->user_data) {
@@ -807,10 +798,10 @@ SV * uv_check_new(SV *class, uv_loop_t *loop = uvapi.default_loop)
     }
 
     if (loop == uvapi.default_loop) {
-        uv_data(handle)->loop_sv = default_loop_sv;
+        handle_data(handle)->loop_sv = default_loop_sv;
     }
     else {
-        uv_data(handle)->loop_sv = sv_bless( newRV_noinc( newSViv( PTR2IV(loop))), gv_stashpv("UV::Loop", GV_ADD));
+        handle_data(handle)->loop_sv = sv_bless( newRV_noinc( newSViv( PTR2IV(loop))), gv_stashpv("UV::Loop", GV_ADD));
     }
     RETVAL = handle_bless((uv_handle_t *)handle);
     OUTPUT:
@@ -821,7 +812,7 @@ void DESTROY(uv_check_t *handle)
     if (NULL != handle && 0 == uv_is_closing((uv_handle_t *)handle) && 0 == uv_is_active((uv_handle_t *)handle)) {
         uv_check_stop(handle);
         uv_close((uv_handle_t *)handle, handle_close_cb);
-        handle_data_destroy(uv_data(handle));
+        handle_data_destroy(handle_data(handle));
     }
 
 int uv_check_start(uv_check_t *handle, SV *cb=NULL)
@@ -858,10 +849,10 @@ SV * uv_idle_new(SV *class, uv_loop_t *loop = uvapi.default_loop)
     }
 
     if (loop == uvapi.default_loop) {
-        uv_data(handle)->loop_sv = default_loop_sv;
+        handle_data(handle)->loop_sv = default_loop_sv;
     }
     else {
-        uv_data(handle)->loop_sv = sv_bless( newRV_noinc( newSViv( PTR2IV(loop))), gv_stashpv("UV::Loop", GV_ADD));
+        handle_data(handle)->loop_sv = sv_bless( newRV_noinc( newSViv( PTR2IV(loop))), gv_stashpv("UV::Loop", GV_ADD));
     }
     RETVAL = handle_bless((uv_handle_t *)handle);
     OUTPUT:
@@ -872,7 +863,7 @@ void DESTROY(uv_idle_t *handle)
     if (NULL != handle && 0 == uv_is_closing((uv_handle_t *)handle) && 0 == uv_is_active((uv_handle_t *)handle)) {
         uv_idle_stop(handle);
         uv_close((uv_handle_t *)handle, handle_close_cb);
-        handle_data_destroy(uv_data(handle));
+        handle_data_destroy(handle_data(handle));
     }
 
 int uv_idle_start(uv_idle_t *handle, SV *cb=NULL)
@@ -921,10 +912,10 @@ SV * uv_poll_new(SV *class, int fd, uv_loop_t *loop = NULL)
     }
 
     if (loop == uvapi.default_loop) {
-        uv_data(handle)->loop_sv = default_loop_sv;
+        handle_data(handle)->loop_sv = default_loop_sv;
     }
     else {
-        uv_data(handle)->loop_sv = sv_bless( newRV_noinc( newSViv( PTR2IV(loop))), gv_stashpv("UV::Loop", GV_ADD));
+        handle_data(handle)->loop_sv = sv_bless( newRV_noinc( newSViv( PTR2IV(loop))), gv_stashpv("UV::Loop", GV_ADD));
     }
     RETVAL = handle_bless((uv_handle_t *)handle);
     OUTPUT:
@@ -945,10 +936,10 @@ SV * uv_poll_new_socket(SV *class, int fd, uv_loop_t *loop = NULL)
     }
 
     if (loop == uvapi.default_loop) {
-        uv_data(handle)->loop_sv = default_loop_sv;
+        handle_data(handle)->loop_sv = default_loop_sv;
     }
     else {
-        uv_data(handle)->loop_sv = sv_bless( newRV_noinc( newSViv( PTR2IV(loop))), gv_stashpv("UV::Loop", GV_ADD));
+        handle_data(handle)->loop_sv = sv_bless( newRV_noinc( newSViv( PTR2IV(loop))), gv_stashpv("UV::Loop", GV_ADD));
     }
     RETVAL = handle_bless((uv_handle_t *)handle);
     OUTPUT:
@@ -959,7 +950,7 @@ void DESTROY(uv_poll_t *handle)
     if (NULL != handle && 0 == uv_is_closing((uv_handle_t *)handle) && 0 == uv_is_active((uv_handle_t *)handle)) {
         uv_poll_stop(handle);
         uv_close((uv_handle_t *)handle, handle_close_cb);
-        handle_data_destroy(uv_data(handle));
+        handle_data_destroy(handle_data(handle));
     }
 
 int uv_poll_start(uv_poll_t *handle, int events = UV_READABLE, SV *cb=NULL)
@@ -998,10 +989,10 @@ SV * uv_prepare_new(SV *class, uv_loop_t *loop = NULL)
     }
 
     if (loop == uvapi.default_loop) {
-        uv_data(prepare)->loop_sv = default_loop_sv;
+        handle_data(prepare)->loop_sv = default_loop_sv;
     }
     else {
-        uv_data(prepare)->loop_sv = sv_bless( newRV_noinc( newSViv( PTR2IV(loop))), gv_stashpv("UV::Loop", GV_ADD));
+        handle_data(prepare)->loop_sv = sv_bless( newRV_noinc( newSViv( PTR2IV(loop))), gv_stashpv("UV::Loop", GV_ADD));
     }
     RETVAL = handle_bless((uv_handle_t *)prepare);
     OUTPUT:
@@ -1012,7 +1003,7 @@ void DESTROY(uv_prepare_t *handle)
     if (NULL != handle && 0 == uv_is_closing((uv_handle_t *)handle) && 0 == uv_is_active((uv_handle_t *)handle)) {
         uv_prepare_stop(handle);
         uv_close((uv_handle_t *)handle, handle_close_cb);
-        handle_data_destroy(uv_data(handle));
+        handle_data_destroy(handle_data(handle));
     }
 
 int uv_prepare_start(uv_prepare_t *handle, SV *cb=NULL)
@@ -1051,10 +1042,10 @@ SV * uv_timer_new(SV *class, uv_loop_t *loop = NULL)
     }
 
     if (loop == uvapi.default_loop) {
-        uv_data(timer)->loop_sv = default_loop_sv;
+        handle_data(timer)->loop_sv = default_loop_sv;
     }
     else {
-        uv_data(timer)->loop_sv = sv_bless( newRV_noinc( newSViv( PTR2IV(loop))), gv_stashpv("UV::Loop", GV_ADD));
+        handle_data(timer)->loop_sv = sv_bless( newRV_noinc( newSViv( PTR2IV(loop))), gv_stashpv("UV::Loop", GV_ADD));
     }
     RETVAL = handle_bless((uv_handle_t *)timer);
     OUTPUT:
@@ -1065,7 +1056,7 @@ void DESTROY(uv_timer_t *handle)
     if (NULL != handle && 0 == uv_is_closing((uv_handle_t *)handle) && 0 == uv_is_active((uv_handle_t *)handle)) {
         uv_timer_stop(handle);
         uv_close((uv_handle_t *)handle, handle_close_cb);
-        handle_data_destroy(uv_data(handle));
+        handle_data_destroy(handle_data(handle));
     }
 
 int uv_timer_again(uv_timer_t *handle)

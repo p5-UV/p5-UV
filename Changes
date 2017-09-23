@@ -1,8 +1,11 @@
 Revision history for Perl extension {{$dist->name}}
 
 {{$NEXT}}
-    - Remove some of the predeclaration of stashes for Handle types to move
-      towards thread safety.
+    - Don't store Handle stashes globally for Handle types (thread safety)
+    - Simplified the typemap
+    - Removed UV::default_loop from UV.xs and added to UV.pm instead
+    - Renamed some macros to make more sense.
+    - Removed unused macros
 
 1.000001  2017-08-17 (TRIAL)
     - Update some prereqs
