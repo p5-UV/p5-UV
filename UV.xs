@@ -270,21 +270,21 @@ static uv_handle_t* handle_new(const uv_handle_type type)
 static const char * handle_namespace(const uv_handle_type type)
 {
     switch (type) {
-        case UV_ASYNC: return "UV::Async"; break;
-        case UV_CHECK: return "UV::Check"; break;
-        case UV_FS_EVENT: return "UV::FSEvent"; break;
-        case UV_FS_POLL: return "UV::FSPoll"; break;
-        case UV_IDLE: return "UV::Idle"; break;
-        case UV_NAMED_PIPE: return "UV::NamedPipe"; break;
-        case UV_POLL: return "UV::Poll"; break;
-        case UV_PREPARE: return "UV::Prepare"; break;
-        case UV_PROCESS: return "UV::Process"; break;
-        case UV_STREAM: return "UV::Stream"; break;
-        case UV_TCP: return "UV::TCP"; break;
-        case UV_TIMER: return "UV::Timer"; break;
-        case UV_TTY: return "UV::TTY"; break;
-        case UV_UDP: return "UV::UDP"; break;
-        case UV_SIGNAL: return "UV::Signal"; break;
+        case UV_ASYNC: return "UV::Async";
+        case UV_CHECK: return "UV::Check";
+        case UV_FS_EVENT: return "UV::FSEvent";
+        case UV_FS_POLL: return "UV::FSPoll";
+        case UV_IDLE: return "UV::Idle";
+        case UV_NAMED_PIPE: return "UV::NamedPipe";
+        case UV_POLL: return "UV::Poll";
+        case UV_PREPARE: return "UV::Prepare";
+        case UV_PROCESS: return "UV::Process";
+        case UV_STREAM: return "UV::Stream";
+        case UV_TCP: return "UV::TCP";
+        case UV_TIMER: return "UV::Timer";
+        case UV_TTY: return "UV::TTY";
+        case UV_UDP: return "UV::UDP";
+        case UV_SIGNAL: return "UV::Signal";
         default:
             croak("Invalid handle type supplied");
     }
