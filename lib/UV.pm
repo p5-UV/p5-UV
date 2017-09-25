@@ -33,29 +33,16 @@ our @EXPORT_OK  = qw(
     default_loop err_name hrtime strerr translate_sys_error
 );
 
-# make sure all sub-classes of uv_handle_t are thought of as such
-@UV::Async::ISA =
-@UV::Check::ISA =
-@UV::FSEvent::ISA =
-@UV::FSPoll::ISA =
-@UV::Idle::ISA =
-@UV::NamedPipe::ISA =
-@UV::Poll::ISA =
-@UV::Prepare::ISA =
-@UV::Process::ISA =
-@UV::Stream::ISA =
-@UV::TCP::ISA =
-@UV::Timer::ISA =
-@UV::TTY::ISA =
-@UV::UDP::ISA =
-@UV::Signal::ISA =
-@UV::File::ISA =
-    "UV::Handle";
+# Loop
+use UV::Loop ();
+# Handles
+use UV::Check ();
+use UV::Idle ();
+use UV::Poll ();
+use UV::Prepare ();
+use UV::Timer ();
 
-sub default_loop {
-    require UV::Loop;
-    return UV::Loop->default_loop();
-}
+sub default_loop { return UV::Loop->default_loop(); }
 
 1;
 
