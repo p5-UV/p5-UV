@@ -99,38 +99,38 @@
    "provides" : {
       "UV" : {
          "file" : "lib/UV.pm",
-         "version" : "1.000002"
+         "version" : "1.000003"
       },
       "UV::Check" : {
          "file" : "lib/UV/Check.pm",
-         "version" : "1.000002"
+         "version" : "1.000003"
       },
       "UV::Handle" : {
          "file" : "lib/UV/Handle.pm",
-         "version" : "1.000002"
+         "version" : "1.000003"
       },
       "UV::Idle" : {
          "file" : "lib/UV/Idle.pm",
-         "version" : "1.000002"
+         "version" : "1.000003"
       },
       "UV::Loop" : {
          "file" : "lib/UV/Loop.pm",
-         "version" : "1.000002"
+         "version" : "1.000003"
       },
       "UV::Poll" : {
          "file" : "lib/UV/Poll.pm",
-         "version" : "1.000002"
+         "version" : "1.000003"
       },
       "UV::Prepare" : {
          "file" : "lib/UV/Prepare.pm",
-         "version" : "1.000002"
+         "version" : "1.000003"
       },
       "UV::Timer" : {
          "file" : "lib/UV/Timer.pm",
-         "version" : "1.000002"
+         "version" : "1.000003"
       }
    },
-   "release_status" : "testing",
+   "release_status" : "stable",
    "resources" : {
       "bugtracker" : {
          "web" : "https://github.com/genio/p5-UV/issues"
@@ -142,7 +142,7 @@
          "web" : "https://github.com/genio/p5-UV"
       }
    },
-   "version" : "1.000002",
+   "version" : "1.000003",
    "x_Dist_Zilla" : {
       "perl" : {
          "version" : "5.026000"
@@ -449,7 +449,7 @@
                   "branch" : null,
                   "changelog" : "Changes",
                   "signed" : 0,
-                  "tag" : "v1.000002",
+                  "tag" : "v1.000003",
                   "tag_format" : "v%v",
                   "tag_message" : "v%v"
                },
@@ -684,7 +684,7 @@
       "zilla" : {
          "class" : "Dist::Zilla::Dist::Builder",
          "config" : {
-            "is_trial" : 1
+            "is_trial" : 0
          },
          "version" : "6.010"
       }
