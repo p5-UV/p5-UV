@@ -1,6 +1,8 @@
 Revision history for Perl extension {{$dist->name}}
 
 {{$NEXT}}
+
+1.000002  2017-09-24
     - Don't store Handle stashes globally for Handle types (thread safety)
     - Simplified the typemap
     - Removed UV::default_loop from UV.xs and added to UV.pm instead
