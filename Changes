@@ -6,6 +6,7 @@ Revision history for Perl extension {{$dist->name}}
     - Removed UV::default_loop from UV.xs and added to UV.pm instead
     - Renamed some macros to make more sense.
     - Removed unused macros
+    - Default value for SIGPROF as it doesn't exist in Windows (useful in *nix)
 
 1.000001  2017-08-17 (TRIAL)
     - Update some prereqs

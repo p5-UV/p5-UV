@@ -14,6 +14,11 @@
 
 #include <uv.h>
 
+/* pulled from sys/signal.h in case we don't have it in Windows */
+#if !defined(SIGPROF)
+#define SIGPROF 27 /* profiling time alarm */
+#endif
+
 #if !defined(UV_DISCONNECT)
 #define UV_DISCONNECT 4
 #endif
