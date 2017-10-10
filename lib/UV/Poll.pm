@@ -7,10 +7,6 @@ use strict;
 use warnings;
 
 use parent 'UV::Handle';
-our @EXPORT_OK  = qw(
-    UV_READABLE UV_WRITABLE UV_DISCONNECT UV_PRIORITIZED
-);
-
 
 
 1;

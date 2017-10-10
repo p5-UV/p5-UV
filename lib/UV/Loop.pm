@@ -9,10 +9,6 @@ use Exporter qw(import);
 
 use UV;
 
-our @EXPORT_OK  = qw(
-    UV_RUN_DEFAULT UV_RUN_ONCE UV_RUN_NOWAIT UV_LOOP_BLOCK_SIGNAL SIGPROF
-);
-
 1;
 
 __END__

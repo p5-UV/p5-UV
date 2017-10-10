@@ -3,7 +3,6 @@
 #include "XSUB.h"
 
 #define NEED_newRV_noinc
-#define NEED_newCONSTSUB
 #define NEED_sv_2pv_flags
 #include "ppport.h"
 
@@ -13,23 +12,7 @@
 #include <stdlib.h>
 
 #include <uv.h>
-
-/* pulled from sys/signal.h in case we don't have it in Windows */
-#if !defined(SIGPROF)
-#define SIGPROF 27 /* profiling time alarm */
-#endif
-
-#if !defined(UV_DISCONNECT)
-#define UV_DISCONNECT 4
-#endif
-#if !defined(UV_PRIORITIZED)
-#define UV_PRIORITIZED 8
-#endif
-#if !defined(UV_VERSION_HEX)
-#define UV_VERSION_HEX  ((UV_VERSION_MAJOR << 16) | \
-                         (UV_VERSION_MINOR <<  8) | \
-                         (UV_VERSION_PATCH))
-#endif
+#include "p5uv_constants.h"
 
 #define handle_data(h)      ((handle_data_t *)((uv_handle_t *)(h))->data)
 
@@ -565,96 +548,7 @@ PROTOTYPES: ENABLE
 BOOT:
 {
     PERL_MATH_INT64_LOAD_OR_CROAK;
-    /* grab the PACKAGE hash. If it doesn't yet exist, create it */
-    HV *stash = gv_stashpv("UV", GV_ADD);
-
-    /* add some constants to the package stash */
-    {
-        /* expose the VERSION macros */
-        newCONSTSUB(stash, "UV_VERSION_MAJOR", newSViv(UV_VERSION_MAJOR));
-        newCONSTSUB(stash, "UV_VERSION_MINOR", newSViv(UV_VERSION_MINOR));
-        newCONSTSUB(stash, "UV_VERSION_PATCH", newSViv(UV_VERSION_PATCH));
-        newCONSTSUB(stash, "UV_VERSION_IS_RELEASE", newSViv(UV_VERSION_IS_RELEASE));
-        newCONSTSUB(stash, "UV_VERSION_SUFFIX", newSVpvf("%s", UV_VERSION_SUFFIX));
-        newCONSTSUB(stash, "UV_VERSION_HEX", newSViv(UV_VERSION_HEX));
-
-        /* expose the different error constants */
-        newCONSTSUB(stash, "UV_E2BIG", newSViv(UV_E2BIG));
-        newCONSTSUB(stash, "UV_EACCES", newSViv(UV_EACCES));
-        newCONSTSUB(stash, "UV_EADDRINUSE", newSViv(UV_EADDRINUSE));
-        newCONSTSUB(stash, "UV_EADDRNOTAVAIL", newSViv(UV_EADDRNOTAVAIL));
-        newCONSTSUB(stash, "UV_EAFNOSUPPORT", newSViv(UV_EAFNOSUPPORT));
-        newCONSTSUB(stash, "UV_EAGAIN", newSViv(UV_EAGAIN));
-        newCONSTSUB(stash, "UV_EAI_ADDRFAMILY", newSViv(UV_EAI_ADDRFAMILY));
-        newCONSTSUB(stash, "UV_EAI_AGAIN", newSViv(UV_EAI_AGAIN));
-        newCONSTSUB(stash, "UV_EAI_BADFLAGS", newSViv(UV_EAI_BADFLAGS));
-        newCONSTSUB(stash, "UV_EAI_BADHINTS", newSViv(UV_EAI_BADHINTS));
-        newCONSTSUB(stash, "UV_EAI_CANCELED", newSViv(UV_EAI_CANCELED));
-        newCONSTSUB(stash, "UV_EAI_FAIL", newSViv(UV_EAI_FAIL));
-        newCONSTSUB(stash, "UV_EAI_FAMILY", newSViv(UV_EAI_FAMILY));
-        newCONSTSUB(stash, "UV_EAI_MEMORY", newSViv(UV_EAI_MEMORY));
-        newCONSTSUB(stash, "UV_EAI_NODATA", newSViv(UV_EAI_NODATA));
-        newCONSTSUB(stash, "UV_EAI_NONAME", newSViv(UV_EAI_NONAME));
-        newCONSTSUB(stash, "UV_EAI_OVERFLOW", newSViv(UV_EAI_OVERFLOW));
-        newCONSTSUB(stash, "UV_EAI_PROTOCOL", newSViv(UV_EAI_PROTOCOL));
-        newCONSTSUB(stash, "UV_EAI_SERVICE", newSViv(UV_EAI_SERVICE));
-        newCONSTSUB(stash, "UV_EAI_SOCKTYPE", newSViv(UV_EAI_SOCKTYPE));
-        newCONSTSUB(stash, "UV_EALREADY", newSViv(UV_EALREADY));
-        newCONSTSUB(stash, "UV_EBADF", newSViv(UV_EBADF));
-        newCONSTSUB(stash, "UV_EBUSY", newSViv(UV_EBUSY));
-        newCONSTSUB(stash, "UV_ECANCELED", newSViv(UV_ECANCELED));
-        newCONSTSUB(stash, "UV_ECHARSET", newSViv(UV_ECHARSET));
-        newCONSTSUB(stash, "UV_ECONNABORTED", newSViv(UV_ECONNABORTED));
-        newCONSTSUB(stash, "UV_ECONNREFUSED", newSViv(UV_ECONNREFUSED));
-        newCONSTSUB(stash, "UV_ECONNRESET", newSViv(UV_ECONNRESET));
-        newCONSTSUB(stash, "UV_EDESTADDRREQ", newSViv(UV_EDESTADDRREQ));
-        newCONSTSUB(stash, "UV_EEXIST", newSViv(UV_EEXIST));
-        newCONSTSUB(stash, "UV_EFAULT", newSViv(UV_EFAULT));
-        newCONSTSUB(stash, "UV_EFBIG", newSViv(UV_EFBIG));
-        newCONSTSUB(stash, "UV_EHOSTUNREACH", newSViv(UV_EHOSTUNREACH));
-        newCONSTSUB(stash, "UV_EINTR", newSViv(UV_EINTR));
-        newCONSTSUB(stash, "UV_EINVAL", newSViv(UV_EINVAL));
-        newCONSTSUB(stash, "UV_EIO", newSViv(UV_EIO));
-        newCONSTSUB(stash, "UV_EISCONN", newSViv(UV_EISCONN));
-        newCONSTSUB(stash, "UV_EISDIR", newSViv(UV_EISDIR));
-        newCONSTSUB(stash, "UV_ELOOP", newSViv(UV_ELOOP));
-        newCONSTSUB(stash, "UV_EMFILE", newSViv(UV_EMFILE));
-        newCONSTSUB(stash, "UV_EMSGSIZE", newSViv(UV_EMSGSIZE));
-        newCONSTSUB(stash, "UV_ENAMETOOLONG", newSViv(UV_ENAMETOOLONG));
-        newCONSTSUB(stash, "UV_ENETDOWN", newSViv(UV_ENETDOWN));
-        newCONSTSUB(stash, "UV_ENETUNREACH", newSViv(UV_ENETUNREACH));
-        newCONSTSUB(stash, "UV_ENFILE", newSViv(UV_ENFILE));
-        newCONSTSUB(stash, "UV_ENOBUFS", newSViv(UV_ENOBUFS));
-        newCONSTSUB(stash, "UV_ENODEV", newSViv(UV_ENODEV));
-        newCONSTSUB(stash, "UV_ENOENT", newSViv(UV_ENOENT));
-        newCONSTSUB(stash, "UV_ENOMEM", newSViv(UV_ENOMEM));
-        newCONSTSUB(stash, "UV_ENONET", newSViv(UV_ENONET));
-        newCONSTSUB(stash, "UV_ENOPROTOOPT", newSViv(UV_ENOPROTOOPT));
-        newCONSTSUB(stash, "UV_ENOSPC", newSViv(UV_ENOSPC));
-        newCONSTSUB(stash, "UV_ENOSYS", newSViv(UV_ENOSYS));
-        newCONSTSUB(stash, "UV_ENOTCONN", newSViv(UV_ENOTCONN));
-        newCONSTSUB(stash, "UV_ENOTDIR", newSViv(UV_ENOTDIR));
-        newCONSTSUB(stash, "UV_ENOTEMPTY", newSViv(UV_ENOTEMPTY));
-        newCONSTSUB(stash, "UV_ENOTSOCK", newSViv(UV_ENOTSOCK));
-        newCONSTSUB(stash, "UV_ENOTSUP", newSViv(UV_ENOTSUP));
-        newCONSTSUB(stash, "UV_EPERM", newSViv(UV_EPERM));
-        newCONSTSUB(stash, "UV_EPIPE", newSViv(UV_EPIPE));
-        newCONSTSUB(stash, "UV_EPROTO", newSViv(UV_EPROTO));
-        newCONSTSUB(stash, "UV_EPROTONOSUPPORT", newSViv(UV_EPROTONOSUPPORT));
-        newCONSTSUB(stash, "UV_EPROTOTYPE", newSViv(UV_EPROTOTYPE));
-        newCONSTSUB(stash, "UV_ERANGE", newSViv(UV_ERANGE));
-        newCONSTSUB(stash, "UV_EROFS", newSViv(UV_EROFS));
-        newCONSTSUB(stash, "UV_ESHUTDOWN", newSViv(UV_ESHUTDOWN));
-        newCONSTSUB(stash, "UV_ESPIPE", newSViv(UV_ESPIPE));
-        newCONSTSUB(stash, "UV_ESRCH", newSViv(UV_ESRCH));
-        newCONSTSUB(stash, "UV_ETIMEDOUT", newSViv(UV_ETIMEDOUT));
-        newCONSTSUB(stash, "UV_ETXTBSY", newSViv(UV_ETXTBSY));
-        newCONSTSUB(stash, "UV_EXDEV", newSViv(UV_EXDEV));
-        newCONSTSUB(stash, "UV_UNKNOWN", newSViv(UV_UNKNOWN));
-        newCONSTSUB(stash, "UV_EOF", newSViv(UV_EOF));
-        newCONSTSUB(stash, "UV_ENXIO", newSViv(UV_ENXIO));
-        newCONSTSUB(stash, "UV_EMLINK", newSViv(UV_EMLINK));
-    }
+    constants_export_uv();
 
     /* somewhat of an API */
     uvapi.default_loop = NULL;
@@ -677,28 +571,7 @@ PROTOTYPES: ENABLE
 
 BOOT:
 {
-    /* grab the PACKAGE hash. If it doesn't yet exist, create it */
-    HV *stash = gv_stashpv("UV::Handle", GV_ADD);
-
-    /* add some constants to the package stash */
-
-    /* expose the different handle type constants */
-    newCONSTSUB(stash, "UV_ASYNC", newSViv(UV_ASYNC));
-    newCONSTSUB(stash, "UV_CHECK", newSViv(UV_CHECK));
-    newCONSTSUB(stash, "UV_FS_EVENT", newSViv(UV_FS_EVENT));
-    newCONSTSUB(stash, "UV_FS_POLL", newSViv(UV_FS_POLL));
-    newCONSTSUB(stash, "UV_IDLE", newSViv(UV_IDLE));
-    newCONSTSUB(stash, "UV_NAMED_PIPE", newSViv(UV_NAMED_PIPE));
-    newCONSTSUB(stash, "UV_POLL", newSViv(UV_POLL));
-    newCONSTSUB(stash, "UV_PREPARE", newSViv(UV_PREPARE));
-    newCONSTSUB(stash, "UV_PROCESS", newSViv(UV_PROCESS));
-    newCONSTSUB(stash, "UV_STREAM", newSViv(UV_STREAM));
-    newCONSTSUB(stash, "UV_TCP", newSViv(UV_TCP));
-    newCONSTSUB(stash, "UV_TIMER", newSViv(UV_TIMER));
-    newCONSTSUB(stash, "UV_TTY", newSViv(UV_TTY));
-    newCONSTSUB(stash, "UV_UDP", newSViv(UV_UDP));
-    newCONSTSUB(stash, "UV_SIGNAL", newSViv(UV_SIGNAL));
-    newCONSTSUB(stash, "UV_FILE", newSViv(UV_FILE));
+    constants_export_uv_handle();
 }
 
 void DESTROY(uv_handle_t *handle)
@@ -894,12 +767,7 @@ PROTOTYPES: ENABLE
 
 BOOT:
 {
-    HV *stash = gv_stashpvn("UV::Poll", 8, TRUE);
-    /* Poll Event Types */
-    newCONSTSUB(stash, "UV_READABLE", newSViv(UV_READABLE));
-    newCONSTSUB(stash, "UV_WRITABLE", newSViv(UV_WRITABLE));
-    newCONSTSUB(stash, "UV_DISCONNECT", newSViv(UV_DISCONNECT));
-    newCONSTSUB(stash, "UV_PRIORITIZED", newSViv(UV_PRIORITIZED));
+    constants_export_uv_poll();
 }
 
 SV * uv_poll_new(SV *class, int fd, uv_loop_t *loop = NULL)
@@ -1100,14 +968,7 @@ PROTOTYPES: ENABLE
 
 BOOT:
 {
-    HV *stash = gv_stashpvn("UV::Loop", 8, TRUE);
-    /* Loop run constants */
-    newCONSTSUB(stash, "UV_RUN_DEFAULT", newSViv(UV_RUN_DEFAULT));
-    newCONSTSUB(stash, "UV_RUN_ONCE", newSViv(UV_RUN_ONCE));
-    newCONSTSUB(stash, "UV_RUN_NOWAIT", newSViv(UV_RUN_NOWAIT));
-    /* expose the Loop configure constants */
-    newCONSTSUB(stash, "UV_LOOP_BLOCK_SIGNAL", newSViv(UV_LOOP_BLOCK_SIGNAL));
-    newCONSTSUB(stash, "SIGPROF", newSViv(SIGPROF));
+    constants_export_uv_loop();
 }
 
 SV *new (SV *class, int want_default = 0)
