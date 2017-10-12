@@ -65,15 +65,20 @@ static void handle_alloc_cb(uv_handle_t* handle, size_t suggested_size, uv_buf_t
 static SV * handle_bless(uv_handle_t *h);
 static void handle_check_cb(uv_check_t* handle);
 static void handle_close_cb(uv_handle_t* handle);
+static void handle_data_destroy(handle_data_t *data_ptr);
+static handle_data_t* handle_data_new(const uv_handle_type type);
 static void handle_idle_cb(uv_idle_t* handle);
 static const char* handle_namespace(const uv_handle_type type);
+static void handle_on(uv_handle_t *handle, const char *name, SV *cb);
 static void handle_poll_cb(uv_poll_t* handle, int status, int events);
 static void handle_prepare_cb(uv_prepare_t* handle);
 static void handle_timer_cb(uv_timer_t* handle);
+static void loop_default_init();
+static uv_loop_t * loop_new();
 static void loop_walk_cb(uv_handle_t* handle, void* arg);
 
 /* loop functions */
-static void loop_default_init()
+void loop_default_init()
 {
     if (!default_loop_sv) {
         uvapi.default_loop = uv_default_loop();
@@ -87,7 +92,7 @@ static void loop_default_init()
     }
 }
 
-static uv_loop_t * loop_new()
+uv_loop_t * loop_new()
 {
     uv_loop_t *loop;
     int ret;
@@ -103,7 +108,7 @@ static uv_loop_t * loop_new()
     return loop;
 }
 
-static void loop_walk_cb(uv_handle_t* handle, void* arg)
+void loop_walk_cb(uv_handle_t* handle, void* arg)
 {
     SV *callback;
     if (NULL == arg || (SV *)arg == &PL_sv_undef) return;
@@ -115,12 +120,12 @@ static void loop_walk_cb(uv_handle_t* handle, void* arg)
     ENTER;
     SAVETMPS;
 
-    PUSHMARK (SP);
-    EXTEND (SP, 1);
+    PUSHMARK(SP);
+    EXTEND(SP, 1);
     PUSHs(handle_bless(handle)); /* invocant */
 
     PUTBACK;
-    call_sv (callback, G_VOID);
+    call_sv(callback, G_VOID);
     SPAGAIN;
 
     FREETMPS;
@@ -128,7 +133,7 @@ static void loop_walk_cb(uv_handle_t* handle, void* arg)
 }
 
 /* handle functions */
-static SV * handle_bless(uv_handle_t *h)
+SV * handle_bless(uv_handle_t *h)
 {
     SV *rv;
     handle_data_t *data_ptr = h->data;
@@ -144,7 +149,7 @@ static SV * handle_bless(uv_handle_t *h)
     return rv;
 }
 
-static void handle_data_destroy(handle_data_t *data_ptr)
+void handle_data_destroy(handle_data_t *data_ptr)
 {
     if (NULL == data_ptr) return;
 
@@ -190,7 +195,7 @@ static void handle_data_destroy(handle_data_t *data_ptr)
     data_ptr = NULL;
 }
 
-static handle_data_t* handle_data_new(const uv_handle_type type)
+handle_data_t* handle_data_new(const uv_handle_type type)
 {
     handle_data_t *data_ptr = (handle_data_t *)malloc(sizeof(handle_data_t));
     if (NULL == data_ptr) {
@@ -221,7 +226,7 @@ static handle_data_t* handle_data_new(const uv_handle_type type)
     return data_ptr;
 }
 
-static void handle_destroy(uv_handle_t *handle)
+void handle_destroy(uv_handle_t *handle)
 {
     if (NULL == handle) return;
     if (0 == uv_is_closing(handle) && 0 == uv_is_active(handle)) {
@@ -253,7 +258,7 @@ static uv_handle_t* handle_new(const uv_handle_type type)
     return handle;
 }
 
-static const char * handle_namespace(const uv_handle_type type)
+const char* handle_namespace(const uv_handle_type type)
 {
     switch (type) {
         case UV_ASYNC: return "UV::Async";
@@ -277,7 +282,7 @@ static const char * handle_namespace(const uv_handle_type type)
     return NULL;
 }
 
-static void handle_on(uv_handle_t *handle, const char *name, SV *cb)
+void handle_on(uv_handle_t *handle, const char *name, SV *cb)
 {
     SV *callback = NULL;
     handle_data_t *data_ptr = handle_data(handle);
@@ -369,7 +374,7 @@ static void handle_on(uv_handle_t *handle, const char *name, SV *cb)
 }
 
 /* HANDLE callbacks */
-static void handle_alloc_cb(uv_handle_t* handle, size_t suggested_size, uv_buf_t* buf)
+void handle_alloc_cb(uv_handle_t* handle, size_t suggested_size, uv_buf_t* buf)
 {
     handle_data_t *data_ptr = handle_data(handle);
     buf->base = malloc(suggested_size);
@@ -383,20 +388,20 @@ static void handle_alloc_cb(uv_handle_t* handle, size_t suggested_size, uv_buf_t
     ENTER;
     SAVETMPS;
 
-    PUSHMARK (SP);
-    EXTEND (SP, 2);
+    PUSHMARK(SP);
+    EXTEND(SP, 2);
     PUSHs(handle_bless(handle)); /* invocant */
     mPUSHi(suggested_size);
 
     PUTBACK;
-    call_sv (data_ptr->alloc_cb, G_VOID);
+    call_sv(data_ptr->alloc_cb, G_VOID);
     SPAGAIN;
 
     FREETMPS;
     LEAVE;
 }
 
-static void handle_check_cb(uv_check_t* handle)
+void handle_check_cb(uv_check_t* handle)
 {
     handle_data_t *data_ptr = handle_data(handle);
 
@@ -407,12 +412,12 @@ static void handle_check_cb(uv_check_t* handle)
         ENTER;
         SAVETMPS;
 
-        PUSHMARK (SP);
-        EXTEND (SP, 1);
+        PUSHMARK(SP);
+        EXTEND(SP, 1);
         PUSHs(handle_bless((uv_handle_t *)handle)); /* invocant */
 
         PUTBACK;
-        call_sv (data_ptr->check_cb, G_VOID);
+        call_sv(data_ptr->check_cb, G_VOID);
         SPAGAIN;
 
         FREETMPS;
@@ -420,7 +425,7 @@ static void handle_check_cb(uv_check_t* handle)
     }
 }
 
-static void handle_close_cb(uv_handle_t* handle)
+void handle_close_cb(uv_handle_t* handle)
 {
     handle_data_t *data_ptr = handle_data(handle);
 
@@ -431,12 +436,12 @@ static void handle_close_cb(uv_handle_t* handle)
         ENTER;
         SAVETMPS;
 
-        PUSHMARK (SP);
-        EXTEND (SP, 1);
+        PUSHMARK(SP);
+        EXTEND(SP, 1);
         PUSHs(handle_bless(handle)); /* invocant */
 
         PUTBACK;
-        call_sv (data_ptr->close_cb, G_VOID);
+        call_sv(data_ptr->close_cb, G_VOID);
         SPAGAIN;
 
         FREETMPS;
@@ -444,7 +449,7 @@ static void handle_close_cb(uv_handle_t* handle)
     }
 }
 
-static void handle_idle_cb(uv_idle_t* handle)
+void handle_idle_cb(uv_idle_t* handle)
 {
     handle_data_t *data_ptr = handle_data(handle);
     /* nothing else to do if we don't have a callback to call */
@@ -455,19 +460,19 @@ static void handle_idle_cb(uv_idle_t* handle)
     ENTER;
     SAVETMPS;
 
-    PUSHMARK (SP);
-    EXTEND (SP, 1);
+    PUSHMARK(SP);
+    EXTEND(SP, 1);
     PUSHs(handle_bless((uv_handle_t *) handle)); /* invocant */
 
     PUTBACK;
-    call_sv (data_ptr->idle_cb, G_VOID);
+    call_sv(data_ptr->idle_cb, G_VOID);
     SPAGAIN;
 
     FREETMPS;
     LEAVE;
 }
 
-static void handle_poll_cb(uv_poll_t* handle, int status, int events)
+void handle_poll_cb(uv_poll_t* handle, int status, int events)
 {
     handle_data_t *data_ptr = handle_data(handle);
 
@@ -479,21 +484,21 @@ static void handle_poll_cb(uv_poll_t* handle, int status, int events)
     ENTER;
     SAVETMPS;
 
-    PUSHMARK (SP);
-    EXTEND (SP, 3);
+    PUSHMARK(SP);
+    EXTEND(SP, 3);
     PUSHs(handle_bless((uv_handle_t *)handle)); /* invocant */
     mPUSHi(status);
     mPUSHi(events);
 
     PUTBACK;
-    call_sv (data_ptr->poll_cb, G_VOID);
+    call_sv(data_ptr->poll_cb, G_VOID);
     SPAGAIN;
 
     FREETMPS;
     LEAVE;
 }
 
-static void handle_prepare_cb(uv_prepare_t* handle)
+void handle_prepare_cb(uv_prepare_t* handle)
 {
     handle_data_t *data_ptr = handle_data(handle);
     /* nothing else to do if we don't have a callback to call */
@@ -504,19 +509,19 @@ static void handle_prepare_cb(uv_prepare_t* handle)
     ENTER;
     SAVETMPS;
 
-    PUSHMARK (SP);
-    EXTEND (SP, 1);
+    PUSHMARK(SP);
+    EXTEND(SP, 1);
     PUSHs(handle_bless((uv_handle_t *) handle)); /* invocant */
 
     PUTBACK;
-    call_sv (data_ptr->prepare_cb, G_VOID);
+    call_sv(data_ptr->prepare_cb, G_VOID);
     SPAGAIN;
 
     FREETMPS;
     LEAVE;
 }
 
-static void handle_timer_cb(uv_timer_t* handle)
+void handle_timer_cb(uv_timer_t* handle)
 {
     handle_data_t *data_ptr = handle_data(handle);
     /* nothing else to do if we don't have a callback to call */
@@ -527,12 +532,12 @@ static void handle_timer_cb(uv_timer_t* handle)
     ENTER;
     SAVETMPS;
 
-    PUSHMARK (SP);
-    EXTEND (SP, 1);
+    PUSHMARK(SP);
+    EXTEND(SP, 1);
     PUSHs(handle_bless((uv_handle_t *) handle)); /* invocant */
 
     PUTBACK;
-    call_sv (data_ptr->timer_cb, G_VOID);
+    call_sv(data_ptr->timer_cb, G_VOID);
     SPAGAIN;
 
     FREETMPS;
