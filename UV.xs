@@ -15,15 +15,11 @@
 #include "p5uv_constants.h"
 
 #define handle_data(h)      ((handle_data_t *)((uv_handle_t *)(h))->data)
-
-struct UVAPI {
-    uv_loop_t *default_loop;
-};
+#define loop_data(l)        ((loop_data_t *)((uv_loop_t *)(l))->data)
 
 /* data to store with a HANDLE */
 typedef struct handle_data_s {
     SV *self;
-    SV *loop_sv;
     HV *stash;
     SV *user_data;
     /* callbacks available */
@@ -36,8 +32,11 @@ typedef struct handle_data_s {
     SV *timer_cb;
 } handle_data_t;
 
-static struct UVAPI uvapi;
-static SV *default_loop_sv;
+/* data to store with a LOOP */
+typedef struct loop_data_s {
+    SV *self;
+    int is_default;
+} loop_data_t;
 
 static SV * s_get_cv (SV *cb_sv)
 {
@@ -60,7 +59,7 @@ static SV * s_get_cv_croak (SV *cb_sv)
     return cv;
 }
 
-/* Handle function definitions for some that aren't alpha ordered later */
+/* Handle function definitions */
 static void handle_alloc_cb(uv_handle_t* handle, size_t suggested_size, uv_buf_t* buf);
 static SV * handle_bless(uv_handle_t *h);
 static void handle_check_cb(uv_check_t* handle);
@@ -69,33 +68,79 @@ static void handle_data_destroy(handle_data_t *data_ptr);
 static handle_data_t* handle_data_new(const uv_handle_type type);
 static void handle_idle_cb(uv_idle_t* handle);
 static const char* handle_namespace(const uv_handle_type type);
+static uv_handle_t* handle_new(const uv_handle_type type);
 static void handle_on(uv_handle_t *handle, const char *name, SV *cb);
 static void handle_poll_cb(uv_poll_t* handle, int status, int events);
 static void handle_prepare_cb(uv_prepare_t* handle);
 static void handle_timer_cb(uv_timer_t* handle);
-static void loop_default_init();
-static uv_loop_t * loop_new();
+/* Loop function definitions */
+static SV * loop_bless(pTHX_ uv_loop_t *loop);
+static loop_data_t* loop_data_new(pTHX_);
+static void loop_data_destroy(loop_data_t *data_ptr);
+static uv_loop_t* loop_default(pTHX_);
+static uv_loop_t* loop_new(pTHX_);
 static void loop_walk_cb(uv_handle_t* handle, void* arg);
 
 /* loop functions */
-void loop_default_init()
+SV* loop_bless(pTHX_ uv_loop_t *loop)
 {
-    if (!default_loop_sv) {
-        uvapi.default_loop = uv_default_loop();
-        if (!uvapi.default_loop) {
-            croak("Error getting a new default loop");
-        }
-        default_loop_sv = sv_bless(
-            newRV_noinc(newSViv(PTR2IV(uvapi.default_loop))),
-            gv_stashpv("UV::Loop", GV_ADD)
-        );
+    loop_data_t *data_ptr = loop_data(loop);
+    if (!data_ptr || !data_ptr->self) {
+        croak("Couldn't get the loop data");
     }
+
+    return newSVsv(data_ptr->self);
 }
 
-uv_loop_t * loop_new()
+void loop_data_destroy(loop_data_t *data_ptr)
 {
-    uv_loop_t *loop;
+    if (NULL == data_ptr) return;
+
+    /* cleanup self */
+    if (NULL != data_ptr->self) {
+        data_ptr->self = NULL;
+    }
+    Safefree(data_ptr);
+    data_ptr = NULL;
+}
+
+loop_data_t* loop_data_new(pTHX_)
+{
+    loop_data_t *data_ptr = (loop_data_t *)malloc(sizeof(loop_data_t));
+    if (NULL == data_ptr) {
+        croak("Cannot allocate space for loop data.");
+    }
+    data_ptr->self = NULL;
+    data_ptr->is_default = 0;
+    return data_ptr;
+}
+
+uv_loop_t * loop_default(pTHX_)
+{
+    loop_data_t *data_ptr;
+    uv_loop_t *loop = uv_default_loop();
+    if (!loop) {
+        croak("Error getting a new default loop");
+    }
+    data_ptr = loop_data(loop);
+    if (!data_ptr) data_ptr = loop_data_new(aTHX_);
+
+    if (!data_ptr->self) {
+        data_ptr->self = sv_bless(
+            newRV_noinc(newSViv(PTR2IV(loop))),
+            gv_stashpv("UV::Loop", GV_ADD)
+        );
+        loop->data = (void *)data_ptr;
+    }
+    data_ptr->is_default = 1;
+    return loop;
+}
+
+uv_loop_t * loop_new(void)
+{
     int ret;
+    loop_data_t *data_ptr;
+    uv_loop_t *loop;
     Newx(loop, 1, uv_loop_t);
     if (NULL == loop) {
         croak("Unable to allocate space for a new loop");
@@ -105,6 +150,15 @@ uv_loop_t * loop_new()
         Safefree(loop);
         croak("Error initializing loop (%i): %s", ret, uv_strerror(ret));
     }
+    data_ptr = loop_data_new();
+    data_ptr->self = sv_bless(
+        newRV_noinc(newSViv(PTR2IV(loop))),
+        gv_stashpv("UV::Loop", GV_ADD)
+    );
+    loop->data = (void *)data_ptr;
+    data_ptr->is_default = 0;
+
+    loop->data = (void *)data_ptr;
     return loop;
 }
 
@@ -212,9 +266,6 @@ handle_data_t* handle_data_new(const uv_handle_type type)
     /* setup the user data */
     data_ptr->user_data = NULL;
 
-    /* setup the loop_sv slot */
-    data_ptr->loop_sv = NULL;
-
     /* setup the callback slots */
     data_ptr->alloc_cb = NULL;
     data_ptr->check_cb = NULL;
@@ -236,7 +287,7 @@ void handle_destroy(uv_handle_t *handle)
     }
 }
 
-static uv_handle_t* handle_new(const uv_handle_type type)
+uv_handle_t* handle_new(const uv_handle_type type)
 {
     uv_handle_t *handle;
     SV *self;
@@ -554,9 +605,6 @@ BOOT:
 {
     PERL_MATH_INT64_LOAD_OR_CROAK;
     constants_export_uv();
-
-    /* somewhat of an API */
-    uvapi.default_loop = NULL;
 }
 
 const char* uv_err_name(int err)
@@ -585,7 +633,7 @@ void DESTROY(uv_handle_t *handle)
 
 SV *uv_handle_loop(uv_handle_t *handle)
     CODE:
-    RETVAL = newSVsv(handle_data(handle)->loop_sv);
+    RETVAL = loop_bless(aTHX_ handle->loop);
     OUTPUT:
     RETVAL
 
@@ -665,14 +713,12 @@ MODULE = UV             PACKAGE = UV::Check      PREFIX = uv_check_
 
 PROTOTYPES: ENABLE
 
-SV * uv_check_new(SV *class, uv_loop_t *loop = uvapi.default_loop)
+SV * uv_check_new(SV *class, uv_loop_t *loop = NULL)
     CODE:
     int res;
     uv_check_t *handle = (uv_check_t *)handle_new(UV_CHECK);
     PERL_UNUSED_VAR(class);
-    loop_default_init();
-    if (NULL == loop) loop = uvapi.default_loop;
-
+    if (!loop) loop = loop_default(aTHX_);
 
     res = uv_check_init(loop, handle);
     if (0 != res) {
@@ -680,12 +726,6 @@ SV * uv_check_new(SV *class, uv_loop_t *loop = uvapi.default_loop)
         croak("Couldn't initialize check (%i): %s", res, uv_strerror(res));
     }
 
-    if (loop == uvapi.default_loop) {
-        handle_data(handle)->loop_sv = default_loop_sv;
-    }
-    else {
-        handle_data(handle)->loop_sv = sv_bless( newRV_noinc( newSViv( PTR2IV(loop))), gv_stashpv("UV::Loop", GV_ADD));
-    }
     RETVAL = handle_bless((uv_handle_t *)handle);
     OUTPUT:
     RETVAL
@@ -716,14 +756,12 @@ MODULE = UV             PACKAGE = UV::Idle      PREFIX = uv_idle_
 
 PROTOTYPES: ENABLE
 
-SV * uv_idle_new(SV *class, uv_loop_t *loop = uvapi.default_loop)
+SV * uv_idle_new(SV *class, uv_loop_t *loop = NULL)
     CODE:
     int res;
     uv_idle_t *handle = (uv_idle_t *)handle_new(UV_IDLE);
     PERL_UNUSED_VAR(class);
-    loop_default_init();
-    if (NULL == loop) loop = uvapi.default_loop;
-
+    if (!loop) loop = loop_default(aTHX_);
 
     res = uv_idle_init(loop, handle);
     if (0 != res) {
@@ -731,12 +769,6 @@ SV * uv_idle_new(SV *class, uv_loop_t *loop = uvapi.default_loop)
         croak("Couldn't initialize idle (%i): %s", res, uv_strerror(res));
     }
 
-    if (loop == uvapi.default_loop) {
-        handle_data(handle)->loop_sv = default_loop_sv;
-    }
-    else {
-        handle_data(handle)->loop_sv = sv_bless( newRV_noinc( newSViv( PTR2IV(loop))), gv_stashpv("UV::Loop", GV_ADD));
-    }
     RETVAL = handle_bless((uv_handle_t *)handle);
     OUTPUT:
     RETVAL
@@ -780,8 +812,7 @@ SV * uv_poll_new(SV *class, int fd, uv_loop_t *loop = NULL)
     int res;
     uv_poll_t *handle = (uv_poll_t *)handle_new(UV_POLL);
     PERL_UNUSED_VAR(class);
-    loop_default_init();
-    if (NULL == loop) loop = uvapi.default_loop;
+    if (!loop) loop = loop_default(aTHX_);
 
     res = uv_poll_init(loop, handle, fd);
     if (0 != res) {
@@ -789,12 +820,6 @@ SV * uv_poll_new(SV *class, int fd, uv_loop_t *loop = NULL)
         croak("Couldn't initialize handle (%i): %s", res, uv_strerror(res));
     }
 
-    if (loop == uvapi.default_loop) {
-        handle_data(handle)->loop_sv = default_loop_sv;
-    }
-    else {
-        handle_data(handle)->loop_sv = sv_bless( newRV_noinc( newSViv( PTR2IV(loop))), gv_stashpv("UV::Loop", GV_ADD));
-    }
     RETVAL = handle_bless((uv_handle_t *)handle);
     OUTPUT:
     RETVAL
@@ -804,8 +829,7 @@ SV * uv_poll_new_socket(SV *class, int fd, uv_loop_t *loop = NULL)
     int res;
     uv_poll_t *handle = (uv_poll_t *)handle_new(UV_POLL);
     PERL_UNUSED_VAR(class);
-    loop_default_init();
-    if (NULL == loop) loop = uvapi.default_loop;
+    if (!loop) loop = loop_default(aTHX_);
 
     res = uv_poll_init_socket(loop, handle, fd);
     if (0 != res) {
@@ -813,12 +837,6 @@ SV * uv_poll_new_socket(SV *class, int fd, uv_loop_t *loop = NULL)
         croak("Couldn't initialize handle (%i): %s", res, uv_strerror(res));
     }
 
-    if (loop == uvapi.default_loop) {
-        handle_data(handle)->loop_sv = default_loop_sv;
-    }
-    else {
-        handle_data(handle)->loop_sv = sv_bless( newRV_noinc( newSViv( PTR2IV(loop))), gv_stashpv("UV::Loop", GV_ADD));
-    }
     RETVAL = handle_bless((uv_handle_t *)handle);
     OUTPUT:
     RETVAL
@@ -857,8 +875,7 @@ SV * uv_prepare_new(SV *class, uv_loop_t *loop = NULL)
     int res;
     uv_prepare_t *prepare = (uv_prepare_t *)handle_new(UV_PREPARE);
     PERL_UNUSED_VAR(class);
-    loop_default_init();
-    if (NULL == loop) loop = uvapi.default_loop;
+    if (!loop) loop = loop_default(aTHX_);
 
     res = uv_prepare_init(loop, prepare);
     if (0 != res) {
@@ -866,12 +883,6 @@ SV * uv_prepare_new(SV *class, uv_loop_t *loop = NULL)
         croak("Couldn't initialize prepare (%i): %s", res, uv_strerror(res));
     }
 
-    if (loop == uvapi.default_loop) {
-        handle_data(prepare)->loop_sv = default_loop_sv;
-    }
-    else {
-        handle_data(prepare)->loop_sv = sv_bless( newRV_noinc( newSViv( PTR2IV(loop))), gv_stashpv("UV::Loop", GV_ADD));
-    }
     RETVAL = handle_bless((uv_handle_t *)prepare);
     OUTPUT:
     RETVAL
@@ -905,26 +916,23 @@ MODULE = UV             PACKAGE = UV::Timer      PREFIX = uv_timer_
 
 PROTOTYPES: ENABLE
 
+BOOT:
+{
+    PERL_MATH_INT64_LOAD_OR_CROAK;
+}
+
 SV * uv_timer_new(SV *class, uv_loop_t *loop = NULL)
     CODE:
     int res;
     uv_timer_t *timer = (uv_timer_t *)handle_new(UV_TIMER);
     PERL_UNUSED_VAR(class);
-    loop_default_init();
-    if (NULL == loop) loop = uvapi.default_loop;
-
+    if (!loop) loop = loop_default(aTHX_);
     res = uv_timer_init(loop, timer);
     if (0 != res) {
         Safefree(timer);
         croak("Couldn't initialize timer (%i): %s", res, uv_strerror(res));
     }
 
-    if (loop == uvapi.default_loop) {
-        handle_data(timer)->loop_sv = default_loop_sv;
-    }
-    else {
-        handle_data(timer)->loop_sv = sv_bless( newRV_noinc( newSViv( PTR2IV(loop))), gv_stashpv("UV::Loop", GV_ADD));
-    }
     RETVAL = handle_bless((uv_handle_t *)timer);
     OUTPUT:
     RETVAL
@@ -973,6 +981,7 @@ PROTOTYPES: ENABLE
 
 BOOT:
 {
+    PERL_MATH_INT64_LOAD_OR_CROAK;
     constants_export_uv_loop();
 }
 
@@ -984,36 +993,35 @@ SV *new (SV *class, int want_default = 0)
     uv_loop_t *loop;
     PERL_UNUSED_VAR(class);
     if (ix == 1 || ix == 2) want_default = 1;
-    if (0 == want_default) {
-        loop = loop_new();
-        RETVAL = sv_bless(
-            newRV_noinc(
-                newSViv(
-                    PTR2IV(loop)
-                )
-            ), gv_stashpv("UV::Loop", GV_ADD)
-        );
+    if (want_default) {
+        loop = loop_default(aTHX_);
     }
     else {
-        loop_default_init();
-        RETVAL = newSVsv(default_loop_sv);
+        loop = loop_new(aTHX_);
     }
+    loop_data_t *data_ptr = loop_data(loop);
+    RETVAL = loop_bless(aTHX_ loop);
     OUTPUT:
     RETVAL
 
 void DESTROY (uv_loop_t *loop)
     CODE:
+    loop_data_t *data_ptr;
+    if (!loop) return;
+    data_ptr = (loop_data_t *)loop->data;
+
     /* 1. the default loop shouldn't be freed by destroying it's perl loop object */
     /* 2. not doing so helps avoid many global destruction bugs in perl, too */
-    if (loop == uvapi.default_loop) {
-        SvREFCNT_dec(default_loop_sv);
+    if (data_ptr->is_default) {
         if (PL_dirty) {
-            uv_loop_close((uv_loop_t *) default_loop_sv);
-            default_loop_sv = NULL;
+            if (0 == uv_loop_close(loop)) {
+                loop_data_destroy(data_ptr);
+            }
         }
     }
     else {
         if (0 == uv_loop_close(loop)) {
+            loop_data_destroy(data_ptr);
             Safefree(loop);
         }
     }
@@ -1025,11 +1033,6 @@ int uv_backend_timeout(const uv_loop_t* loop)
 int uv_close(uv_loop_t *loop)
     CODE:
         RETVAL = uv_loop_close(loop);
-        if (loop == uvapi.default_loop) {
-            SvREFCNT_dec(default_loop_sv);
-            default_loop_sv = NULL;
-            uvapi.default_loop = NULL;
-        }
     OUTPUT:
     RETVAL
 
