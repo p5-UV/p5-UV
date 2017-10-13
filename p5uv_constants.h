@@ -32,12 +32,13 @@
     newCONSTSUB(stash, #c, newSVpvf("%s", c)); \
     av_push(export, newSVpv(#c, 0));
 
-extern void constants_export_uv(void);
-extern void constants_export_uv_handle(void);
-extern void constants_export_uv_loop(void);
-extern void constants_export_uv_poll(void);
+/* all of these call Perl API functions and should have thread context */
+extern void constants_export_uv(pTHX);
+extern void constants_export_uv_handle(pTHX);
+extern void constants_export_uv_loop(pTHX);
+extern void constants_export_uv_poll(pTHX);
 
-void constants_export_uv(void)
+void constants_export_uv(pTHX)
 {
     HV *stash = gv_stashpv("UV", GV_ADD);
     AV *export = get_av("UV::EXPORT_OK", TRUE);
@@ -126,7 +127,7 @@ void constants_export_uv(void)
     DO_CONST_IV(UV_EMLINK);
 }
 
-void constants_export_uv_handle(void)
+void constants_export_uv_handle(pTHX)
 {
     HV *stash = gv_stashpv("UV::Handle", GV_ADD);
     AV *export = get_av("UV::Handle::EXPORT_OK", TRUE);
@@ -149,7 +150,7 @@ void constants_export_uv_handle(void)
     DO_CONST_IV(UV_FILE);
 }
 
-void constants_export_uv_loop(void)
+void constants_export_uv_loop(pTHX)
 {
     HV *stash = gv_stashpv("UV::Loop", GV_ADD);
     AV *export = get_av("UV::Loop::EXPORT_OK", TRUE);
@@ -163,7 +164,7 @@ void constants_export_uv_loop(void)
     DO_CONST_IV(SIGPROF);
 }
 
-void constants_export_uv_poll(void)
+void constants_export_uv_poll(pTHX)
 {
     HV *stash = gv_stashpv("UV::Poll", GV_ADD);
     AV *export = get_av("UV::Poll::EXPORT_OK", TRUE);
