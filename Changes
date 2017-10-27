@@ -1,12 +1,12 @@
 Revision history for Perl extension {{$dist->name}}
 
-{{$NEXT}}
+{{$NEXT}} (TRIAL)
     - Don't store Loop stashes globally (thread safety)
     - Moved constant declarations / some de-dupe efforts (Thanks Paul Evans)
     - Added Perl context to all functions that call the Perl API
     - Separated loop and handle functions from the XS interface
 
-1.000002  2017-09-24
+1.000002  2017-09-24 (TRIAL)
     - Don't store Handle stashes globally for Handle types (thread safety)
     - Simplified the typemap
     - Removed UV::default_loop from UV.xs and added to UV.pm instead
