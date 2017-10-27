@@ -1,6 +1,10 @@
 Revision history for Perl extension {{$dist->name}}
 
 {{$NEXT}}
+    - Don't store Loop stashes globally (thread safety)
+    - Moved constant declarations / some de-dupe efforts (Thanks Paul Evans)
+    - Added Perl context to all functions that call the Perl API
+    - Separated loop and handle functions from the XS interface
 
 1.000002  2017-09-24
     - Don't store Handle stashes globally for Handle types (thread safety)
