@@ -1,6 +1,6 @@
 package UV::Check;
 
-our $VERSION = '1.000003';
+our $VERSION = '1.000004';
 $VERSION = eval $VERSION;
 
 use strict;
