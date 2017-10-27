@@ -1,6 +1,8 @@
 Revision history for Perl extension {{$dist->name}}
 
-{{$NEXT}} (TRIAL)
+{{$NEXT}}
+
+1.000003  2017-10-26 (TRIAL)
     - Don't store Loop stashes globally (thread safety)
     - Moved constant declarations / some de-dupe efforts (Thanks Paul Evans)
     - Added Perl context to all functions that call the Perl API
