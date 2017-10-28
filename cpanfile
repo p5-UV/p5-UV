@@ -18,6 +18,7 @@ on 'build' => sub {
 
 on 'configure' => sub {
     requires 'Alien::libuv' => '0.006';
+    requires 'ExtUtils::MakeMaker' => '7.12';
 };
 
 on 'test' => sub {
