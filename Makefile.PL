@@ -9,6 +9,13 @@ use ExtUtils::MakeMaker;
 
 use Config;
 use Alien::libuv ();
+my $xsbuild = {
+  xs => {
+    'lib/UV' => {
+      OBJECT => 'lib/UV$(OBJ_EXT) lib/perl_math_int64$(OBJ_EXT)',
+    },
+  },
+};
 
 my %WriteMakefileArgs = (
   "ABSTRACT" => "Perl interface to libuv",
@@ -21,7 +28,7 @@ my %WriteMakefileArgs = (
   },
   "CONFIGURE_REQUIRES" => {
     "Alien::libuv" => "0.006",
-    "ExtUtils::MakeMaker" => 0
+    "ExtUtils::MakeMaker" => "7.12"
   },
   "DISTNAME" => "UV",
   "LICENSE" => "perl",
@@ -57,15 +64,10 @@ my %WriteMakefileArgs = (
 %WriteMakefileArgs = (
     %WriteMakefileArgs,
     XSMULTI => 1,
-    XSBUILD => {
-      xs => {
-        'lib/UV' => {
-          OBJECT => 'lib/UV$(OBJ_EXT) perl_math_int64$(OBJ_EXT)',
-        },
-      },
-    },
+    XSBUILD => $xsbuild,
     CCFLAGS => Alien::libuv->cflags . " -I. -I../.. $Config{ccflags}",
     LIBS    => [ Alien::libuv->libs ],
+    OBJECT  => '$(O_FILES)',
 );
 
 my %FallbackPrereqs = (

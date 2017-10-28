@@ -1,6 +1,8 @@
 Revision history for Perl extension {{$dist->name}}
 
-{{$NEXT}}
+{{$NEXT}} (TRIAL)
+    - Require at least ExtUtils::MakeMaker v7.12 for XSMULTI
+    - Move all *.[ch] into lib with the module using XSMULTI (mohawk)
 
 1.000003  2017-10-26 (TRIAL)
     - Don't store Loop stashes globally (thread safety)

@@ -36,7 +36,7 @@
       "configure" : {
          "requires" : {
             "Alien::libuv" : "0.006",
-            "ExtUtils::MakeMaker" : "0"
+            "ExtUtils::MakeMaker" : "7.12"
          }
       },
       "develop" : {
@@ -695,7 +695,8 @@
       }
    },
    "x_contributors" : [
-      "Dan Book <grinnz@gmail.com>"
+      "Dan Book <grinnz@gmail.com>",
+      "Ed J <mohawk2@users.noreply.github.com>"
    ],
    "x_serialization_backend" : "Cpanel::JSON::XS version 3.0239"
 }
