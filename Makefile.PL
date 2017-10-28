@@ -57,9 +57,15 @@ my %WriteMakefileArgs = (
 %WriteMakefileArgs = (
     %WriteMakefileArgs,
     XSMULTI => 1,
+    XSBUILD => {
+      xs => {
+        'lib/UV' => {
+          OBJECT => 'lib/UV$(OBJ_EXT) perl_math_int64$(OBJ_EXT)',
+        },
+      },
+    },
     CCFLAGS => Alien::libuv->cflags . " -I. -I../.. $Config{ccflags}",
     LIBS    => [ Alien::libuv->libs ],
-    OBJECT  => '$(O_FILES)',
 );
 
 my %FallbackPrereqs = (
