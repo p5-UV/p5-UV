@@ -1,5 +1,9 @@
 language: perl
 sudo: false
+addons:
+  apt:
+    packages:
+    - aspell
 perl:
 #  - "5.26"
 #  - "5.24"
