@@ -18,7 +18,7 @@ perl:
 env:
   - "TEST_POD=1"
 before_install:
-  - git clone git://github.com/travis-perl/helpers ~/travis-perl-helpers
+  - git clone git://github.com/mohawk2/helpers ~/travis-perl-helpers -b fix-ci
   - source ~/travis-perl-helpers/init
   - build-perl
   - perl -V
