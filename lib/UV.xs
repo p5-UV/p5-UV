@@ -11,7 +11,8 @@
 
 #include <uv.h>
 #include "p5uv_constants.h"
-#include "p5uv_loops_handles.h"
+#include "p5uv_loops.h"
+#include "p5uv_handles.h"
 
 
 MODULE = UV             PACKAGE = UV            PREFIX = uv_

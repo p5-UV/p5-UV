@@ -1,5 +1,5 @@
-#if !defined (P5UV_LOOPS_HANDLES_H)
-#define P5UV_LOOPS_HANDLES_H
+#if !defined (P5UV_HANDLES_H)
+#define P5UV_HANDLES_H
 
 #include "EXTERN.h"
 #include "perl.h"
@@ -8,9 +8,25 @@
 #define NEED_sv_2pv_flags
 #include "ppport.h"
 #include <uv.h>
+#include "p5uv_loops.h"
 
 #define handle_data(h)      ((handle_data_t *)((uv_handle_t *)(h))->data)
-#define loop_data(l)        ((loop_data_t *)((uv_loop_t *)(l))->data)
+
+static SV * handle_get_cv_croak(SV *cb_sv)
+{
+    dTHX;
+    HV *st;
+    GV *gvp;
+    SV *cv = (SV *)sv_2cv(cb_sv, &st, &gvp, 0);
+
+    if (!cv) {
+        dTHX;
+        croak("%s: callback must be a CODE reference or another callable object", SvPV_nolen(cb_sv));
+    }
+
+    return cv;
+}
+
 
 /* data to store with a HANDLE */
 typedef struct handle_data_s {
@@ -27,33 +43,6 @@ typedef struct handle_data_s {
     SV *timer_cb;
 } handle_data_t;
 
-/* data to store with a LOOP */
-typedef struct loop_data_s {
-    SV *self;
-    int is_default;
-} loop_data_t;
-
-static SV * s_get_cv (SV *cb_sv)
-{
-    dTHX;
-    HV *st;
-    GV *gvp;
-
-    return (SV *)sv_2cv(cb_sv, &st, &gvp, 0);
-}
-
-static SV * s_get_cv_croak (SV *cb_sv)
-{
-    SV *cv = s_get_cv(cb_sv);
-
-    if (!cv) {
-        dTHX;
-        croak("%s: callback must be a CODE reference or another callable object", SvPV_nolen(cb_sv));
-    }
-
-    return cv;
-}
-
 /* Handle function definitions */
 extern void handle_alloc_cb(uv_handle_t* handle, size_t suggested_size, uv_buf_t* buf);
 extern SV * handle_bless(pTHX_ uv_handle_t *h);
@@ -68,118 +57,6 @@ extern void handle_on(pTHX_ uv_handle_t *handle, const char *name, SV *cb);
 extern void handle_poll_cb(uv_poll_t* handle, int status, int events);
 extern void handle_prepare_cb(uv_prepare_t* handle);
 extern void handle_timer_cb(uv_timer_t* handle);
-/* Loop function definitions */
-extern SV * loop_bless(pTHX_ uv_loop_t *loop);
-extern loop_data_t* loop_data_new(pTHX);
-extern void loop_data_destroy(pTHX_ loop_data_t *data_ptr);
-extern uv_loop_t* loop_default(pTHX);
-extern uv_loop_t* loop_new(pTHX);
-extern void loop_walk_cb(uv_handle_t* handle, void* arg);
-
-/* loop functions */
-SV* loop_bless(pTHX_ uv_loop_t *loop)
-{
-    loop_data_t *data_ptr = loop_data(loop);
-    if (!data_ptr || !data_ptr->self) {
-        croak("Couldn't get the loop data");
-    }
-
-    return newSVsv(data_ptr->self);
-}
-
-void loop_data_destroy(pTHX_ loop_data_t *data_ptr)
-{
-    if (NULL == data_ptr) return;
-
-    /* cleanup self */
-    if (NULL != data_ptr->self) {
-        data_ptr->self = NULL;
-    }
-    Safefree(data_ptr);
-}
-
-loop_data_t* loop_data_new(pTHX)
-{
-    loop_data_t *data_ptr = (loop_data_t *)malloc(sizeof(loop_data_t));
-    if (NULL == data_ptr) {
-        croak("Cannot allocate space for loop data.");
-    }
-    data_ptr->self = NULL;
-    data_ptr->is_default = 0;
-    return data_ptr;
-}
-
-uv_loop_t * loop_default(pTHX)
-{
-    loop_data_t *data_ptr;
-    uv_loop_t *loop = uv_default_loop();
-    if (!loop) {
-        croak("Error getting a new default loop");
-    }
-    data_ptr = loop_data(loop);
-    if (!data_ptr) data_ptr = loop_data_new(aTHX);
-
-    if (!data_ptr->self) {
-        data_ptr->self = sv_bless(
-            newRV_noinc(newSViv(PTR2IV(loop))),
-            gv_stashpv("UV::Loop", GV_ADD)
-        );
-        loop->data = (void *)data_ptr;
-    }
-    data_ptr->is_default = 1;
-    return loop;
-}
-
-uv_loop_t * loop_new(pTHX)
-{
-    int ret;
-    loop_data_t *data_ptr;
-    uv_loop_t *loop;
-    Newx(loop, 1, uv_loop_t);
-    if (NULL == loop) {
-        croak("Unable to allocate space for a new loop");
-    }
-    ret = uv_loop_init(loop);
-    if (0 != ret) {
-        Safefree(loop);
-        croak("Error initializing loop (%i): %s", ret, uv_strerror(ret));
-    }
-    data_ptr = loop_data_new(aTHX);
-    data_ptr->self = sv_bless(
-        newRV_noinc(newSViv(PTR2IV(loop))),
-        gv_stashpv("UV::Loop", GV_ADD)
-    );
-    loop->data = (void *)data_ptr;
-    data_ptr->is_default = 0;
-
-    loop->data = (void *)data_ptr;
-    return loop;
-}
-
-void loop_walk_cb(uv_handle_t* handle, void* arg)
-{
-    SV *callback;
-    if (NULL == arg || (SV *)arg == &PL_sv_undef) return;
-    dTHX;
-    callback = arg ? s_get_cv_croak((SV *)arg) : NULL;
-    if (NULL == callback) return;
-
-    /* provide info to the caller: invocant, suggested_size */
-    dSP;
-    ENTER;
-    SAVETMPS;
-
-    PUSHMARK(SP);
-    EXTEND(SP, 1);
-    PUSHs(handle_bless(aTHX_ handle)); /* invocant */
-
-    PUTBACK;
-    call_sv(callback, G_VOID);
-    SPAGAIN;
-
-    FREETMPS;
-    LEAVE;
-}
 
 /* handle functions */
 SV * handle_bless(pTHX_ uv_handle_t *h)
@@ -333,7 +210,7 @@ void handle_on(pTHX_ uv_handle_t *handle, const char *name, SV *cb)
     handle_data_t *data_ptr = handle_data(handle);
     if (!data_ptr) return;
 
-    callback = cb ? s_get_cv_croak(cb) : NULL;
+    callback = cb ? handle_get_cv_croak(cb) : NULL;
 
     /* find out which callback to set */
     if (strEQ(name, "alloc")) {
