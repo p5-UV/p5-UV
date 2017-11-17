@@ -38,16 +38,35 @@ typedef struct loop_data_s {
 } loop_data_t;
 
 /* Loop function definitions */
-extern SV* loop_bless(pTHX_ uv_loop_t *loop);
+extern int          loop_alive(pTHX_ const uv_loop_t *loop);
+extern SV*          loop_bless(pTHX_ uv_loop_t *loop);
 extern loop_data_t* loop_data_new(pTHX);
+<<<<<<< Updated upstream
 extern void loop_data_destroy(pTHX_ loop_data_t *data_ptr);
 extern uv_loop_t* loop_default(pTHX);
 extern uv_loop_t* loop_new(pTHX);
 extern void loop_on(pTHX_ uv_loop_t *loop, const char *name, SV *cb);
 extern void loop_walk_cb(uv_handle_t* handle, void* arg);
 extern void loop_walk_close_cb(uv_handle_t* handle, void* arg);
+=======
+extern void         loop_data_destroy(pTHX_ loop_data_t *data_ptr);
+extern uv_loop_t*   loop_default(pTHX);
+extern uv_loop_t*   loop_new(pTHX);
+extern void         loop_on(pTHX_ uv_loop_t *loop, const char *name, SV *cb);
+extern void         loop_walk_cb(uv_handle_t* handle, void* arg);
+extern void         loop_walk_close_cb(uv_handle_t* handle, void* arg);
+>>>>>>> Stashed changes
 
 /* loop functions */
+int loop_alive(pTHX_const uv_loop_t *loop)
+{
+    loop_data_t *data_ptr = loop_data(loop);
+    if (!data_ptr || data_ptr->closed) {
+        return 0;
+    }
+    return uv_loop_alive(loop);
+}
+
 SV* loop_bless(pTHX_ uv_loop_t *loop)
 {
     loop_data_t *data_ptr = loop_data(loop);

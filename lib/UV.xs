@@ -462,12 +462,12 @@ int uv_close(uv_loop_t *loop)
     RETVAL
 
 int uv_alive(const uv_loop_t* loop)
+    ALIAS:
+        UV::Loop::loop_alive = 1
     CODE:
-    RETVAL = uv_loop_alive(loop);
+    RETVAL = loop_alive(loop);
     OUTPUT:
     RETVAL
-
-int uv_loop_alive(const uv_loop_t* loop)
 
 int uv_configure(uv_loop_t *loop, uv_loop_option option, int value)
     CODE:
