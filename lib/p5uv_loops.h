@@ -31,6 +31,10 @@ static SV * loop_get_cv_croak(SV *cb_sv)
 typedef struct loop_data_s {
     SV *self;
     int is_default;
+    int closed;
+
+    /* callbacks available */
+    SV *walk_cb;
 } loop_data_t;
 
 /* Loop function definitions */
@@ -39,7 +43,9 @@ extern loop_data_t* loop_data_new(pTHX);
 extern void loop_data_destroy(pTHX_ loop_data_t *data_ptr);
 extern uv_loop_t* loop_default(pTHX);
 extern uv_loop_t* loop_new(pTHX);
+extern void loop_on(pTHX_ uv_loop_t *loop, const char *name, SV *cb);
 extern void loop_walk_cb(uv_handle_t* handle, void* arg);
+extern void loop_walk_close_cb(uv_handle_t* handle, void* arg);
 
 /* loop functions */
 SV* loop_bless(pTHX_ uv_loop_t *loop)
@@ -60,6 +66,11 @@ void loop_data_destroy(pTHX_ loop_data_t *data_ptr)
     if (NULL != data_ptr->self) {
         data_ptr->self = NULL;
     }
+    /* cleanup callbacks */
+    if (NULL != data_ptr->walk_cb) {
+        SvREFCNT_dec(data_ptr->walk_cb);
+        data_ptr->walk_cb = NULL;
+    }
     Safefree(data_ptr);
 }
 
@@ -71,6 +82,9 @@ loop_data_t* loop_data_new(pTHX)
     }
     data_ptr->self = NULL;
     data_ptr->is_default = 0;
+    data_ptr->closed = 0;
+    /* setup the callback slots */
+    data_ptr->walk_cb = NULL;
     return data_ptr;
 }
 
@@ -121,6 +135,30 @@ uv_loop_t * loop_new(pTHX)
     return loop;
 }
 
+void loop_on(pTHX_ uv_loop_t *loop, const char *name, SV *cb)
+{
+    loop_data_t *data_ptr = loop_data(loop);
+    SV *callback = NULL;
+    if (!data_ptr) return;
+
+    if (NULL != cb && (SV *)cb != &PL_sv_undef) {
+        callback = cb ? loop_get_cv_croak(cb) : NULL;
+    }
+
+    /* find out which callback to set */
+    if (strEQ(name, "walk")) {
+        /* clear the callback's current value first */
+        if (NULL != data_ptr->walk_cb) {
+            SvREFCNT_dec(data_ptr->walk_cb);
+            data_ptr->walk_cb = NULL;
+        }
+        /* set the CB */
+        if (NULL != callback) {
+            data_ptr->walk_cb = SvREFCNT_inc(callback);
+        }
+    }
+}
+
 void loop_walk_cb(uv_handle_t* handle, void* arg)
 {
     SV *callback;
@@ -144,6 +182,35 @@ void loop_walk_cb(uv_handle_t* handle, void* arg)
 
     FREETMPS;
     LEAVE;
+}
+
+void loop_walk_close_cb(uv_handle_t* handle, void* arg)
+{
+    SV *callback = NULL;
+    dTHX;
+    if (NULL != arg && (SV *)arg != &PL_sv_undef) {
+        callback = loop_get_cv_croak((SV *)arg);
+    }
+    if (callback) {
+        /* provide info to the caller: invocant, suggested_size */
+        dSP;
+        ENTER;
+        SAVETMPS;
+
+        PUSHMARK(SP);
+        EXTEND(SP, 1);
+        PUSHs(handle_bless(aTHX_ handle)); /* invocant */
+
+        PUTBACK;
+        call_sv(callback, G_VOID);
+        SPAGAIN;
+
+        FREETMPS;
+        LEAVE;
+    }
+    if (!((handle_data(handle)->closing))) {
+        uv_close(handle, handle_close_cb);
+    }
 }
 
 #endif
