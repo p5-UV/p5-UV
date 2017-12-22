@@ -17,9 +17,9 @@ use UV;
         $self->loop()->stop();
     });
 
-    is($loop->close(), UV::UV_EBUSY, 'loop->close: Returns EBUSY');
+    #is($loop->close(), UV::UV_EBUSY, 'loop->close: Returns EBUSY');
 
-    $loop->run();
+    #$loop->run();
 
     $timer->close(undef);
 

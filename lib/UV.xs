@@ -11,8 +11,7 @@
 
 #include <uv.h>
 #include "p5uv_constants.h"
-#include "p5uv_loops.h"
-#include "p5uv_handles.h"
+#include "p5uv_base.h"
 
 
 MODULE = UV             PACKAGE = UV            PREFIX = uv_
@@ -60,7 +59,10 @@ int uv_handle_active(uv_handle_t *handle)
         UV::Handle::is_active = 1
     CODE:
         PERL_UNUSED_VAR(ix);
-        RETVAL = uv_is_active(handle);
+        if (handle_data(handle)->closed)
+            RETVAL = 0;
+        else
+            RETVAL = uv_is_active(handle);
     OUTPUT:
     RETVAL
 
@@ -69,7 +71,7 @@ int uv_handle_closing(uv_handle_t *handle)
         UV::Handle::is_closing = 1
     CODE:
         PERL_UNUSED_VAR(ix);
-        RETVAL = uv_is_closing(handle);
+        RETVAL = handle_data(handle)->closing;
     OUTPUT:
     RETVAL
 
@@ -79,7 +81,8 @@ void uv_handle_close(uv_handle_t *handle, SV *cb=NULL)
         cb = cb == &PL_sv_undef ? NULL : cb;
         handle_on(aTHX_ handle, "close", cb);
     }
-    uv_close(handle, handle_close_cb);
+    if (handle_data(handle)->closing) return;
+    handle_close(handle);
 
 SV * uv_handle_data(uv_handle_t *handle, SV *new_val = NULL)
     CODE:
@@ -102,7 +105,10 @@ SV * uv_handle_data(uv_handle_t *handle, SV *new_val = NULL)
 
 int uv_handle_has_ref(uv_handle_t *handle)
     CODE:
-        RETVAL = uv_has_ref(handle);
+        if (handle_data(handle)->closed)
+            RETVAL = 0;
+        else
+            RETVAL = uv_has_ref(handle);
     OUTPUT:
     RETVAL
 
@@ -113,6 +119,9 @@ void uv_handle_on(uv_handle_t *handle, const char *name, SV *cb=NULL)
 
 void uv_handle_ref(uv_handle_t *handle)
     CODE:
+    if (handle_data(handle)->closing) {
+        croak("Invalid operation on closed handle.");
+    }
     uv_ref(handle);
 
 int uv_handle_type(uv_handle_t *handle)
@@ -123,6 +132,9 @@ int uv_handle_type(uv_handle_t *handle)
 
 void uv_handle_unref(uv_handle_t *handle)
     CODE:
+    if (handle_data(handle)->closing) {
+        croak("Invalid operation on closed handle.");
+    }
     uv_unref(handle);
 
 
@@ -134,15 +146,21 @@ PROTOTYPES: ENABLE
 SV * uv_check_new(SV *class, uv_loop_t *loop = NULL)
     CODE:
     int res;
-    uv_check_t *handle = (uv_check_t *)handle_new(aTHX_ UV_CHECK);
+    uv_check_t *handle;
     PERL_UNUSED_VAR(class);
     if (!loop) loop = loop_default(aTHX);
+    if (loop_data(loop)->closed) {
+        croak("Invalid operation on closed loop.");
+    }
 
+    handle = (uv_check_t *)handle_new(aTHX_ UV_CHECK, "UV::Check");
     res = uv_check_init(loop, handle);
     if (0 != res) {
+        handle_data_destroy(aTHX_ handle_data(handle));
         Safefree(handle);
         croak("Couldn't initialize check (%i): %s", res, uv_strerror(res));
     }
+    loop_attach_handle(aTHX_ loop, (uv_handle_t *)handle);
 
     RETVAL = handle_bless(aTHX_ (uv_handle_t *)handle);
     OUTPUT:
@@ -178,12 +196,13 @@ PROTOTYPES: ENABLE
 SV * uv_idle_new(SV *class, uv_loop_t *loop = NULL)
     CODE:
     int res;
-    uv_idle_t *handle = (uv_idle_t *)handle_new(aTHX_ UV_IDLE);
+    uv_idle_t *handle = (uv_idle_t *)handle_new(aTHX_ UV_IDLE, "UV::Idle");
     PERL_UNUSED_VAR(class);
     if (!loop) loop = loop_default(aTHX);
 
     res = uv_idle_init(loop, handle);
     if (0 != res) {
+        handle_data_destroy(aTHX_ handle_data(handle));
         Safefree(handle);
         croak("Couldn't initialize idle (%i): %s", res, uv_strerror(res));
     }
@@ -230,12 +249,13 @@ BOOT:
 SV * uv_poll_new(SV *class, int fd, uv_loop_t *loop = NULL)
     CODE:
     int res;
-    uv_poll_t *handle = (uv_poll_t *)handle_new(aTHX_ UV_POLL);
+    uv_poll_t *handle = (uv_poll_t *)handle_new(aTHX_ UV_POLL, "UV::Poll");
     PERL_UNUSED_VAR(class);
     if (!loop) loop = loop_default(aTHX);
 
     res = uv_poll_init(loop, handle, fd);
     if (0 != res) {
+        handle_data_destroy(aTHX_ handle_data(handle));
         Safefree(handle);
         croak("Couldn't initialize handle (%i): %s", res, uv_strerror(res));
     }
@@ -247,12 +267,13 @@ SV * uv_poll_new(SV *class, int fd, uv_loop_t *loop = NULL)
 SV * uv_poll_new_socket(SV *class, int fd, uv_loop_t *loop = NULL)
     CODE:
     int res;
-    uv_poll_t *handle = (uv_poll_t *)handle_new(aTHX_ UV_POLL);
+    uv_poll_t *handle = (uv_poll_t *)handle_new(aTHX_ UV_POLL, "UV::Poll");
     PERL_UNUSED_VAR(class);
     if (!loop) loop = loop_default(aTHX);
 
     res = uv_poll_init_socket(loop, handle, fd);
     if (0 != res) {
+        handle_data_destroy(aTHX_ handle_data(handle));
         Safefree(handle);
         croak("Couldn't initialize handle (%i): %s", res, uv_strerror(res));
     }
@@ -294,17 +315,18 @@ PROTOTYPES: ENABLE
 SV * uv_prepare_new(SV *class, uv_loop_t *loop = NULL)
     CODE:
     int res;
-    uv_prepare_t *prepare = (uv_prepare_t *)handle_new(aTHX_ UV_PREPARE);
+    uv_prepare_t *handle = (uv_prepare_t *)handle_new(aTHX_ UV_PREPARE, "UV::Prepare");
     PERL_UNUSED_VAR(class);
     if (!loop) loop = loop_default(aTHX);
 
-    res = uv_prepare_init(loop, prepare);
+    res = uv_prepare_init(loop, handle);
     if (0 != res) {
-        Safefree(prepare);
+        handle_data_destroy(aTHX_ handle_data(handle));
+        Safefree(handle);
         croak("Couldn't initialize prepare (%i): %s", res, uv_strerror(res));
     }
 
-    RETVAL = handle_bless(aTHX_ (uv_handle_t *)prepare);
+    RETVAL = handle_bless(aTHX_ (uv_handle_t *)handle);
     OUTPUT:
     RETVAL
 
@@ -334,7 +356,7 @@ int uv_prepare_stop(uv_prepare_t *handle)
 
 
 
-MODULE = UV             PACKAGE = UV::Timer      PREFIX = uv_timer_
+MODULE = UV             PACKAGE = UV::Timer      PREFIX = p5uv_timer_
 
 PROTOTYPES: ENABLE
 
@@ -343,19 +365,20 @@ BOOT:
     PERL_MATH_INT64_LOAD_OR_CROAK;
 }
 
-SV * uv_timer_new(SV *class, uv_loop_t *loop = NULL)
+SV * p5uv_timer_new(SV *class, uv_loop_t *loop = NULL)
     CODE:
     int res;
-    uv_timer_t *timer = (uv_timer_t *)handle_new(aTHX_ UV_TIMER);
+    uv_timer_t *handle = (uv_timer_t *)handle_new(aTHX_ UV_TIMER, "UV::Timer");
     PERL_UNUSED_VAR(class);
     if (!loop) loop = loop_default(aTHX);
-    res = uv_timer_init(loop, timer);
+    res = uv_timer_init(loop, handle);
     if (0 != res) {
-        Safefree(timer);
+        handle_data_destroy(aTHX_ handle_data(handle));
+        Safefree(handle);
         croak("Couldn't initialize timer (%i): %s", res, uv_strerror(res));
     }
 
-    RETVAL = handle_bless(aTHX_ (uv_handle_t *)timer);
+    RETVAL = handle_bless(aTHX_ (uv_handle_t *)handle);
     OUTPUT:
     RETVAL
 
@@ -368,12 +391,19 @@ void DESTROY(uv_timer_t *handle)
         handle->data = NULL;
     }
 
-int uv_timer_again(uv_timer_t *handle)
-
-int uv_timer_start(uv_timer_t *handle, uint64_t start=0, uint64_t repeat=0, SV *cb=NULL)
+int p5uv_timer_again(uv_timer_t *handle)
     CODE:
-        if (uv_is_closing((uv_handle_t *)handle)) {
-            croak("You can't call start on a closed handle");
+        if (handle_data(handle)->closing) {
+            croak("Invalid operation on closed handle.");
+        }
+        RETVAL = uv_timer_again(handle);
+    OUTPUT:
+    RETVAL
+
+int p5uv_timer_start(uv_timer_t *handle, uint64_t start=0, uint64_t repeat=0, SV *cb=NULL)
+    CODE:
+        if (handle_data(handle)->closing) {
+            croak("Invalid operation on closed handle.");
         }
         if (items > 3) {
             cb = cb == &PL_sv_undef ? NULL : cb;
@@ -383,19 +413,27 @@ int uv_timer_start(uv_timer_t *handle, uint64_t start=0, uint64_t repeat=0, SV *
     OUTPUT:
     RETVAL
 
-int uv_timer_stop(uv_timer_t *handle)
+int p5uv_timer_stop(uv_timer_t *handle)
     CODE:
         RETVAL = uv_timer_stop(handle);
     OUTPUT:
     RETVAL
 
-uint64_t uv_timer_get_repeat(uv_timer_t* handle)
+uint64_t p5uv_timer_get_repeat(uv_timer_t* handle)
     CODE:
+        if (handle_data(handle)->closing) {
+            croak("Invalid operation on closed handle.");
+        }
         RETVAL = uv_timer_get_repeat(handle);
     OUTPUT:
     RETVAL
 
-void uv_timer_set_repeat(uv_timer_t *handle, uint64_t repeat)
+void p5uv_timer_set_repeat(uv_timer_t *handle, uint64_t repeat)
+    CODE:
+        if (handle_data(handle)->closing) {
+            croak("Invalid operation on closed handle.");
+        }
+        uv_timer_set_repeat(handle, repeat);
 
 
 MODULE = UV             PACKAGE = UV::Loop      PREFIX = uv_
@@ -429,27 +467,7 @@ SV *new (SV *class, int want_default = 0)
 
 void DESTROY (uv_loop_t *loop)
     CODE:
-    loop_data_t *data_ptr;
-    if (!loop) return;
-    data_ptr = (loop_data_t *)loop->data;
-
-    /* 1. the default loop shouldn't be freed by destroying it's perl loop object */
-    /* 2. not doing so helps avoid many global destruction bugs in perl, too */
-    if (data_ptr->is_default) {
-        if (PL_dirty) {
-            if (0 == uv_loop_close(loop)) {
-                if (data_ptr) loop_data_destroy(aTHX_ data_ptr);
-                loop->data = NULL;
-            }
-        }
-    }
-    else {
-        if (0 == uv_loop_close(loop)) {
-            if (data_ptr) loop_data_destroy(aTHX_ data_ptr);
-            loop->data = NULL;
-            Safefree(loop);
-        }
-    }
+    loop_destroy(loop);
 
 int uv_backend_fd(const uv_loop_t* loop)
 
@@ -457,7 +475,7 @@ int uv_backend_timeout(const uv_loop_t* loop)
 
 int uv_close(uv_loop_t *loop)
     CODE:
-        RETVAL = uv_loop_close(loop);
+        RETVAL = loop_close(loop);
     OUTPUT:
     RETVAL
 
