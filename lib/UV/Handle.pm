@@ -5,9 +5,62 @@ $VERSION = eval $VERSION;
 
 use strict;
 use warnings;
-use Exporter qw(import);
+use Moo;
 
+use Exporter qw(import);
 use UV;
+
+our @EVENTS = (qw(alloc close));
+
+has data => (is => 'rw');
+
+sub BUILD {
+    my ($self, $args) = @_;
+    $self->{_closed} = 0;
+    $self->{_events} = [qw(alloc close)];
+    for my $event (@EVENTS) {
+        $self->on($event, $args->{"on_$event"});
+    }
+}
+
+sub DEMOLISH {
+    my ($self, $in_global_destruction) = @_;
+    $self->close();
+}
+
+sub _add_event {
+    my ($self, $event, $cb) = @_;
+    return unless $self && $event && !CORE::ref($event);
+    push @{$self->{_events}}, $event;
+    $self->on($event, $cb);
+}
+
+sub close {
+    my $self = shift;
+    $self->on('close', @_) if @_; # set the callback ahead of time if exists
+    return if $self->closed();
+    return unless $self->_has_struct();
+    return $self->_close();
+}
+
+sub closed { return shift->{_closed}; }
+
+sub loop { return shift->{_loop}; }
+
+sub on {
+    my $self = shift;
+    my $event = lc(shift || '');
+    return $self->{"_on_$event"} unless @_;
+
+    if ($event && grep {$event eq $_} @{$self->{_events}}) {
+        my $cb = ($_[0] && CORE::ref($_[0]) eq 'CODE')? shift: undef;
+        $self->{"_on_$event"} = $cb;
+        # if ($self->_has_struct() && $event eq 'close') {
+        #     $self->_store_close_cb($cb);
+        # }
+    }
+    return $self;
+}
 
 1;
 
@@ -201,6 +254,13 @@ you a chance to free up any resources associated with the handle.
 In-progress requests, like C<< $handle->connect() >> or C<< $handle->write >>,
 are canceled and have their callbacks called asynchronously with
 C<< status = UV::UV_ECANCELED >>.
+
+=head2 closed
+
+    # are we officially closed?
+    my $int = $handle->closed();
+
+Read-only method to let us know if the handle is closed.
 
 =head2 closing
 

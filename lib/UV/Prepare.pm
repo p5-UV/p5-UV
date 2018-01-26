@@ -5,8 +5,33 @@ $VERSION = eval $VERSION;
 
 use strict;
 use warnings;
+use Moo;
+extends 'UV::Handle';
 
-use parent 'UV::Handle';
+use Carp ();
+use Exporter qw(import);
+use Scalar::Util qw(blessed);
+use UV::Loop;
+
+sub BUILD {
+    my ($self, $args) = @_;
+    # add to the default set of events for a Handle object
+    $self->_add_event('prepare', $args->{on_prepare});
+
+    unless (exists($args->{loop}) && UV::Loop::_is_a_loop($args->{loop})) {
+        $args->{loop} = UV::Loop->default();
+    }
+    $self->_init($args->{loop});
+    $self->{_loop} = $args->{loop};
+}
+
+sub start {
+    my $self = shift;
+    if (@_) {
+        $self->on('prepare', shift);
+    }
+    return $self->_start();
+}
 
 1;
 

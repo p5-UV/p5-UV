@@ -405,6 +405,16 @@ never be called.
 
 Get the current Hi-Res time (`uint64_t`).
 
+## loop
+
+    my $loop = UV::loop();
+    # You can also get it with the UV::Loop methods below:
+    my $loop = UV::Loop->default_loop();
+    my $loop = UV::Loop->default();
+
+Returns the default loop (which is a singleton object). This module already
+creates the default loop and you get access to it with this method.
+
 ## strerror
 
     my $error = UV::strerror(UV::UV_EAI_BADFLAGS);
@@ -420,6 +430,13 @@ number will imply an error.
 
 When a function which takes a callback returns an error, the callback will
 never be called.
+
+## timer
+
+    my $timer = UV::timer(); # uses the default loop
+    my $timer = UV::timer(loop => $some_other_loop); # non-default loop
+
+Returns a new [UV::Timer](https://metacpan.org/pod/UV::Timer) object.
 
 ## version
 

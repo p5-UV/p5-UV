@@ -50,7 +50,6 @@
             "Test::CPAN::Changes" : "0.4",
             "Test::CPAN::Meta" : "0",
             "Test::CheckManifest" : "1.29",
-            "Test::CleanNamespaces" : "0.15",
             "Test::EOL" : "0",
             "Test::Kwalitee" : "1.22",
             "Test::More" : "0.88",
@@ -66,8 +65,11 @@
       "runtime" : {
          "requires" : {
             "Alien::libuv" : "0.006",
+            "Carp" : "0",
             "Exporter" : "5.57",
             "Math::Int64" : "0",
+            "Moo" : "0",
+            "Scalar::Util" : "0",
             "XSLoader" : "0.14",
             "parent" : "0",
             "perl" : "5.008001",
@@ -171,7 +173,7 @@
                }
             },
             "name" : "Git::GatherDir",
-            "version" : "2.042"
+            "version" : "2.043"
          },
          {
             "class" : "Dist::Zilla::Plugin::PruneCruft",
@@ -281,7 +283,7 @@
                }
             },
             "name" : "@Starter/Test::Compile",
-            "version" : "2.057"
+            "version" : "2.058"
          },
          {
             "class" : "Dist::Zilla::Plugin::MakeMaker::Awesome",
@@ -392,7 +394,7 @@
                }
             },
             "name" : "Git::Contributors",
-            "version" : "0.030"
+            "version" : "0.032"
          },
          {
             "class" : "Dist::Zilla::Plugin::GithubMeta",
@@ -419,7 +421,7 @@
                }
             },
             "name" : "@Git/Check",
-            "version" : "2.042"
+            "version" : "2.043"
          },
          {
             "class" : "Dist::Zilla::Plugin::Git::Commit",
@@ -445,7 +447,7 @@
                }
             },
             "name" : "@Git/Commit",
-            "version" : "2.042"
+            "version" : "2.043"
          },
          {
             "class" : "Dist::Zilla::Plugin::Git::Tag",
@@ -467,7 +469,7 @@
                }
             },
             "name" : "@Git/Tag",
-            "version" : "2.042"
+            "version" : "2.043"
          },
          {
             "class" : "Dist::Zilla::Plugin::Git::Push",
@@ -484,7 +486,7 @@
                }
             },
             "name" : "@Git/Push",
-            "version" : "2.042"
+            "version" : "2.043"
          },
          {
             "class" : "Dist::Zilla::Plugin::Test::Portability",
@@ -495,17 +497,6 @@
             },
             "name" : "Test::Portability",
             "version" : "2.001000"
-         },
-         {
-            "class" : "Dist::Zilla::Plugin::Test::CleanNamespaces",
-            "config" : {
-               "Dist::Zilla::Plugin::Test::CleanNamespaces" : {
-                  "filename" : "xt/author/clean-namespaces.t",
-                  "skips" : []
-               }
-            },
-            "name" : "Test::CleanNamespaces",
-            "version" : "0.006"
          },
          {
             "class" : "Dist::Zilla::Plugin::Test::NoTabs",
@@ -551,12 +542,12 @@
          {
             "class" : "Dist::Zilla::Plugin::CheckChangesHasContent",
             "name" : "CheckChangesHasContent",
-            "version" : "0.010"
+            "version" : "0.011"
          },
          {
             "class" : "Dist::Zilla::Plugin::Test::ChangesHasContent",
             "name" : "Test::ChangesHasContent",
-            "version" : "0.010"
+            "version" : "0.011"
          },
          {
             "class" : "Dist::Zilla::Plugin::Test::Kwalitee",
@@ -618,7 +609,7 @@
                }
             },
             "name" : "Test::PodSpelling",
-            "version" : "2.007004"
+            "version" : "2.007005"
          },
          {
             "class" : "Dist::Zilla::Plugin::CopyFilesFromBuild",

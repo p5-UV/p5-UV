@@ -41,7 +41,7 @@ extern void constants_export_uv_poll(pTHX);
 void constants_export_uv(pTHX)
 {
     HV *stash = gv_stashpv("UV", GV_ADD);
-    AV *export = get_av("UV::EXPORT_OK", TRUE);
+    AV *export = get_av("UV::EXPORT_XS", TRUE);
     DO_CONST_IV(UV_VERSION_MAJOR);
     DO_CONST_IV(UV_VERSION_MINOR);
     DO_CONST_IV(UV_VERSION_PATCH);
@@ -130,7 +130,7 @@ void constants_export_uv(pTHX)
 void constants_export_uv_handle(pTHX)
 {
     HV *stash = gv_stashpv("UV::Handle", GV_ADD);
-    AV *export = get_av("UV::Handle::EXPORT_OK", TRUE);
+    AV *export = get_av("UV::Handle::EXPORT_XS", TRUE);
 
     DO_CONST_IV(UV_ASYNC);
     DO_CONST_IV(UV_CHECK);
@@ -153,7 +153,7 @@ void constants_export_uv_handle(pTHX)
 void constants_export_uv_loop(pTHX)
 {
     HV *stash = gv_stashpv("UV::Loop", GV_ADD);
-    AV *export = get_av("UV::Loop::EXPORT_OK", TRUE);
+    AV *export = get_av("UV::Loop::EXPORT_XS", TRUE);
 
     /* Loop run constants */
     DO_CONST_IV(UV_RUN_DEFAULT);
@@ -167,7 +167,7 @@ void constants_export_uv_loop(pTHX)
 void constants_export_uv_poll(pTHX)
 {
     HV *stash = gv_stashpv("UV::Poll", GV_ADD);
-    AV *export = get_av("UV::Poll::EXPORT_OK", TRUE);
+    AV *export = get_av("UV::Poll::EXPORT_XS", TRUE);
 
     /* Poll Event Types */
     DO_CONST_IV(UV_READABLE);

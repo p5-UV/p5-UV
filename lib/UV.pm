@@ -6,25 +6,27 @@ $VERSION = eval $VERSION;
 
 use strict;
 use warnings;
+
 use Exporter qw(import);
 require XSLoader;
-
 XSLoader::load('UV', $XS_VERSION);
 
-our @EXPORT_OK;
-# The XS code adds the constants to EXPORT_OK
-push @EXPORT_OK, qw(default_loop err_name hrtime strerr translate_sys_error);
+our @EXPORT_OK = (@UV::EXPORT_XS, qw(default_loop loop timer err_name hrtime strerr translate_sys_error));
 
-# Loop
-use UV::Loop ();
-# Handles
-use UV::Check ();
-use UV::Idle ();
-use UV::Poll ();
-use UV::Prepare ();
-use UV::Timer ();
+sub default_loop {
+    require UV::Loop;
+    return UV::Loop->default();
+}
 
-sub default_loop { return UV::Loop->default_loop(); }
+sub loop {
+    require UV::Loop;
+    return UV::Loop->default();
+}
+
+sub timer {
+    require UV::Timer;
+    return UV::Timer->new(@_);
+}
 
 1;
 
@@ -441,6 +443,16 @@ never be called.
 
 Get the current Hi-Res time (C<uint64_t>).
 
+=head2 loop
+
+    my $loop = UV::loop();
+    # You can also get it with the UV::Loop methods below:
+    my $loop = UV::Loop->default_loop();
+    my $loop = UV::Loop->default();
+
+Returns the default loop (which is a singleton object). This module already
+creates the default loop and you get access to it with this method.
+
 =head2 strerror
 
     my $error = UV::strerror(UV::UV_EAI_BADFLAGS);
@@ -456,6 +468,13 @@ number will imply an error.
 
 When a function which takes a callback returns an error, the callback will
 never be called.
+
+=head2 timer
+
+    my $timer = UV::timer(); # uses the default loop
+    my $timer = UV::timer(loop => $some_other_loop); # non-default loop
+
+Returns a new L<UV::Timer> object.
 
 =head2 version
 
