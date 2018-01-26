@@ -1,6 +1,7 @@
 Revision history for Perl extension {{$dist->name}}
 
-{{$NEXT}}
+{{$NEXT}} (TRIAL)
+    - 
 
 1.000004  2018-01-25 (TRIAL)
     - Require at least ExtUtils::MakeMaker v7.12 for XSMULTI
