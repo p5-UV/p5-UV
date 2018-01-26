@@ -2,55 +2,40 @@ use strict;
 use warnings;
 
 use Test::More;
-use UV;
+use UV::Loop qw(UV_RUN_DEFAULT);
 
-my $time = UV::hrtime();
-
-sub timer_callback {
-    my $self = shift;
-    ok($self, 'Got a timer in the timer callback');
+{
+    my $l = UV::Loop->default(); # singleton
+    is($l->alive(), 0, 'Default loop is not alive');
+    my $l2 = UV::Loop->default(); # singleton
+    is($l, $l2, 'Got the same default loop');
 }
 
-sub work_callback {
-    my $self = shift;
-    ok($self, 'Got a request in the work callback');
-}
-sub after_work_cb {
-    my ($self, $status) = @_;
-    ok($self, 'Got a request in the after_work callback');
-    is($status, 0, 'Status is 0 in the after_work callback');
+{
+    my $loop = UV::Loop->default_loop();
+    is($loop->alive(), 0, 'default loop is not alive');
+    $loop->run(UV_RUN_DEFAULT);
 }
 
-subtest 'loop_alive' => sub {
-    my $r = 0;
-    is(UV::default_loop()->alive(), 0, 'default loop is not alive');
+{
+    my $loop = UV::Loop->new(); # not a singleton
+    is($loop->alive(), 0, 'Non-default loop is not alive');
+}
+my $loop = UV::Loop->default();
+#{
+    use UV::Timer ();
+    my $timer = UV::Timer->new(
+        loop => $loop,
+        on_close => sub {print "Closing Timer\n"},
+        on_timer => sub {print "Timing Timer\n"},
+    );
+    isa_ok($timer, 'UV::Timer', 'got a timer');
+    is($timer->start(0,0), 0, 'timer started');
+    is($loop->run(), 0, 'ran');
+#}
 
-    # loops with handles are alive
-    my $timer = UV::Timer->new();
-    $timer->start(100, 0, \&timer_callback);
-
-    ok(UV::default_loop()->alive(), 'default loop is now alive!');
-
-    $r = UV::default_loop()->run(UV::Loop::UV_RUN_DEFAULT);
-    is($r, 0, 'loop ran fine');
-    is(UV::default_loop()->alive(), 0, 'default loop is not alive anymore');
-};
-
-diag("the rest of these tests can't run until we implement uv_req_t objects");
-
-# subtest 'work_loop_alive' => sub {
-#     my $r = 0;
-#     # loops with requests are alive
-#     my $work = UV::Work->new();
-#     isa_ok($work, 'UV::Work', 'got a new UV::Work request');
-#
-#     $r = $work->queue_work(UV::default_loop(), \&work_callback, \&after_work_cb);
-#     is($r, 0, 'work queued successfully');
-#     ok(UV::default_loop()->alive(), 'default loop has work and should be alive');
-#
-#     $r = UV::default_loop()->run(UV::Loop::UV_RUN_DEFAULT);
-#     is($r, 0, 'loop ran fine');
-#     is(UV::default_loop()->alive(), 0, 'default loop is not alive anymore');
-# };
-
+# use Data::Dumper::Concise;
+# print Dumper $timer;
+# print "whaaaaat?\n";
+$loop->close();
 done_testing();

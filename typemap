@@ -4,32 +4,13 @@ uv_loop_option      T_RUN_UV
 int64_t             T_INT64
 uint64_t            T_UINT64
 
-uv_loop_t *         T_LOOP
-const uv_loop_t *   T_LOOP
-
-uv_handle_t *       T_HANDLE
-uv_check_t *        T_HANDLE
-uv_idle_t *         T_HANDLE
-uv_poll_t *         T_HANDLE
-uv_prepare_t *      T_HANDLE
-uv_timer_t *        T_HANDLE
-const uv_timer_t *  T_HANDLE
+uv_loop_t *         T_PTROBJ_MG
+uv_handle_t *       T_PTROBJ_MG
 
 INPUT
 
 T_RUN_UV
     $var = SvIV($arg)
-
-T_LOOP
-    if (!(SvROK($arg) && SvOBJECT(SvRV($arg)) && sv_derived_from($arg, \"UV::Loop\")))
-        croak(\"object is not of type UV::Loop\");
-    $var = ($type)SvIVX (SvRV ($arg));
-
-T_HANDLE
-    if (!(SvROK($arg) && SvOBJECT(SvRV ($arg))
-      && (sv_derived_from($arg, \"UV::" . ($type =~ /uv_([^_\s]+)/, ucfirst "$1") . "\"))))
-         croak(\"object is not of type UV::" . ($type =~ /uv_([^_\s]+)/, ucfirst "$1") . "\");
-    $var = ($type)SvPVX(SvRV ($arg));
 
 T_INT64
     $var = SvI64($arg);
@@ -37,10 +18,10 @@ T_INT64
 T_UINT64
     $var = SvU64($arg);
 
-OUTPUT
+T_PTROBJ_MG
+    $var = ($type)xs_object_magic_get_struct_rv_pretty(aTHX_ $arg, \"$var\");
 
-T_HANDLE
-    $arg = handle_bless((uv_handle_t *)$var);
+OUTPUT
 
 T_INT64
     $arg = newSVi64($var);

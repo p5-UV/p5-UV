@@ -5,9 +5,92 @@ $VERSION = eval $VERSION;
 
 use strict;
 use warnings;
-use Exporter qw(import);
+use Moo;
+use Scalar::Util qw(blessed);
 
+use Exporter qw(import);
 use UV;
+our @EXPORT_OK = (@UV::Loop::EXPORT_XS,);
+
+# simple function to ensure we've been given a UV::Loop
+# this is useful in new Handle construction
+sub _is_a_loop {
+    my $loop = shift;
+    return undef unless $loop;
+    return undef unless ref($loop) && Scalar::Util::blessed($loop);
+    return undef unless $loop->isa('UV::Loop');
+    return 1;
+}
+
+sub BUILD {
+    my ($self, $args) = @_;
+    $self->on('walk', $args->{on_walk});
+    if ($args->{_default}) {
+        $self->_create(1);
+        $self->{_default} = 1;
+    }
+    else {
+        $self->_create(0);
+    }
+    $self->{_handles} = [];
+    $self->{_requests} = [];
+}
+
+sub DEMOLISH {
+    my ($self, $in_global_destruction) = @_;
+    return unless $self->_has_struct();
+    if ($self->is_default()) {
+        $self->_destroy(1) if $in_global_destruction;
+    }
+    else {
+        $self->_destroy(0);
+    }
+}
+
+sub close {
+    my $self = shift;
+    return UV::UV_ENOSYS unless $self->_has_struct();
+    return $self->_close();
+}
+
+# Return the singleton uv_default_loop
+sub default {
+    my $class = shift;
+    my $default_loop;
+    {
+        no strict 'refs';
+        $default_loop = \${"$class\::_default_loop"};
+    }
+    unless (defined($$default_loop) && ${$default_loop}->_has_struct) {
+        $$default_loop = $class->new(@_, _default => 1);
+    }
+    return $$default_loop;
+}
+
+sub default_loop { return shift->default(); }
+
+sub is_default {
+    my $self = shift;
+    return 1 if $self->{_default};
+    return undef;
+}
+
+sub on {
+    my $self = shift;
+    my $event = lc(shift || '');
+    return $self unless $event && $event eq 'walk';
+    return $self->{"_on_$event"} unless @_;
+    my $cb = ($_[-1] && ref($_[-1]) eq 'CODE')? pop: undef;
+    $self->{"_on_$event"} = $cb;
+    return $self;
+}
+
+sub walk {
+    my $self = shift;
+    return unless $self->alive();
+    $self->on('walk', @_) if @_; # set the callback ahead of time if exists
+    $self->_walk();
+}
 
 1;
 
@@ -27,12 +110,12 @@ UV::Loop - Looping with libuv
 
   use UV;
 
-  # A new loop
+  # A new, non-default loop
   my $loop = UV::Loop->new();
 
-  # default loop
-  my $loop = UV::Loop->default_loop(); # convenience constructor
-  my $loop = UV::Loop->new(1); # Tell the constructor you want the default loop
+  # A new default loop instance (Singleton)
+  my $loop = UV::Loop->default_loop(); # singleton constructor
+  my $loop = UV::Loop->default(); # singleton constructor
 
   # run a loop with one of three options:
   # UV_RUN_DEFAULT, UV_RUN_ONCE, UV_RUN_NOWAIT
@@ -68,6 +151,22 @@ Event loops that work properly on all platforms. YAY!
 
 =head3 UV_LOOP_BLOCK_SIGNAL
 
+=head1 EVENTS
+
+L<UV::Loop> makes the following extra events available.
+
+=head2 walk
+
+    $loop->on("walk", sub { say "We are walking!"});
+    $loop->on("walk", sub {
+        # the handle instance this event fired on and the buffer size in use
+        my ($handle) = @_;
+        say "walking over active handles";
+    });
+
+The L<walk|http://docs.libuv.org/en/v1.x/loop.html#c.uv_walk_cb> callback
+fires when a C<< $loop->walk() >> method gets called.
+
 =head1 METHODS
 
 L<UV::Loop> makes the following methods available.
@@ -75,7 +174,6 @@ L<UV::Loop> makes the following methods available.
 =head2 new
 
     my $loop = UV::Loop->new();
-    my $default_loop = UV::Loop->new(1);
     my $default_loop = UV::Loop->default_loop();
     my $default_loop = UV::Loop->default();
 
@@ -155,17 +253,24 @@ signals will fail with C<UV::UV_EINVAL>.
 
 =head2 default
 
-    # simply a synonym for ->new(1)
+    # this is a singleton constructor. you'll get the same instance each time
     my $default_loop = UV::Loop->default();
 
-A synonym for the L<UV::Loop/"new"> constructor.
+A singleton method to get the default loop instance.
 
 =head2 default_loop
 
-    # simply a synonym for ->new(1)
+    # this is a singleton constructor. you'll get the same instance each time
     my $default_loop = UV::Loop->default_loop();
 
-A synonym for the L<UV::Loop/"new"> constructor.
+A singleton method to get the default loop instance.
+
+=head2 is_default
+
+    # lets us know if this loop is the default loop for this context
+    my $bool = $loop->is_default();
+
+A read-only method to let us know if we're dealing with the default loop.
 
 =head2 loop_alive
 
@@ -191,6 +296,22 @@ The timestamp increases monotonically from some arbitrary point in time. Don't
 make assumptions about the starting point, you will only get disappointed.
 
 B<* Note:> Use L<UV/"hrtime"> if you need sub-millisecond granularity.
+
+=head2 on
+
+    # set a walk event callback to print the handle's data attribute
+    $loop->on('walk', sub {
+        my $hndl = shift;
+        say $hndl->data();
+        say "walking!"
+    });
+
+    # clear out the walk event callback for the loop
+    $loop->on(walk => undef);
+    $loop->on(walk => sub {});
+
+The C<on> method allows you to subscribe to L<UV::Loop/"EVENTS"> emitted by
+any UV::Loop.
 
 =head2 run
 

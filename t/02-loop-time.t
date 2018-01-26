@@ -1,8 +1,9 @@
 use strict;
 use warnings;
 
+use UV::Loop;
+use UV::Timer;
 use Test::More;
-use UV;
 
 sub _cleanup_loop {
     my $loop = shift;

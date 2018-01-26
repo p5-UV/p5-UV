@@ -5,6 +5,7 @@ use Test::More;
 
 use Try::Tiny qw(try catch);
 use UV;
+use UV::Timer;
 
 my $once_cb_called = 0;
 my $once_close_cb_called = 0;
@@ -16,26 +17,10 @@ my $tiny_timer;
 my $huge_timer1;
 my $huge_timer2;
 
-sub _cleanup_loop {
-    my $loop = shift;
-
-    $loop->walk(sub {
-        my $handle = shift;
-        if ($handle->can('stop')) {
-            $handle->stop();
-        }
-        if (!$handle->closing()) {
-            $handle->close();
-        }
-    });
-    $loop->run(UV::Loop::UV_RUN_DEFAULT);
-    is($loop->close(), 0, 'loop closed');
-}
-
 sub once_close_cb {
     my $handle = shift;
     ok($handle, 'Got a handle in the once_close_cb');
-    is($handle->is_active(), 0, 'handle is not active');
+    is($handle->active(), 0, 'handle is not active');
     $once_close_cb_called++;
 }
 
@@ -43,7 +28,7 @@ sub once_close_cb {
 sub once_cb {
     my $handle = shift;
     ok($handle, 'Got a handle in the once_cb');
-    is($handle->is_active(), 0, 'handle is not active');
+    is($handle->active(), 0, 'handle is not active');
 
     $once_cb_called++;
 
@@ -64,7 +49,7 @@ sub repeat_close_cb {
 sub repeat_cb {
     my $handle = shift;
     ok($handle, 'Got a handle in the repeat_cb');
-    is($handle->is_active(), 1, 'handle is not active');
+    is($handle->active(), 1, 'handle is not active');
 
     $repeat_cb_called++;
 
@@ -115,7 +100,6 @@ subtest 'timer' => sub {
     is($repeat_close_cb_called, 1, 'repeat_close_cb called once');
     ok(500 <= UV::default_loop()->now() - $start_time, 'finished in < 500 ms');
     $never->close(undef);
-    _cleanup_loop(UV::default_loop());
 };
 
 
@@ -128,15 +112,13 @@ subtest 'timer_start_twice' => sub {
 
     is(0, UV::default_loop()->run(), 'default loop run');
     is($once_cb_called, 1, 'once cb called once');
-    _cleanup_loop(UV::default_loop());
 };
 
 subtest 'timer_init' => sub {
     my $handle = UV::Timer->new();
     isa_ok($handle, 'UV::Timer', 'Got a new timer');
-    is(0, $handle->get_repeat(), 'Get-repeat value is zero');
-    is(0, $handle->is_active(), 'is_active is zero');
-    _cleanup_loop(UV::default_loop());
+    is(0, $handle->repeat(), 'Get-repeat value is zero');
+    is(0, $handle->active(), 'active is zero');
 };
 
 sub order_cb_a {
@@ -185,7 +167,6 @@ subtest 'timer_order' => sub {
     is(0, UV::default_loop()->run(), 'default loop run');
 
     is($order_cb_called, 2, 'Got the right number of CBs called');
-    _cleanup_loop(UV::default_loop());
 };
 
 
@@ -212,7 +193,6 @@ subtest 'timer_huge_timeout' => sub {
     is(0, $huge_timer1->start(4294967295, 0, \&tiny_timer_cb), 'huge_timer1 start');
     is(0, $huge_timer2->start(-1, 0, \&tiny_timer_cb), 'huge_timer2 start');
     is(0, UV::default_loop()->run(), 'default loop run');
-    _cleanup_loop(UV::default_loop());
 };
 
 my $ncalls = 0;
@@ -241,7 +221,6 @@ subtest 'timer_huge_repeat' => sub {
     is(0, $tiny_timer->start(2, 2, \&huge_repeat_cb), 'tiny_timer start');
     is(0, $huge_timer1->start(1, -1, \&huge_repeat_cb), 'huge_timer1 start');
     is(0, UV::default_loop()->run(), 'default loop run');
-    _cleanup_loop(UV::default_loop());
 };
 
 
@@ -266,25 +245,8 @@ subtest 'timer_run_once' => sub {
 
     $timer_handle->close(undef);
     is(0, UV::default_loop()->run(UV::Loop::UV_RUN_ONCE), 'default loop run once');
-    _cleanup_loop(UV::default_loop());
 };
 
-subtest 'timer_null_callback' => sub {
-    my $timer = UV::Timer->new();
-    isa_ok($timer, 'UV::Timer', 'got a new timer');
-    my ($err, $res);
-    try {
-        # attempt to pass a non-valid callback.
-        # sub {}, and undef are good. anything else should fail
-        $res = $timer->start(100, 100, 22);
-    }
-    catch {
-        $err = $_;
-    };
-    ok($err, 'Got an error from the bad callback in start');
-    is($res, undef, 'got a bad start return value');
-    _cleanup_loop(UV::default_loop());
-};
 
 my $timer_early_check_expected_time;
 
@@ -307,7 +269,6 @@ subtest 'timer_early_check' => sub {
 
     $timer_handle->close(undef);
     is(UV::default_loop()->run(UV::Loop::UV_RUN_DEFAULT), 0, 'loop run after handle close');
-    _cleanup_loop(UV::default_loop());
 };
 
 done_testing();

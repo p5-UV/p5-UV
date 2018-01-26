@@ -5,9 +5,38 @@ $VERSION = eval $VERSION;
 
 use strict;
 use warnings;
+use Moo;
+extends 'UV::Handle';
 
-use parent 'UV::Handle';
+use Carp ();
+use Exporter qw(import);
+use Scalar::Util qw(blessed);
+use UV::Loop;
 
+our @EXPORT_OK = (@UV::Poll::EXPORT_XS,);
+
+sub BUILD {
+    my ($self, $args) = @_;
+    # add to the default set of events for a Handle object
+    $self->_add_event('poll', $args->{on_poll});
+
+    unless (exists($args->{loop}) && UV::Loop::_is_a_loop($args->{loop})) {
+        $args->{loop} = UV::Loop->default();
+    }
+    my $socket = ($args->{socket})? 1: 0;
+    $self->_init($socket, $args->{fd}, $args->{loop});
+    $self->{_loop} = $args->{loop};
+}
+
+sub start {
+    my $self = shift;
+    Carp::croak("Can't start a closed handle") if ($self->closed()) ;
+    my $events = shift(@_) || UV::Poll::UV_READABLE;
+    if (@_) {
+        $self->on('poll', shift);
+    }
+    return $self->_start($events);
+}
 
 1;
 
@@ -29,11 +58,15 @@ UV::Poll - Poll handles in libuv
 
   # assume we have a file/IO handle from somewhere
   # A new handle will be initialized against the default loop
-  my $poll = UV::Poll->new(fileno($handle));
+  my $poll = UV::Poll->new(fd => fileno($handle));
 
   # Use a different loop
   my $loop = UV::Loop->new(); # non-default loop
-  my $poll = UV::Poll->new(fileno($handle), $loop);
+  my $poll = UV::Poll->new(fd => fileno($handle), loop => $loop);
+
+  # Create a new poll on a socket handle
+  my $socket = IO::Socket::INET->new(Type => SOCK_STREAM);
+  my $poll = UV::Poll->new(socket => 1, fd => fileno($socket));
 
   # setup the handle's callback:
   $poll->on(poll => sub {"We're prepared!!!"});
@@ -106,7 +139,7 @@ following extra events available.
         say "We are here!";
     });
     my $count = 0;
-    $poll->on(prepare => sub {
+    $poll->on(poll => sub {
         my $invocant = shift; # the handle instance this event fired on
         if (++$count > 2) {
             say "We've been called twice. stopping!";

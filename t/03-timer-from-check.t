@@ -3,6 +3,10 @@ use warnings;
 
 use Test::More;
 use UV;
+use UV::Check;
+use UV::Prepare;
+use UV::Idle;
+use UV::Timer;
 
 sub _cleanup_loop {
     my $loop = shift;

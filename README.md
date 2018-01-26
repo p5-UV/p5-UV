@@ -9,6 +9,7 @@ UV - Perl interface to libuv
     use warnings;
 
     use UV;
+    use UV::Loop;
 
     # hi-resolution time
     my $hi_res_time = UV::hrtime();
@@ -17,8 +18,8 @@ UV - Perl interface to libuv
     my $loop = UV::Loop->new();
 
     # default loop
-    my $loop = UV::Loop->default_loop(); # convenience constructor
-    my $loop = UV::Loop->new(1); # Tell the constructor you want the default loop
+    my $loop = UV::Loop->default_loop(); # convenience singleton constructor
+    my $loop = UV::Loop->default(); # convenience singleton constructor
 
     # run a loop with one of three options:
     # UV_RUN_DEFAULT, UV_RUN_ONCE, UV_RUN_NOWAIT
@@ -35,18 +36,6 @@ document things here as best as we can, but we also suggest you look at the
 work.
 
 Event loops that work properly on all platforms. YAY!
-
-# HELP NEEDED
-
-If you are a C/XS developer, I'm pleading for help. While the test cases so far
-function as expected, some design decisions I've made up to this point have
-become somewhat untenable.
-
-Please submit PRs, yell at me on IRC, email me, call me, contact me by any means
-available to you to help me fix this and get the entirety of the libuv project
-ready for Perl use.
-
-Thanks!!
 
 # CONSTANTS
 
@@ -405,6 +394,16 @@ never be called.
 
 Get the current Hi-Res time (`uint64_t`).
 
+## loop
+
+    my $loop = UV::loop();
+    # You can also get it with the UV::Loop methods below:
+    my $loop = UV::Loop->default_loop();
+    my $loop = UV::Loop->default();
+
+Returns the default loop (which is a singleton object). This module already
+creates the default loop and you get access to it with this method.
+
 ## strerror
 
     my $error = UV::strerror(UV::UV_EAI_BADFLAGS);
@@ -420,6 +419,13 @@ number will imply an error.
 
 When a function which takes a callback returns an error, the callback will
 never be called.
+
+## timer
+
+    my $timer = UV::timer(); # uses the default loop
+    my $timer = UV::timer(loop => $some_other_loop); # non-default loop
+
+Returns a new [UV::Timer](https://metacpan.org/pod/UV::Timer) object.
 
 ## version
 
