@@ -3,6 +3,11 @@ Revision history for Perl extension {{$dist->name}}
 {{$NEXT}} (TRIAL)
     - Require at least ExtUtils::MakeMaker v7.12 for XSMULTI
     - Move all *.[ch] into lib with the module using XSMULTI (mohawk)
+    - Redesign everything
+    - Now using XS::Object::Magic to hide the C structs within our Perl objects
+    - Now using Moo
+    - Doing more of the work in Perl-land
+    - Pretty much a complete-rewrite from v1.000003
 
 1.000003  2017-10-26 (TRIAL)
     - Don't store Loop stashes globally (thread safety)
