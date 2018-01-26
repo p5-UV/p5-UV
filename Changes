@@ -1,6 +1,8 @@
 Revision history for Perl extension {{$dist->name}}
 
-{{$NEXT}} (TRIAL)
+{{$NEXT}}
+
+1.000004  2018-01-25 (TRIAL)
     - Require at least ExtUtils::MakeMaker v7.12 for XSMULTI
     - Move all *.[ch] into lib with the module using XSMULTI (mohawk)
     - Redesign everything
