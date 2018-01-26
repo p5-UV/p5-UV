@@ -45,6 +45,7 @@ UV - Perl interface to libuv
   use warnings;
 
   use UV;
+  use UV::Loop;
 
   # hi-resolution time
   my $hi_res_time = UV::hrtime();
@@ -53,8 +54,8 @@ UV - Perl interface to libuv
   my $loop = UV::Loop->new();
 
   # default loop
-  my $loop = UV::Loop->default_loop(); # convenience constructor
-  my $loop = UV::Loop->new(1); # Tell the constructor you want the default loop
+  my $loop = UV::Loop->default_loop(); # convenience singleton constructor
+  my $loop = UV::Loop->default(); # convenience singleton constructor
 
   # run a loop with one of three options:
   # UV_RUN_DEFAULT, UV_RUN_ONCE, UV_RUN_NOWAIT
