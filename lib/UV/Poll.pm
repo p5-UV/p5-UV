@@ -5,29 +5,35 @@ $VERSION = eval $VERSION;
 
 use strict;
 use warnings;
-use Moo;
-use namespace::clean;
-no namespace::clean;
-extends 'UV::Handle';
+use Exporter qw(import);
+use parent 'UV::Handle';
 
 use Carp ();
-use Exporter qw(import);
-use Scalar::Util qw(blessed);
-use UV::Loop;
 
 our @EXPORT_OK = (@UV::Poll::EXPORT_XS,);
 
-sub BUILD {
+sub _after_new {
     my ($self, $args) = @_;
-    # add to the default set of events for a Handle object
     $self->_add_event('poll', $args->{on_poll});
+    my $socket = (exists($args->{socket}) && defined($args->{socket})) ? 1 : 0;
 
-    unless (exists($args->{loop}) && UV::Loop::_is_a_loop($args->{loop})) {
-        $args->{loop} = UV::Loop->default();
+    my $fd = $args->{fd};
+    unless (defined($fd)) {
+        if (defined(my $single = $args->{single_arg})) {
+            $fd = $single unless CORE::ref($single);
+        }
     }
-    my $socket = ($args->{socket})? 1: 0;
-    $self->_init($socket, $args->{fd}, $args->{loop});
-    $self->{_loop} = $args->{loop};
+    unless (defined($fd)) {
+        Carp::croak("No file or socket descriptor provided");
+    }
+
+    my $err = do { #catch
+        local $@;
+        eval { $self->_init($socket, $fd, $self->{_loop}); }; #try
+        $@;
+    };
+    Carp::croak($err) if $err; # throw
+    return $self;
 }
 
 sub start {

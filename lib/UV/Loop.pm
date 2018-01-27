@@ -27,13 +27,23 @@ sub new {
     $self->on('walk', $args->{on_walk});
     $self->{data} = $args->{data};
     $self->{_default} = (exists($args->{_default}) && $args->{_default})? 1: 0;
-    $self->_create($self->{_default});
+    my $err = do { #catch
+        local $@;
+        eval { $self->_create($self->{_default}); }; #try
+        $@;
+    };
+    Carp::croak($err) if $err; # throw
     return $self;
 }
 
 sub DESTROY {
     my $self = shift;
-    $self->_destroy($self->is_default());
+    my $err = do { # catch
+        local $@;
+        eval { $self->_destruct($self->is_default()); }; # try
+        $@;
+    };
+    warn $err if $err;
 }
 
 sub close {
@@ -68,7 +78,7 @@ sub default_loop { return shift->default(); }
 sub is_default {
     my $self = shift;
     return 1 if $self->{_default};
-    return undef;
+    return 0;
 }
 
 sub on {
@@ -162,6 +172,21 @@ L<UV::Loop> makes the following extra events available.
 
 The L<walk|http://docs.libuv.org/en/v1.x/loop.html#c.uv_walk_cb> callback
 fires when a C<< $loop->walk() >> method gets called.
+
+=head1 ATTRIBUTES
+
+L<UV::Loop> implements the following attributes.
+
+=head2 data
+
+    $loop = $loop->data(23); # allows for method chaining.
+    $loop = $loop->data("Some stringy stuff");
+    $loop = $loop->data(Foo::Bar->new());
+    $loop = $loop->data(undef);
+    my $loop = $loop->data();
+
+The C<data> attribute just allows you to store some extra data around with the
+given loop.
 
 =head1 METHODS
 

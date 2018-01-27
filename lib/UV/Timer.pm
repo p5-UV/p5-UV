@@ -6,23 +6,21 @@ $VERSION = eval $VERSION;
 use strict;
 use warnings;
 use Exporter qw(import);
-use base 'UV::Handle';
+use parent 'UV::Handle';
 
 use Carp ();
-use UV::Loop ();
 
 our @EXPORT_OK = (@UV::Timer::EXPORT_XS,);
 
-sub new {
-    my $self = shift->SUPER::new(@_);
-    my $args = UV::_parse_args(@_);
+sub _after_new {
+    my ($self, $args) = @_;
     $self->_add_event('timer', $args->{on_timer});
-    warn "got here in the after_new method";
-    unless (exists($args->{loop}) && UV::Loop::_is_a_loop($args->{loop})) {
-        $args->{loop} = UV::Loop->default();
-    }
-    $self->_init($args->{loop});
-    $self->{_loop} = $args->{loop};
+    my $err = do { #catch
+        local $@;
+        eval { $self->_init($self->{_loop}); }; #try
+        $@;
+    };
+    Carp::croak($err) if $err; # throw
     return $self;
 }
 

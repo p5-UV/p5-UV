@@ -449,10 +449,11 @@ void p5uv_loop__create(SV *self, int want_default)
             loop->data = SvREFCNT_inc(ST(0));
         }
 
-void p5uv_loop__destroy(SV *self, int is_default=0)
+void p5uv_loop__destruct(SV *self, int is_default=0)
     PREINIT:
         uv_loop_t *loop;
     CODE:
+        if (is_default && !PL_dirty) return;
         loop = (uv_loop_t *)xs_object_magic_get_struct_rv_pretty(aTHX_ self, "uv_loop_t in _destroy");
         if (0 != uv_loop_alive(loop)) {
             uv_walk(loop, loop_walk_close_cb, NULL);
