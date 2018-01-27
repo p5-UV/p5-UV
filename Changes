@@ -1,7 +1,13 @@
 Revision history for Perl extension {{$dist->name}}
 
 {{$NEXT}} (TRIAL)
-    - 
+    - Update 02-loop-alive.t to more closely resemble libuv's
+    - Remove lib/p5uv_handles.h (no longer needed)
+    - Remove lib/p5uv_loops.h (no longer needed)
+    - Ensure all Handle objects call ->_destruct() on destruction rather than
+      just calling close.
+    - Provide the current "closed" state of the handle to its destructor to
+      assist with knowing when to free safely.
 
 1.000004  2018-01-25 (TRIAL)
     - Require at least ExtUtils::MakeMaker v7.12 for XSMULTI
