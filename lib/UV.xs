@@ -46,14 +46,12 @@ BOOT:
     constants_export_uv_handle(aTHX);
 }
 
-void p5uv_handle__destruct(SV *self)
+void p5uv_handle__destruct(SV *self, int closed)
     PREINIT:
         uv_handle_t *handle;
-        SV **closed;
     CODE:
         handle = (uv_handle_t *)xs_object_magic_get_struct_rv_pretty(aTHX_ self, "uv_handle_t in _destruct");
-        closed = hv_fetchs((HV*)SvRV(self), "_closed", FALSE);
-        if (closed && SvIV(*closed)) {
+        if (closed) {
             p5uv_destroy_handle(aTHX_ handle);
             return;
         }

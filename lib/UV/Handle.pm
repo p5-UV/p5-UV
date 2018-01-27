@@ -25,7 +25,7 @@ sub BUILD {
 
 sub DEMOLISH {
     my ($self, $in_global_destruction) = @_;
-    $self->close();
+    $self->_destruct($self->closed());
 }
 
 sub _add_event {
@@ -43,7 +43,7 @@ sub close {
     return $self->_close();
 }
 
-sub closed { return shift->{_closed}; }
+sub closed { return (shift->{_closed})? 1: 0; }
 
 sub loop { return shift->{_loop}; }
 

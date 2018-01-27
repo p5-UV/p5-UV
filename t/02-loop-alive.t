@@ -3,6 +3,7 @@ use warnings;
 
 use Test::More;
 use UV::Loop qw(UV_RUN_DEFAULT);
+use UV::Timer ();
 
 {
     my $l = UV::Loop->default(); # singleton
@@ -21,21 +22,24 @@ use UV::Loop qw(UV_RUN_DEFAULT);
     my $loop = UV::Loop->new(); # not a singleton
     is($loop->alive(), 0, 'Non-default loop is not alive');
 }
-my $loop = UV::Loop->default();
-#{
-    use UV::Timer ();
+
+sub timer_cb {
+    my $timer = shift;
+    isa_ok($timer, 'UV::Timer', 'got a timer');
+}
+
+{
+    my $loop = UV::Loop->default();
     my $timer = UV::Timer->new(
         loop => $loop,
-        on_close => sub {print "Closing Timer\n"},
-        on_timer => sub {print "Timing Timer\n"},
+        on_timer => \&timer_cb,
     );
     isa_ok($timer, 'UV::Timer', 'got a timer');
     is($timer->start(0,0), 0, 'timer started');
-    is($loop->run(), 0, 'ran');
-#}
+    ok($loop->alive(), 'A loop with a handle is alive');
+    is($loop->run(UV_RUN_DEFAULT), 0, 'loop ran');
 
-# use Data::Dumper::Concise;
-# print Dumper $timer;
-# print "whaaaaat?\n";
-$loop->close();
+    is($loop->alive(), 0, 'loop is no longer alive');
+}
+
 done_testing();
