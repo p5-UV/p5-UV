@@ -6,8 +6,10 @@ $VERSION = eval $VERSION;
 use strict;
 use warnings;
 use Moo;
-extends 'UV::Handle';
+use namespace::clean;
+no namespace::clean;
 
+extends 'UV::Handle';
 use Carp ();
 use Exporter qw(import);
 use Scalar::Util qw(blessed);

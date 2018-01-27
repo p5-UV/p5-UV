@@ -5,34 +5,30 @@ $VERSION = eval $VERSION;
 
 use strict;
 use warnings;
-use Moo;
-
 use Exporter qw(import);
-use UV;
-
-our @EVENTS = (qw(alloc close));
-
-has data => (is => 'rw');
-
-sub BUILD {
-    my ($self, $args) = @_;
-    $self->{_closed} = 0;
-    $self->{_events} = [qw(alloc close)];
-    for my $event (@EVENTS) {
-        $self->on($event, $args->{"on_$event"});
-    }
-}
-
-sub DEMOLISH {
-    my ($self, $in_global_destruction) = @_;
-    $self->close();
-}
+use UV ();
 
 sub _add_event {
     my ($self, $event, $cb) = @_;
     return unless $self && $event && !CORE::ref($event);
     push @{$self->{_events}}, $event;
     $self->on($event, $cb);
+}
+
+sub new {
+    my $self = bless {}, shift;
+    my $args = UV::_parse_args(@_);
+    $self->{_closed} = 0;
+    $self->{_events} = [qw(alloc close)];
+    $self->on('alloc', $args->{on_alloc});
+    $self->on('close', $args->{on_close});
+    $self->{data} = $args->{data};
+    $self->_create();
+    return $self;
+}
+
+sub DESTROY {
+    shift->_destroy();
 }
 
 sub close {
@@ -44,6 +40,13 @@ sub close {
 }
 
 sub closed { return shift->{_closed}; }
+
+sub data {
+    my $self = shift;
+    return $self->{data} unless @_;
+    $self->{data} = shift;
+    return $self;
+}
 
 sub loop { return shift->{_loop}; }
 

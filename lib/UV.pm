@@ -7,24 +7,69 @@ $VERSION = eval $VERSION;
 use strict;
 use warnings;
 
+use Carp ();
 use Exporter qw(import);
 require XSLoader;
 XSLoader::load('UV', $XS_VERSION);
 
-our @EXPORT_OK = (@UV::EXPORT_XS, qw(default_loop loop timer err_name hrtime strerr translate_sys_error));
+our @EXPORT_OK = (
+    @UV::EXPORT_XS,
+    qw(default_loop check idle loop poll prepare timer),
+    qw(err_name hrtime strerror version version_string)
+);
+
+require UV::Check;
+require UV::Idle;
+require UV::Loop;
+require UV::Poll;
+require UV::Prepare;
+require UV::Timer;
+
+# _parse_args (static, private)
+sub _parse_args {
+    my $args;
+    if ( @_ == 1 && ref $_[0] ) {
+        my %copy = eval { %{ $_[0] } }; # try shallow copy
+        Carp::croak("Argument to method could not be dereferenced as a hash") if $@;
+        $args = \%copy;
+    }
+    elsif (@_==1 && !ref($_[0])) {
+        $args = {single_arg => $_[0]};
+    }
+    elsif ( @_ % 2 == 0 ) {
+        $args = {@_};
+    }
+    else {
+        Carp::croak("Method got an odd number of elements");
+    }
+    return $args;
+}
 
 sub default_loop {
-    require UV::Loop;
     return UV::Loop->default();
+}
+
+sub check {
+    return UV::Check->new(@_);
+}
+
+sub idle {
+    return UV::Idle->new(@_);
 }
 
 sub loop {
-    require UV::Loop;
     return UV::Loop->default();
 }
 
+sub poll {
+    return UV::Poll->new(@_);
+}
+
+sub prepare {
+    return UV::Prepare->new(@_);
+}
+
 sub timer {
-    require UV::Timer;
     return UV::Timer->new(@_);
 }
 
@@ -397,15 +442,20 @@ Unknown error
 
 The following functions are available:
 
+=head2 check
+
+    my $check = UV::check(); # uses the default loop
+    my $check = UV::check(loop => $some_other_loop); # non-default loop
+
+Returns a new L<UV::Check> Handle object.
+
 =head2 default_loop
 
     my $loop = UV::default_loop();
     # You can also get it with the UV::Loop methods below:
+    use UV::Loop ();
     my $loop = UV::Loop->default_loop();
     my $loop = UV::Loop->default();
-    # Passing a true value as the first arg to the UV::Loop constructor
-    # will also return the default loop
-    my $loop = UV::Loop->new(1);
 
 Returns the default loop (which is a singleton object). This module already
 creates the default loop and you get access to it with this method.
@@ -432,6 +482,13 @@ never be called.
 
 Get the current Hi-Res time (C<uint64_t>).
 
+=head2 idle
+
+    my $idle = UV::idle(); # uses the default loop
+    my $idle = UV::idle(loop => $some_other_loop); # non-default loop
+
+Returns a new L<UV::Idle> Handle object.
+
 =head2 loop
 
     my $loop = UV::loop();
@@ -441,6 +498,20 @@ Get the current Hi-Res time (C<uint64_t>).
 
 Returns the default loop (which is a singleton object). This module already
 creates the default loop and you get access to it with this method.
+
+=head2 poll
+
+    my $poll = UV::poll(); # uses the default loop
+    my $poll = UV::poll(loop => $some_other_loop); # non-default loop
+
+Returns a new L<UV::Poll> Handle object.
+
+=head2 prepare
+
+    my $prepare = UV::prepare(); # uses the default loop
+    my $prepare = UV::prepare(loop => $some_other_loop); # non-default loop
+
+Returns a new L<UV::Prepare> Handle object.
 
 =head2 strerror
 

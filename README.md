@@ -359,15 +359,20 @@ Unknown error
 
 The following functions are available:
 
+## check
+
+    my $check = UV::check(); # uses the default loop
+    my $check = UV::check(loop => $some_other_loop); # non-default loop
+
+Returns a new [UV::Check](https://metacpan.org/pod/UV::Check) Handle object.
+
 ## default\_loop
 
     my $loop = UV::default_loop();
     # You can also get it with the UV::Loop methods below:
+    use UV::Loop ();
     my $loop = UV::Loop->default_loop();
     my $loop = UV::Loop->default();
-    # Passing a true value as the first arg to the UV::Loop constructor
-    # will also return the default loop
-    my $loop = UV::Loop->new(1);
 
 Returns the default loop (which is a singleton object). This module already
 creates the default loop and you get access to it with this method.
@@ -394,6 +399,13 @@ never be called.
 
 Get the current Hi-Res time (`uint64_t`).
 
+## idle
+
+    my $idle = UV::idle(); # uses the default loop
+    my $idle = UV::idle(loop => $some_other_loop); # non-default loop
+
+Returns a new [UV::Idle](https://metacpan.org/pod/UV::Idle) Handle object.
+
 ## loop
 
     my $loop = UV::loop();
@@ -403,6 +415,20 @@ Get the current Hi-Res time (`uint64_t`).
 
 Returns the default loop (which is a singleton object). This module already
 creates the default loop and you get access to it with this method.
+
+## poll
+
+    my $poll = UV::poll(); # uses the default loop
+    my $poll = UV::poll(loop => $some_other_loop); # non-default loop
+
+Returns a new [UV::Poll](https://metacpan.org/pod/UV::Poll) Handle object.
+
+## prepare
+
+    my $prepare = UV::prepare(); # uses the default loop
+    my $prepare = UV::prepare(loop => $some_other_loop); # non-default loop
+
+Returns a new [UV::Prepare](https://metacpan.org/pod/UV::Prepare) Handle object.
 
 ## strerror
 

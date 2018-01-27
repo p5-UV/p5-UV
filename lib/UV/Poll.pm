@@ -6,6 +6,8 @@ $VERSION = eval $VERSION;
 use strict;
 use warnings;
 use Moo;
+use namespace::clean;
+no namespace::clean;
 extends 'UV::Handle';
 
 use Carp ();

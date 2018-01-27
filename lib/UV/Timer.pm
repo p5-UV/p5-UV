@@ -5,26 +5,25 @@ $VERSION = eval $VERSION;
 
 use strict;
 use warnings;
-use Moo;
-extends 'UV::Handle';
+use Exporter qw(import);
+use base 'UV::Handle';
 
 use Carp ();
-use Exporter qw(import);
-use Scalar::Util qw(blessed);
-use UV::Loop;
+use UV::Loop ();
 
 our @EXPORT_OK = (@UV::Timer::EXPORT_XS,);
 
-sub BUILD {
-    my ($self, $args) = @_;
-    # add to the default set of events for a Handle object
+sub new {
+    my $self = shift->SUPER::new(@_);
+    my $args = UV::_parse_args(@_);
     $self->_add_event('timer', $args->{on_timer});
-
+    warn "got here in the after_new method";
     unless (exists($args->{loop}) && UV::Loop::_is_a_loop($args->{loop})) {
         $args->{loop} = UV::Loop->default();
     }
     $self->_init($args->{loop});
     $self->{_loop} = $args->{loop};
+    return $self;
 }
 
 sub repeat {
@@ -36,7 +35,7 @@ sub repeat {
 
 sub start {
     my $self = shift;
-    Carp::croak("Can't start a closed handle") if ($self->closed()) ;
+    Carp::croak("Can't start a closed handle") if $self->closed();
     my $timeout = shift(@_) || 0;
     my $repeat = shift(@_) || 0;
     if (@_) {
