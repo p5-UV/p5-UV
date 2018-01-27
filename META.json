@@ -50,6 +50,7 @@
             "Test::CPAN::Changes" : "0.4",
             "Test::CPAN::Meta" : "0",
             "Test::CheckManifest" : "1.29",
+            "Test::CleanNamespaces" : "0.15",
             "Test::EOL" : "0",
             "Test::Kwalitee" : "1.22",
             "Test::More" : "0.88",
@@ -68,7 +69,6 @@
             "Carp" : "0",
             "Exporter" : "5.57",
             "Math::Int64" : "0",
-            "Moo" : "0",
             "Scalar::Util" : "0",
             "XSLoader" : "0.14",
             "parent" : "0",
@@ -497,6 +497,17 @@
             },
             "name" : "Test::Portability",
             "version" : "2.001000"
+         },
+         {
+            "class" : "Dist::Zilla::Plugin::Test::CleanNamespaces",
+            "config" : {
+               "Dist::Zilla::Plugin::Test::CleanNamespaces" : {
+                  "filename" : "xt/author/clean-namespaces.t",
+                  "skips" : []
+               }
+            },
+            "name" : "Test::CleanNamespaces",
+            "version" : "0.006"
          },
          {
             "class" : "Dist::Zilla::Plugin::Test::NoTabs",

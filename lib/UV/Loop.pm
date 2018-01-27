@@ -5,11 +5,10 @@ $VERSION = eval $VERSION;
 
 use strict;
 use warnings;
-use Moo;
-use Scalar::Util qw(blessed);
 
 use Exporter qw(import);
-use UV;
+use Scalar::Util ();
+use UV ();
 our @EXPORT_OK = (@UV::Loop::EXPORT_XS,);
 
 # simple function to ensure we've been given a UV::Loop
@@ -22,35 +21,42 @@ sub _is_a_loop {
     return 1;
 }
 
-sub BUILD {
-    my ($self, $args) = @_;
+sub new {
+    my $self = bless {}, shift;
+    my $args = UV::_parse_args(@_);
     $self->on('walk', $args->{on_walk});
-    if ($args->{_default}) {
-        $self->_create(1);
-        $self->{_default} = 1;
-    }
-    else {
-        $self->_create(0);
-    }
-    $self->{_handles} = [];
-    $self->{_requests} = [];
+    $self->{data} = $args->{data};
+    $self->{_default} = (exists($args->{_default}) && $args->{_default})? 1: 0;
+    my $err = do { #catch
+        local $@;
+        eval { $self->_create($self->{_default}); }; #try
+        $@;
+    };
+    Carp::croak($err) if $err; # throw
+    return $self;
 }
 
-sub DEMOLISH {
-    my ($self, $in_global_destruction) = @_;
-    return unless $self->_has_struct();
-    if ($self->is_default()) {
-        $self->_destroy(1) if $in_global_destruction;
-    }
-    else {
-        $self->_destroy(0);
-    }
+sub DESTROY {
+    my $self = shift;
+    my $err = do { # catch
+        local $@;
+        eval { $self->_destruct($self->is_default()); }; # try
+        $@;
+    };
+    warn $err if $err;
 }
 
 sub close {
     my $self = shift;
     return UV::UV_ENOSYS unless $self->_has_struct();
     return $self->_close();
+}
+
+sub data {
+    my $self = shift;
+    return $self->{data} unless @_;
+    $self->{data} = shift;
+    return $self;
 }
 
 # Return the singleton uv_default_loop
@@ -72,7 +78,7 @@ sub default_loop { return shift->default(); }
 sub is_default {
     my $self = shift;
     return 1 if $self->{_default};
-    return undef;
+    return 0;
 }
 
 sub on {
@@ -166,6 +172,21 @@ L<UV::Loop> makes the following extra events available.
 
 The L<walk|http://docs.libuv.org/en/v1.x/loop.html#c.uv_walk_cb> callback
 fires when a C<< $loop->walk() >> method gets called.
+
+=head1 ATTRIBUTES
+
+L<UV::Loop> implements the following attributes.
+
+=head2 data
+
+    $loop = $loop->data(23); # allows for method chaining.
+    $loop = $loop->data("Some stringy stuff");
+    $loop = $loop->data(Foo::Bar->new());
+    $loop = $loop->data(undef);
+    my $loop = $loop->data();
+
+The C<data> attribute just allows you to store some extra data around with the
+given loop.
 
 =head1 METHODS
 

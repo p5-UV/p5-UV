@@ -5,28 +5,9 @@ $VERSION = eval $VERSION;
 
 use strict;
 use warnings;
-use Moo;
-
 use Exporter qw(import);
-use UV;
-
-our @EVENTS = (qw(alloc close));
-
-has data => (is => 'rw');
-
-sub BUILD {
-    my ($self, $args) = @_;
-    $self->{_closed} = 0;
-    $self->{_events} = [qw(alloc close)];
-    for my $event (@EVENTS) {
-        $self->on($event, $args->{"on_$event"});
-    }
-}
-
-sub DEMOLISH {
-    my ($self, $in_global_destruction) = @_;
-    $self->close();
-}
+use UV ();
+use UV::Loop ();
 
 sub _add_event {
     my ($self, $event, $cb) = @_;
@@ -35,15 +16,55 @@ sub _add_event {
     $self->on($event, $cb);
 }
 
+sub new {
+    my $self = bless {}, shift;
+    my $args = UV::_parse_args(@_);
+    $self->{_closed} = 0;
+    $self->{_events} = [qw(alloc close)];
+    $self->on('alloc', $args->{on_alloc});
+    $self->on('close', $args->{on_close});
+    $self->{data} = $args->{data};
+    my $loop = $args->{loop} || $args->{single_arg};
+    unless ($loop && UV::Loop::_is_a_loop($loop)) {
+        $loop = UV::Loop->default();
+    }
+    $self->{_loop} = $loop;
+    if ($self->can('_after_new')) {
+        $self->_after_new($args);
+    }
+    return $self;
+}
+
+sub DESTROY {
+    my $self = shift;
+    my $err = do { # catch
+        local $@;
+        eval { $self->_destruct(); }; # try
+        $@;
+    };
+    warn $err if $err;
+}
+
 sub close {
     my $self = shift;
     $self->on('close', @_) if @_; # set the callback ahead of time if exists
     return if $self->closed();
-    return unless $self->_has_struct();
-    return $self->_close();
+    my $err = do { # catch
+        local $@;
+        eval { $self->_close(); }; # try
+        $@;
+    };
+    Carp::croak($err) if $err; # throw
 }
 
 sub closed { return shift->{_closed}; }
+
+sub data {
+    my $self = shift;
+    return $self->{data} unless @_;
+    $self->{data} = shift;
+    return $self;
+}
 
 sub loop { return shift->{_loop}; }
 
@@ -175,10 +196,8 @@ L<UV::Handle> implements the following attributes.
     $handle = $handle->data(undef);
     my $data = $handle->data();
 
-The L<data|http://docs.libuv.org/en/v1.x/handle.html#c.uv_handle_t.data>
-attribute allows you to store some information along with your L<UV::Handle>
-object. Since libuv does not make use of this attribute in any way, you're free
-to use it for your own purposes.
+The C<data> attribute is free for you to use for your own purposes. It helps
+to be able to maintain some data to possibly be used in callbacks later.
 
 =head2 loop
 
