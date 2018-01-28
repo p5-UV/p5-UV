@@ -10,11 +10,27 @@ perl:
   - "5.12"
   - "5.10"
   - "5.8"
-env:
-  - "HARNESS_OPTIONS=j9 TEST_POD=1"
+  - "blead"
+matrix:
+  include:
+    - perl: 5.24
+      env: COVERAGE=1   # enables coverage+coveralls reporting
+  allow_failures:
+    - perl: blead       # ignore failures for blead perl
+sudo: false             # faster builds as long as you don't need sudo access
+before_install:
+  - git clone git://github.com/travis-perl/helpers ~/travis-perl-helpers
+  - source ~/travis-perl-helpers/init
+  - build-perl
+  - perl -V
+  - build-dist
+  - cd $BUILD_DIR             # $BUILD_DIR is set by the build-dist command
 install:
-  - "cpanm -n Test::More Test::Pod Test::Pod::Coverage"
-  - "cpanm -n --installdeps ."
-sudo: false
+  - cpan-install --deps       # installs prereqs, including recommends
+  - cpan-install --coverage   # installs converage prereqs, if enabled
+before_script:
+  - coverage-setup
+after_success:
+  - coverage-report
 notifications:
   email: false
