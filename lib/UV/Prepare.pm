@@ -1,6 +1,6 @@
 package UV::Prepare;
 
-our $VERSION = '1.000005';
+our $VERSION = '1.000006';
 $VERSION = eval $VERSION;
 
 use strict;
