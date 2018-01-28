@@ -11,16 +11,40 @@ use Exporter qw(import);
 require XSLoader;
 XSLoader::load('UV', $XS_VERSION);
 
-our @EXPORT_OK = (@UV::EXPORT_XS, qw(default_loop loop timer err_name hrtime strerr translate_sys_error));
+our @EXPORT_OK = (
+    @UV::EXPORT_XS,
+    qw(default_loop loop err_name hrtime strerr translate_sys_error),
+    qw(check timer),
+);
+
+sub check {
+    require UV::Check;
+    return UV::Check->new(@_);
+}
 
 sub default_loop {
     require UV::Loop;
     return UV::Loop->default();
 }
 
+sub idle {
+    require UV::Idle;
+    return UV::Idle->new(@_);
+}
+
 sub loop {
     require UV::Loop;
     return UV::Loop->default();
+}
+
+sub poll {
+    require UV::Poll;
+    return UV::Poll->new(@_);
+}
+
+sub prepare {
+    require UV::Prepare;
+    return UV::Prepare->new(@_);
 }
 
 sub timer {
@@ -397,6 +421,13 @@ Unknown error
 
 The following functions are available:
 
+=head2 check
+
+    my $handle = UV::check(); # uses the default loop
+    my $handle = UV::check(loop => $some_other_loop); # non-default loop
+
+Returns a new L<UV::Check> Handle object.
+
 =head2 default_loop
 
     my $loop = UV::default_loop();
@@ -432,6 +463,13 @@ never be called.
 
 Get the current Hi-Res time (C<uint64_t>).
 
+=head2 idle
+
+    my $handle = UV::idle(); # uses the default loop
+    my $handle = UV::idle(loop => $some_other_loop); # non-default loop
+
+Returns a new L<UV::Idle> Handle object.
+
 =head2 loop
 
     my $loop = UV::loop();
@@ -441,6 +479,20 @@ Get the current Hi-Res time (C<uint64_t>).
 
 Returns the default loop (which is a singleton object). This module already
 creates the default loop and you get access to it with this method.
+
+=head2 poll
+
+    my $handle = UV::poll(); # uses the default loop
+    my $handle = UV::poll(loop => $some_other_loop); # non-default loop
+
+Returns a new L<UV::Poll> Handle object.
+
+=head2 prepare
+
+    my $handle = UV::prepare(); # uses the default loop
+    my $handle = UV::prepare(loop => $some_other_loop); # non-default loop
+
+Returns a new L<UV::Prepare> Handle object.
 
 =head2 strerror
 

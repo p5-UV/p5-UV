@@ -11,6 +11,13 @@ Revision history for Perl extension {{$dist->name}}
     - Rename Loop->_destroy() to Loop->_destruct() to be consistent
     - Make Loop->_destroy() use p5uv_destroy_loop() to free properly
     - A few changes at the suggestion of Devel::PPPort
+    - Added a few more tests to ensure we can export things correctly
+    - Added a UV::check() function. A convenience wrapper to UV::Check->new
+    - Added a UV::idle() function. A convenience wrapper to UV::Idle->new
+    - Added a UV::poll() function. A convenience wrapper to UV::Poll->new
+    - Added a UV::prepare() function. A convenience wrapper to UV::Prepare->new
+    - Reworked the tests to exercise the above convenience wrappers
+    - Removed a few superfluous 'use' statements
 
 1.000004  2018-01-25 (TRIAL)
     - Require at least ExtUtils::MakeMaker v7.12 for XSMULTI

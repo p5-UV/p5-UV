@@ -359,6 +359,13 @@ Unknown error
 
 The following functions are available:
 
+## check
+
+    my $handle = UV::check(); # uses the default loop
+    my $handle = UV::check(loop => $some_other_loop); # non-default loop
+
+Returns a new [UV::Check](https://metacpan.org/pod/UV::Check) Handle object.
+
 ## default\_loop
 
     my $loop = UV::default_loop();
@@ -394,6 +401,13 @@ never be called.
 
 Get the current Hi-Res time (`uint64_t`).
 
+## idle
+
+    my $handle = UV::idle(); # uses the default loop
+    my $handle = UV::idle(loop => $some_other_loop); # non-default loop
+
+Returns a new [UV::Idle](https://metacpan.org/pod/UV::Idle) Handle object.
+
 ## loop
 
     my $loop = UV::loop();
@@ -403,6 +417,20 @@ Get the current Hi-Res time (`uint64_t`).
 
 Returns the default loop (which is a singleton object). This module already
 creates the default loop and you get access to it with this method.
+
+## poll
+
+    my $handle = UV::poll(); # uses the default loop
+    my $handle = UV::poll(loop => $some_other_loop); # non-default loop
+
+Returns a new [UV::Poll](https://metacpan.org/pod/UV::Poll) Handle object.
+
+## prepare
+
+    my $handle = UV::prepare(); # uses the default loop
+    my $handle = UV::prepare(loop => $some_other_loop); # non-default loop
+
+Returns a new [UV::Prepare](https://metacpan.org/pod/UV::Prepare) Handle object.
 
 ## strerror
 

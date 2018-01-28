@@ -10,7 +10,6 @@ extends 'UV::Handle';
 
 use Carp ();
 use Exporter qw(import);
-use Scalar::Util qw(blessed);
 use UV::Loop;
 
 our @EXPORT_OK = (@UV::Timer::EXPORT_XS,);
