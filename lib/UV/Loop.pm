@@ -39,12 +39,7 @@ sub BUILD {
 sub DEMOLISH {
     my ($self, $in_global_destruction) = @_;
     return unless $self->_has_struct();
-    if ($self->is_default()) {
-        $self->_destroy(1) if $in_global_destruction;
-    }
-    else {
-        $self->_destroy(0);
-    }
+    $self->_destruct($self->is_default());
 }
 
 sub close {
@@ -72,7 +67,7 @@ sub default_loop { return shift->default(); }
 sub is_default {
     my $self = shift;
     return 1 if $self->{_default};
-    return undef;
+    return 0;
 }
 
 sub on {

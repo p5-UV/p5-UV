@@ -55,9 +55,6 @@ sub on {
     if ($event && grep {$event eq $_} @{$self->{_events}}) {
         my $cb = ($_[0] && CORE::ref($_[0]) eq 'CODE')? shift: undef;
         $self->{"_on_$event"} = $cb;
-        # if ($self->_has_struct() && $event eq 'close') {
-        #     $self->_store_close_cb($cb);
-        # }
     }
     return $self;
 }

@@ -8,6 +8,9 @@ Revision history for Perl extension {{$dist->name}}
       just calling close.
     - Provide the current "closed" state of the handle to its destructor to
       assist with knowing when to free safely.
+    - Rename Loop->_destroy() to Loop->_destruct() to be consistent
+    - Make Loop->_destroy() use p5uv_destroy_loop() to free properly
+    - A few changes at the suggestion of Devel::PPPort
 
 1.000004  2018-01-25 (TRIAL)
     - Require at least ExtUtils::MakeMaker v7.12 for XSMULTI

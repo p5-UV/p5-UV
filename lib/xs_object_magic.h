@@ -2,6 +2,8 @@
 #define __XS_OBJECT_MAGIC_H__
 
 #include "perl.h"
+#define NEED_newRV_noinc
+#include "ppport.h"
 
 START_EXTERN_C
 

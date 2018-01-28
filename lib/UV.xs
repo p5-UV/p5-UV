@@ -447,19 +447,18 @@ void p5uv_loop__create(SV *self, int want_default)
             loop->data = SvREFCNT_inc(ST(0));
         }
 
-void p5uv_loop__destroy(SV *self, int is_default=0)
+void p5uv_loop__destruct(SV *self, int is_default=0)
     PREINIT:
         uv_loop_t *loop;
     CODE:
         loop = (uv_loop_t *)xs_object_magic_get_struct_rv_pretty(aTHX_ self, "uv_loop_t in _destroy");
+        if (is_default && !PL_dirty) return;
         if (0 != uv_loop_alive(loop)) {
             uv_walk(loop, loop_walk_close_cb, NULL);
             uv_run(loop, UV_RUN_DEFAULT);
             uv_loop_close(loop);
-            xs_object_magic_detach_struct(aTHX_ self, loop);
         }
-        loop->data = NULL;
-        if (NULL != loop && 0==is_default) Safefree(loop);
+        if (NULL != loop && 0==is_default) p5uv_destroy_loop(aTHX_ loop);
 
 void p5uv_loop__has_struct(SV *self)
     PPCODE:

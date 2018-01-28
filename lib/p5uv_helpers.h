@@ -4,7 +4,6 @@
 #include "EXTERN.h"
 #include "perl.h"
 #include "XSUB.h"
-#define NEED_newCONSTSUB
 #include "ppport.h"
 #include "xs_object_magic.h"
 #include <uv.h>
