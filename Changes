@@ -1,6 +1,8 @@
 Revision history for Perl extension {{$dist->name}}
 
-{{$NEXT}} (TRIAL)
+{{$NEXT}}
+
+1.000005  2018-01-28 (TRIAL)
     - Update 02-loop-alive.t to more closely resemble libuv's
     - Remove lib/p5uv_handles.h (no longer needed)
     - Remove lib/p5uv_loops.h (no longer needed)
