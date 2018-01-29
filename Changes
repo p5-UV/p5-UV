@@ -1,6 +1,14 @@
 Revision history for Perl extension {{$dist->name}}
 
-{{$NEXT}}
+{{$NEXT}} (TRIAL)
+    - Removed is_closing()
+    - Removed is_active()
+    - Removed loop_configure()
+    - Removed loop_alive()
+    - Removed reference to UV::Poll->new_socket() as that's all done in the
+      standard ->new() constructor now.
+    - Updated documentation for the Handle classes to better indicate their
+      use.
 
 1.000005  2018-01-28 (TRIAL)
     - Update 02-loop-alive.t to more closely resemble libuv's
