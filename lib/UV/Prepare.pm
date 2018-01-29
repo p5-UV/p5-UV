@@ -55,7 +55,12 @@ UV::Prepare - Prepare handles in libuv
 
   # Use a different loop
   my $loop = UV::Loop->new(); # non-default loop
-  my $prepare = UV::Prepare->new($loop);
+  my $prepare = UV::Prepare->new(
+    loop => $loop,
+    on_alloc => sub {say "alloc!"},
+    on_close => sub {say "close!"},
+    on_prepare => sub {say "prepare!"},
+  );
 
   # setup the handle's callback:
   $prepare->on(prepare => sub {say "We're prepared!!!"});
@@ -81,7 +86,7 @@ before polling for i/o.
 L<UV::Prepare> inherits all events from L<UV::Handle> and also makes the
 following extra events available.
 
-=head2 timer
+=head2 prepare
 
     $prepare->on(prepare => sub { my $invocant = shift; say "We are here!"});
     my $count = 0;
@@ -106,7 +111,12 @@ following extra methods available.
 
     my $prepare = UV::Prepare->new();
     # Or tell it what loop to initialize against
-    my $prepare = UV::Prepare->new($loop);
+    my $prepare = UV::Prepare->new(
+        loop => $loop,
+        on_alloc => sub {say "alloc!"},
+        on_close => sub {say "close!"},
+        on_prepare => sub {say "prepare!"},
+    );
 
 This constructor method creates a new L<UV::Prepare> object and
 L<initializes|http://docs.libuv.org/en/v1.x/prepare.html#c.uv_prepare_init> the

@@ -108,6 +108,11 @@ UV::Loop - Looping with libuv
   # A new, non-default loop
   my $loop = UV::Loop->new();
 
+  # a new loop with the walk callback provided:
+  my $loop = UV::Loop->new(
+    on_walk => sub {say "walking!"},
+  );
+
   # A new default loop instance (Singleton)
   my $loop = UV::Loop->default_loop(); # singleton constructor
   my $loop = UV::Loop->default(); # singleton constructor
@@ -168,7 +173,9 @@ L<UV::Loop> makes the following methods available.
 
 =head2 new
 
-    my $loop = UV::Loop->new();
+    my $loop = UV::Loop->new(
+        on_walk => sub {say "walking!"},
+    );
     my $default_loop = UV::Loop->default_loop();
     my $default_loop = UV::Loop->default();
 
@@ -266,18 +273,6 @@ A singleton method to get the default loop instance.
     my $bool = $loop->is_default();
 
 A read-only method to let us know if we're dealing with the default loop.
-
-=head2 loop_alive
-
-    my $int = $loop->loop_alive();
-
-This is just a synonym for L<UV::Loop/"alive">.
-
-=head2 loop_configure
-
-    my $int = $loop->configure(UV::Loop::UV_LOOP_BLOCK_SIGNAL, SIGPROF);
-
-This is just a synonym for L<UV::Loop/"configure">.
 
 =head2 now
 

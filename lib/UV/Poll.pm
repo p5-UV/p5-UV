@@ -61,11 +61,23 @@ UV::Poll - Poll handles in libuv
 
   # Use a different loop
   my $loop = UV::Loop->new(); # non-default loop
-  my $poll = UV::Poll->new(fd => fileno($handle), loop => $loop);
+  my $poll = UV::Poll->new(
+    fd => fileno($handle),
+    loop => $loop,
+    on_alloc => sub {say "alloc!"},
+    on_close => sub {say "close!"},
+    on_poll => sub {say "poll!"},
+  );
 
   # Create a new poll on a socket handle
   my $socket = IO::Socket::INET->new(Type => SOCK_STREAM);
-  my $poll = UV::Poll->new(socket => 1, fd => fileno($socket));
+  my $poll = UV::Poll->new(
+    socket => 1,
+    fd => fileno($socket),
+    on_alloc => sub {say "alloc!"},
+    on_close => sub {say "close!"},
+    on_poll => sub {say "poll!"},
+  );
 
   # setup the handle's callback:
   $poll->on(poll => sub {"We're prepared!!!"});
@@ -157,36 +169,39 @@ following extra methods available.
 
 =head2 new
 
-    my $poll = UV::Poll->new(fileno($some_handle));
-    # Or tell it what loop to initialize against
-    my $poll = UV::Poll->new(fileno($some_handle), $loop);
-
-This constructor method creates a new L<UV::Poll> object and
-L<initializes|http://docs.libuv.org/en/v1.x/poll.html#c.uv_poll_init> the
-handle with the given L<UV::Loop> to poll for a file descriptor. If no
-L<UV::Loop> is provided, then the L<UV::Loop/"default_loop"> is assumed.
-
-B<* Note:> As of libuv v1.2.2: the file descriptor is set to non-blocking mode.
-
-=head2 new_socket
-
     use IO::Socket::INET;
-    use UV;
+    use UV ();
+    use UV::Loop ();
     use UV::Poll qw(UV_READABLE UV_WRITABLE);
+
+    my $poll = UV::Poll->new(fd => fileno($some_handle));
+    # Or tell it what loop to initialize against
+    my $poll = UV::Poll->new(fd => fileno($some_handle), loop => $loop);
 
     my $socket = IO::Socket::INET->new(Type => SOCK_STREAM);
 
-    my $poll = UV::Poll->new_socket(fileno($socket));
-    my $poll = UV::Poll->new_socket(fileno($socket), $some_loop); # or another loop
+    my $poll = UV::Poll->new(socket => 1, fd => fileno($socket));
+    # or another loop
+    my $poll = UV::Poll->new(
+        socket => 1.
+        fd => fileno($socket),
+        loop => $some_loop,
+        on_alloc => sub {say "alloc!"},
+        on_close => sub {say "close!"},
+        on_poll => sub {say "poll!"},
+    );
 
     $poll->run(UV_READABLE | UV_WRITABLE, sub { ... });
 
-This constructor method creates a new L<UV::Poll> object and
-L<initializes|http://docs.libuv.org/en/v1.x/poll.html#c.uv_poll_init_socket> the
-handle with the given L<UV::Loop> to poll for a socket handle. If no
-L<UV::Loop> is provided, then the L<UV::Loop/"default_loop"> is assumed.
+This constructor method creates a new L<UV::Poll> object instance. It
+initializes the handle with either the given L<UV::Loop> or the
+L<default loop|UV::Loop/"default">.
 
-B<* Note:> As of libuv v1.2.2: the file socket is set to non-blocking mode.
+Then initialization happens with
+L<init|http://docs.libuv.org/en/v1.x/poll.html#c.uv_poll_init> or
+L<init_socket|http://docs.libuv.org/en/v1.x/poll.html#c.uv_poll_init_socket>.
+
+B<* Note:> As of libuv v1.2.2: the file descriptor is set to non-blocking mode.
 
 =head2 start
 
@@ -194,6 +209,9 @@ B<* Note:> As of libuv v1.2.2: the file socket is set to non-blocking mode.
     # use the UV_READABLE events mask
     # use whatever callback was supplied with ->on(poll => sub {...})
     $poll->start();
+
+    # Pass events
+    $poll->start(UV_READABLE | UV_WRITABLE);
 
     # pass a callback for the "idle" event
     $poll->start(UV_READABLE, sub {say "yay"});

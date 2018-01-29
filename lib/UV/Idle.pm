@@ -55,7 +55,12 @@ UV::Idle - Idle handles in libuv
 
   # Use a different loop
   my $loop = UV::Loop->new(); # non-default loop
-  my $idle = UV::Idle->new($loop);
+  my $idle = UV::Idle->new(
+    loop => $loop,
+    on_alloc => sub {say "alloc!"},
+    on_close => sub {say "close!"},
+    on_idle => sub {say "idle!"},
+  );
 
   # setup the idle callback:
   $idle->on(idle => sub {say "We're IDLING!!!"});
@@ -112,7 +117,12 @@ following extra methods available.
 
     my $idle = UV::Idle->new();
     # Or tell it what loop to initialize against
-    my $idle = UV::Idle->new($loop);
+    my $idle = UV::Idle->new(
+        loop => $loop,
+        on_alloc => sub {say "alloc!"},
+        on_close => sub {say "close!"},
+        on_idle => sub {say "idle!"},
+    );
 
 This constructor method creates a new L<UV::Idle> object and
 L<initializes|http://docs.libuv.org/en/v1.x/idle.html#c.uv_idle_init> the

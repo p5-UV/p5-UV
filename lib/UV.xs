@@ -485,8 +485,6 @@ void p5uv_loop__walk(SV *self)
 int p5uv_loop_alive(SV *self)
     PREINIT:
         uv_loop_t *loop;
-    ALIAS:
-        UV::Loop::loop_alive = 1
     CODE:
         loop = (uv_loop_t *)xs_object_magic_get_struct_rv_pretty(aTHX_ self, "uv_loop_t in alive");
         RETVAL = uv_loop_alive(loop);
@@ -514,8 +512,6 @@ int p5uv_loop_backend_timeout(SV *self)
 int p5uv_loop_configure(SV *self, uv_loop_option option, int value)
     PREINIT:
         uv_loop_t *loop;
-    ALIAS:
-        UV::Loop::loop_configure = 1
     CODE:
         loop = (uv_loop_t *)xs_object_magic_get_struct_rv_pretty(aTHX_ self, "uv_loop_t in configure");
         RETVAL = uv_loop_configure(loop, option, value);

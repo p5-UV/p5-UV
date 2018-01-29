@@ -55,7 +55,12 @@ UV::Check - Check handles in libuv
 
   # Use a different loop
   my $loop = UV::Loop->new(); # non-default loop
-  my $check = UV::Check->new($loop);
+  my $check = UV::Check->new(
+    loop => $loop,
+    on_alloc => sub {say "alloc!"},
+    on_close => sub {say "close!"},
+    on_check => sub {say "check!"},
+  );
 
   # setup the check callback:
   $check->on(check => sub {say "We're CHECKING!!!"});
@@ -104,7 +109,12 @@ following extra methods available.
 
     my $check = UV::Check->new();
     # Or tell it what loop to initialize against
-    my $check = UV::Check->new($loop);
+    my $check = UV::Check->new(
+        loop => $loop,
+        on_alloc => sub {say "alloc!"},
+        on_close => sub {say "close!"},
+        on_check => sub {say "check!"},
+    );
 
 This constructor method creates a new L<UV::Check> object and
 L<initializes|http://docs.libuv.org/en/v1.x/check.html#c.uv_check_init> the

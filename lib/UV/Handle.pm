@@ -172,10 +172,8 @@ L<UV::Handle> implements the following attributes.
     $handle = $handle->data(undef);
     my $data = $handle->data();
 
-The L<data|http://docs.libuv.org/en/v1.x/handle.html#c.uv_handle_t.data>
-attribute allows you to store some information along with your L<UV::Handle>
-object. Since libuv does not make use of this attribute in any way, you're free
-to use it for your own purposes.
+The C<data> attribute allows you to store some information along with your
+L<UV::Handle> object that you can for your own purposes.
 
 =head2 loop
 
@@ -185,18 +183,6 @@ to use it for your own purposes.
 The L<loop|http://docs.libuv.org/en/v1.x/handle.html#c.uv_handle_t.loop>
 attribute is a B<read-only> attribute that returns the L<UV::Loop> object this
 handle was initialized with.
-
-=head2 type
-
-    # read-only attribute
-    my $int = $handle->type();
-    if ($int == UV::Handle::UV_TIMER) {
-        say "This handle is a timer";
-    }
-
-The L<type|http://docs.libuv.org/en/v1.x/handle.html#c.uv_handle_t.type>
-attribute is a B<read-only> attribute that returns the corresponding libuv
-handle type constant.
 
 =head1 METHODS
 
@@ -257,7 +243,7 @@ C<< status = UV::UV_ECANCELED >>.
     # are we officially closed?
     my $int = $handle->closed();
 
-Read-only method to let us know if the handle is closed.
+B<Read-only> method to let us know if the handle is closed.
 
 =head2 closing
 
@@ -277,20 +263,6 @@ The L<has_ref|http://docs.libuv.org/en/v1.x/handle.html#c.uv_has_ref>
 method returns non-zero if the handle is referenced, zero otherwise.
 
 See L<Reference Counting|http://docs.libuv.org/en/v1.x/handle.html#refcount>.
-
-=head2 is_active
-
-    # simply a synonym for ->active()
-    my $int = $handle->is_active();
-
-A synonym for L<UV::Handle/"active">.
-
-=head2 is_closing
-
-    # simply a synonym for ->closing()
-    my $int = $handle->is_closing();
-
-A synonym for L<UV::Handle/"closing">.
 
 =head2 on
 
