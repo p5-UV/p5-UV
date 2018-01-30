@@ -1,34 +1,46 @@
 package UV::Poll;
 
 our $VERSION = '1.000006';
-$VERSION = eval $VERSION;
 
 use strict;
 use warnings;
-use Moo;
-extends 'UV::Handle';
-
 use Carp ();
 use Exporter qw(import);
-use UV::Loop;
+use parent 'UV::Handle';
 
 our @EXPORT_OK = (@UV::Poll::EXPORT_XS,);
 
-sub BUILD {
+sub _after_new {
     my ($self, $args) = @_;
-    # add to the default set of events for a Handle object
     $self->_add_event('poll', $args->{on_poll});
+    my $socket = (exists($args->{socket}) && defined($args->{socket})) ? 1 : 0;
 
-    my $fd = $args->{fd};
+    my $fd;
+    for my $key (qw(fd fh socket single_arg)) {
+        if (defined($fd = $args->{$key})) {
+            if (CORE::ref($fd) eq 'GLOB' || CORE::ref($fd) =~ /^IO::Socket/) {
+                $fd = fileno($fd);
+                last;
+            }
+            elsif (!CORE::ref($fd) && $fd =~ /\A[0-9]+\z/) {
+                last;
+            }
+            else {
+                $fd = undef;
+            }
+        }
+    }
     unless (defined($fd)) {
         Carp::croak("No file or socket descriptor provided");
     }
+
     my $err = do { #catch
         local $@;
         eval { $self->_init($fd, $self->{_loop}); 1; }; #try
         $@;
     };
     Carp::croak($err) if $err; # throw
+    return $self;
 }
 
 sub start {

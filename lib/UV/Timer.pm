@@ -1,25 +1,26 @@
 package UV::Timer;
 
 our $VERSION = '1.000006';
-$VERSION = eval $VERSION;
 
 use strict;
 use warnings;
-use Moo;
-extends 'UV::Handle';
-
 use Carp ();
 use Exporter qw(import);
-use UV::Loop;
+use parent 'UV::Handle';
 
 our @EXPORT_OK = (@UV::Timer::EXPORT_XS,);
 
-sub BUILD {
+sub _after_new {
     my ($self, $args) = @_;
-    # add to the default set of events for a Handle object
     $self->_add_event('timer', $args->{on_timer});
 
-    $self->_init($self->{_loop});
+    my $err = do { #catch
+        local $@;
+        eval { $self->_init($self->{_loop}); 1; }; #try
+        $@;
+    };
+    Carp::croak($err) if $err; # throw
+    return $self;
 }
 
 sub repeat {

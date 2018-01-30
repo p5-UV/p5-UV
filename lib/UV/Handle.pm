@@ -1,42 +1,13 @@
 package UV::Handle;
 
 our $VERSION = '1.000006';
-$VERSION = eval $VERSION;
 
 use strict;
 use warnings;
-use Moo;
-
+use Carp ();
 use Exporter qw(import);
 use UV ();
 use UV::Loop ();
-
-has data => (is => 'rw');
-
-sub BUILD {
-    my ($self, $args) = @_;
-    $self->{_closed} = 0;
-    $self->{_events} = [qw(alloc close)];
-    $self->on(alloc => $args->{"on_alloc"});
-    $self->on(close => $args->{"on_close"});
-    my $loop = $args->{loop} || $args->{single_arg};
-    unless ($loop && UV::Loop::_is_a_loop($loop)) {
-        $loop = UV::Loop->default();
-    }
-    $self->{_loop} = $loop;
-}
-
-sub DEMOLISH {
-    my ($self, $in_global_destruction) = @_;
-    return unless $self->_has_struct();
-    $self->stop() if ($self->can('stop') && !$self->closing() && !$self->closed());
-    my $err = do { # catch
-        local $@;
-        eval { $self->_destruct($self->closed()); 1; }; # try
-        $@;
-    };
-    warn $err if $err;
-}
 
 sub _add_event {
     my ($self, $event, $cb) = @_;
@@ -45,11 +16,43 @@ sub _add_event {
     $self->on($event, $cb);
 }
 
+sub new {
+    my $self = bless {}, shift;
+    my $args = UV::_parse_args(@_);
+    $self->{_closed} = 0;
+    $self->{_events} = [qw(alloc close)];
+    $self->on('alloc', $args->{on_alloc});
+    $self->on('close', $args->{on_close});
+    $self->{data} = $args->{data};
+
+    my $loop = $args->{loop} || $args->{single_arg};
+    unless ($loop && UV::Loop::_is_a_loop($loop)) {
+        $loop = UV::Loop->default();
+    }
+    $self->{_loop} = $loop;
+    if ($self->can('_after_new')) {
+        $self->_after_new($args);
+    }
+    return $self;
+}
+
+sub DESTROY {
+    my $self = shift;
+    return unless $self->_has_struct();
+    $self->stop() if ($self->can('stop') && !$self->closing() && !$self->closed());
+
+    my $err = do { # catch
+        local $@;
+        eval { $self->_destruct($self->closed()); 1; }; # try
+        $@;
+    };
+    warn $err if $err;
+}
+
 sub active {
     my $self = shift;
-    return 0 if $self->closed();
     return 0 unless $self->_has_struct();
-    return 0 if $self->closing();
+    return 0 if $self->closed() || $self->closing();
     my $val = 0;
     my $err = do { # catch
         local $@;
@@ -63,9 +66,9 @@ sub active {
 sub close {
     my $self = shift;
     $self->on('close', @_) if @_; # set the callback ahead of time if exists
-    return if $self->closed();
     return unless $self->_has_struct();
-    $self->stop() if ($self->can('stop') && !$self->closing());
+    return if $self->closed() || $self->closing();
+    $self->stop() if $self->can('stop');
     my $err = do { # catch
         local $@;
         eval { $self->_close(); 1; }; # try
@@ -75,6 +78,13 @@ sub close {
 }
 
 sub closed { return (shift->{_closed})? 1: 0; }
+
+sub data {
+    my $self = shift;
+    return $self->{data} unless @_;
+    $self->{data} = shift;
+    return $self;
+}
 
 sub loop { return shift->{_loop}; }
 

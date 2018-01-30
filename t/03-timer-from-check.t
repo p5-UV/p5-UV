@@ -3,6 +3,7 @@ use warnings;
 
 use Test::More;
 use UV;
+use UV::Loop;
 use UV::Check;
 use UV::Prepare;
 use UV::Idle;
