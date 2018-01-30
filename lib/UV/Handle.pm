@@ -39,7 +39,7 @@ sub DESTROY {
     return unless $self->_has_struct();
     my $err = do { # catch
         local $@;
-        eval { $self->_destruct($self->closed()); }; # try
+        eval { $self->_destruct($self->closed()); 1; }; # try
         $@;
     };
     warn $err if $err;
@@ -52,7 +52,7 @@ sub close {
     return unless $self->_has_struct();
     my $err = do { # catch
         local $@;
-        eval { $self->_close(); }; # try
+        eval { $self->_close(); 1; }; # try
         $@;
     };
     Carp::croak($err) if $err;

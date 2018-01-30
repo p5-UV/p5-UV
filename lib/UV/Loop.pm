@@ -29,7 +29,7 @@ sub new {
     $self->{_default} = (exists($args->{_default}) && $args->{_default})? 1: 0;
     my $err = do { #catch
         local $@;
-        eval { $self->_create($self->{_default}); }; #try
+        eval { $self->_create($self->{_default}); 1; }; #try
         $@;
     };
     Carp::croak($err) if $err; # throw
@@ -41,7 +41,7 @@ sub DESTROY {
     return unless $self->_has_struct();
     my $err = do { # catch
         local $@;
-        eval { $self->_destruct($self->is_default()); }; # try
+        eval { $self->_destruct($self->is_default()); 1; }; # try
         $@;
     };
     warn $err if $err;

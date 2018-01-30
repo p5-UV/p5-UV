@@ -27,7 +27,7 @@ sub _after_new {
 
     my $err = do { #catch
         local $@;
-        eval { $self->_init($socket, $fd, $self->{_loop}); }; #try
+        eval { $self->_init($socket, $fd, $self->{_loop}); 1; }; #try
         $@;
     };
     Carp::croak($err) if $err; # throw

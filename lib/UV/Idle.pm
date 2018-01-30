@@ -14,7 +14,7 @@ sub _after_new {
     $self->_add_event('idle', $args->{on_poll});
     my $err = do { #catch
         local $@;
-        eval { $self->_init($self->{_loop}); }; #try
+        eval { $self->_init($self->{_loop}); 1; }; #try
         $@;
     };
     Carp::croak($err) if $err; # throw
