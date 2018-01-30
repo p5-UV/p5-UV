@@ -14,9 +14,10 @@ perl:
 matrix:
   include:
     - perl: 5.24
-      env: COVERAGE=1   # enables coverage+coveralls reporting
+    #   env: COVERAGE=1   # enables coverage+coveralls reporting
   allow_failures:
     - perl: blead       # ignore failures for blead perl
+    - perl: 5.16      # ignore failures for blead perl
 sudo: false             # faster builds as long as you don't need sudo access
 before_install:
   - git clone git://github.com/travis-perl/helpers ~/travis-perl-helpers
@@ -27,10 +28,10 @@ before_install:
   - cd $BUILD_DIR             # $BUILD_DIR is set by the build-dist command
 install:
   - cpan-install --deps       # installs prereqs, including recommends
-  - cpan-install --coverage   # installs converage prereqs, if enabled
-before_script:
-  - coverage-setup
-after_success:
-  - coverage-report
+#   - cpan-install --coverage   # installs converage prereqs, if enabled
+# before_script:
+#   - coverage-setup
+# after_success:
+#   - coverage-report
 notifications:
   email: false
