@@ -1,23 +1,26 @@
 package UV::Idle;
 
 our $VERSION = '1.000006';
-$VERSION = eval $VERSION;
 
 use strict;
 use warnings;
-use Moo;
-extends 'UV::Handle';
+use Exporter qw(import);
+use parent 'UV::Handle';
 
 use Carp ();
-use Exporter qw(import);
-use UV::Loop;
 
-sub BUILD {
+sub _after_new {
     my ($self, $args) = @_;
     # add to the default set of events for a Handle object
     $self->_add_event('idle', $args->{on_idle});
 
-    $self->_init($self->{_loop});
+    my $err = do { #catch
+        local $@;
+        eval { $self->_init($self->{_loop}); 1; }; #try
+        $@;
+    };
+    Carp::croak($err) if $err; # throw
+    return $self;
 }
 
 sub start {
