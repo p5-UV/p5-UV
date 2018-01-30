@@ -330,11 +330,6 @@
             "version" : "6.010"
          },
          {
-            "class" : "Dist::Zilla::Plugin::PkgVersion",
-            "name" : "PkgVersion",
-            "version" : "6.010"
-         },
-         {
             "class" : "Dist::Zilla::Plugin::ReadmeAnyFromPod",
             "config" : {
                "Dist::Zilla::Role::FileWatcher" : {

@@ -2,7 +2,6 @@ package UV;
 
 our $VERSION = '1.000006';
 our $XS_VERSION = $VERSION;
-$VERSION = eval $VERSION;
 
 use strict;
 use warnings;

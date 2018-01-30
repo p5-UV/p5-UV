@@ -1,14 +1,12 @@
 package UV::Timer;
 
 our $VERSION = '1.000006';
-$VERSION = eval $VERSION;
 
 use strict;
 use warnings;
+use Carp ();
 use Exporter qw(import);
 use parent 'UV::Handle';
-
-use Carp ();
 
 our @EXPORT_OK = (@UV::Timer::EXPORT_XS,);
 
