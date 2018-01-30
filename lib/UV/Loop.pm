@@ -1,7 +1,6 @@
 package UV::Loop;
 
 our $VERSION = '1.000006';
-$VERSION = eval $VERSION;
 
 use strict;
 use warnings;
