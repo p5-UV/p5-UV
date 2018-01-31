@@ -67,6 +67,7 @@ sub close {
     my $self = shift;
     $self->on('close', @_) if @_; # set the callback ahead of time if exists
     return unless $self->_has_struct();
+
     return if $self->closed() || $self->closing();
     $self->stop() if $self->can('stop');
     my $err = do { # catch
