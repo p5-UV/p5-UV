@@ -3,8 +3,8 @@ use warnings;
 
 use Test::More;
 use IO::Socket::INET;
-use UV;
-use UV::Loop;
+use UV ();
+use UV::Loop ();
 use UV::Poll qw(UV_READABLE UV_WRITABLE);
 
 # Some options behave differently on Windows
@@ -14,6 +14,7 @@ sub WINLIKE () {
     return 1 if $^O eq 'msys';
     return '';
 }
+plan skip_all => 'Windows only testing' unless WINLIKE();
 
 my $sock;
 my $handle;
@@ -49,9 +50,7 @@ sub close_socket_and_verify_stack {
     }
 }
 
-subtest 'poll_close_doesnt_corrupt_stack' => sub {
-    plan skip_all => 'Windows only testing' unless WINLIKE();
-
+{
     $sock = IO::Socket::INET->new(Type => SOCK_STREAM);
 
     $handle = UV::Poll->new(socket=>1, fd=>fileno($sock));
@@ -60,9 +59,8 @@ subtest 'poll_close_doesnt_corrupt_stack' => sub {
 
     close_socket_and_verify_stack();
 
-    is(UV::Loop->default_loop()->run(), 0, 'default loop ran');
+    is(UV::Loop->default()->run(), 0, 'default loop ran');
     is($close_cb_called, 1, 'right number of close CBs called');
-
-};
+}
 
 done_testing();

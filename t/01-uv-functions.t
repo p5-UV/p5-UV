@@ -4,7 +4,7 @@ use warnings;
 use Test::More;
 use UV ();
 
-subtest 'basic_functions' => sub {
+{
     my $time = UV::hrtime();
     ok($time, "hrtime: got back - $time");
     ok(UV::hrtime(), "hrtime - no assignment");
@@ -13,51 +13,51 @@ subtest 'basic_functions' => sub {
     ok(UV::version(), 'got a version hex');
     is(UV::strerror(UV::UV_ENOSYS), 'function not implemented', 'Got the right constant value');
     is(UV::err_name(UV::UV_ENOSYS), 'ENOSYS', 'Got the right constant name');
-};
+}
 
-subtest 'default_loops' => sub {
-    my $loop = UV::default_loop();
+{
+    my $loop = UV::loop();
     isa_ok($loop, 'UV::Loop', 'got back the loop');
     is($loop->is_default(), 1, 'is the default loop');
     my $loop2 = UV::loop();
     isa_ok($loop2, 'UV::Loop', 'got back the loop');
     is($loop2->is_default(), 1, 'is the default loop');
     is($loop, $loop2, 'They are the same loop');
-};
+}
 
-subtest 'check_handle_default_loop' => sub {
+{
     my $handle = UV::check();
     isa_ok($handle, 'UV::Check', 'got back a Check handle');
     isa_ok($handle, 'UV::Handle', 'it derrives from UV::Handle');
     is($handle->loop()->is_default(), 1, 'Handle uses the default loop');
-};
+}
 
-subtest 'idle_handle_default_loop' => sub {
+{
     my $handle = UV::idle();
     isa_ok($handle, 'UV::Idle', 'got back an Idle handle');
     isa_ok($handle, 'UV::Handle', 'it derrives from UV::Handle');
     is($handle->loop()->is_default(), 1, 'Handle uses the default loop')
-};
+}
 
-subtest 'poll_handle_default_loop' => sub {
+{
     my $handle = UV::poll(fd => fileno(\*STDIN));
     isa_ok($handle, 'UV::Poll', 'got back an Poll handle');
     isa_ok($handle, 'UV::Handle', 'it derrives from UV::Handle');
     is($handle->loop()->is_default(), 1, 'Handle uses the default loop')
-};
+}
 
-subtest 'prepare_handle_default_loop' => sub {
+{
     my $handle = UV::prepare();
     isa_ok($handle, 'UV::Prepare', 'got back an Prepare handle');
     isa_ok($handle, 'UV::Handle', 'it derrives from UV::Handle');
     is($handle->loop()->is_default(), 1, 'Handle uses the default loop')
-};
+}
 
-subtest 'timer_handle_default_loop' => sub {
+{
     my $handle = UV::timer();
     isa_ok($handle, 'UV::Timer', 'got back an Timer handle');
     isa_ok($handle, 'UV::Handle', 'it derrives from UV::Handle');
     is($handle->loop()->is_default(), 1, 'Handle uses the default loop')
-};
+}
 
 done_testing();

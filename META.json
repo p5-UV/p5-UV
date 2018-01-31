@@ -66,6 +66,7 @@
          "requires" : {
             "Alien::libuv" : "0.006",
             "Carp" : "0",
+            "Devel::GlobalDestruction" : "0",
             "Exporter" : "5.57",
             "Math::Int64" : "0",
             "Scalar::Util" : "0",
