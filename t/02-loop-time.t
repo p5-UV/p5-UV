@@ -1,8 +1,8 @@
 use strict;
 use warnings;
 
-use UV::Loop;
-use UV::Timer;
+use UV::Loop qw(UV_RUN_NOWAIT);
+use UV::Timer ();
 use Test::More;
 
 sub _cleanup_loop {
@@ -12,32 +12,32 @@ sub _cleanup_loop {
     is($loop->close(), 0, 'loop closed');;
 }
 
-subtest 'default_loop_update_time' => sub {
-    my $start = UV::Loop->default_loop()->now();
+{
+    my $start = UV::Loop->default()->now();
     ok($start, "  Start time is $start");
-    while (UV::Loop->default_loop()->now() - $start < 500) {
-        is(0, UV::Loop->default_loop()->run(UV::Loop::UV_RUN_NOWAIT), "  run(UV_RUN_NOWAIT): ok for a half-second");
+    while (UV::Loop->default->now() - $start < 500) {
+        is(0, UV::Loop->default()->run(UV_RUN_NOWAIT), "  run(UV_RUN_NOWAIT): ok for a half-second");
     }
-    _cleanup_loop(UV::Loop->default_loop());
-};
+    _cleanup_loop(UV::Loop->default());
+}
 
-subtest 'reg_loop_update_time' => sub {
+{
     my $loop = UV::Loop->new();
     isa_ok($loop, 'UV::Loop', 'got a new loop');
     my $start = $loop->now();
     ok($start, "  Start time is $start");
     while ($loop->now() - $start < 500) {
-        is(0, $loop->run(UV::Loop::UV_RUN_NOWAIT), "  run(UV_RUN_NOWAIT): ok for a half-second");
+        is(0, $loop->run(UV_RUN_NOWAIT), "  run(UV_RUN_NOWAIT): ok for a half-second");
     }
     _cleanup_loop($loop);
-};
+}
 
 sub cb {
     my $timer = shift;
     $timer->close(undef);
 }
 
-subtest 'default_loop_backend_timeout' => sub {
+{
     my $loop = UV::Loop->default();
     isa_ok($loop, 'UV::Loop', '->default(): got a new default Loop');
     my $timer = UV::Timer->new();
@@ -55,6 +55,6 @@ subtest 'default_loop_backend_timeout' => sub {
 
     is($loop->backend_timeout(), 0, "backend_timeout now 0 secs");
     _cleanup_loop($loop);
-};
+}
 
 done_testing();

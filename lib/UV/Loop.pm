@@ -4,6 +4,9 @@ our $VERSION = '1.000006';
 
 use strict;
 use warnings;
+
+use Carp ();
+use Devel::GlobalDestruction ();
 use Exporter qw(import);
 use Scalar::Util ();
 use UV ();
@@ -38,13 +41,21 @@ sub new {
 
 sub DESTROY {
     my $self = shift;
-    return unless $self->_has_struct();
-    my $err = do { # catch
-        local $@;
-        eval { $self->_destruct($self->is_default()); 1; }; # try
-        $@;
-    };
-    warn $err if $err;
+    my $class = Scalar::Util::blessed($self);
+    my $def = $self->is_default();
+
+    if ($self->_has_struct()) {
+        my $err = do { # catch
+            local $@;
+            eval { $self->_destruct($self->is_default()); 1; }; # try
+            $@;
+        };
+        warn $err if $err;
+    }
+    if (Devel::GlobalDestruction::in_global_destruction() && $def && $class) {
+        no strict 'refs';
+        undef(${"$class\::_default_loop"});
+    }
 }
 
 sub close {
