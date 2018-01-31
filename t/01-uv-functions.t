@@ -3,6 +3,14 @@ use warnings;
 
 use Test::More;
 use UV ();
+use UV::Loop ();
+
+sub _cleanup_loop {
+    my $loop = shift;
+    $loop->walk(sub {shift->close()});
+    $loop->run(UV::Loop::UV_RUN_DEFAULT);
+    $loop->close();
+}
 
 {
     my $time = UV::hrtime();
@@ -30,34 +38,39 @@ use UV ();
     isa_ok($handle, 'UV::Check', 'got back a Check handle');
     isa_ok($handle, 'UV::Handle', 'it derrives from UV::Handle');
     is($handle->loop()->is_default(), 1, 'Handle uses the default loop');
+    _cleanup_loop(UV::Loop->default());
 }
 
 {
     my $handle = UV::idle();
     isa_ok($handle, 'UV::Idle', 'got back an Idle handle');
     isa_ok($handle, 'UV::Handle', 'it derrives from UV::Handle');
-    is($handle->loop()->is_default(), 1, 'Handle uses the default loop')
+    is($handle->loop()->is_default(), 1, 'Handle uses the default loop');
+    _cleanup_loop(UV::Loop->default());
 }
 
 {
     my $handle = UV::poll(fd => fileno(\*STDIN));
     isa_ok($handle, 'UV::Poll', 'got back an Poll handle');
     isa_ok($handle, 'UV::Handle', 'it derrives from UV::Handle');
-    is($handle->loop()->is_default(), 1, 'Handle uses the default loop')
+    is($handle->loop()->is_default(), 1, 'Handle uses the default loop');
+    _cleanup_loop(UV::Loop->default());
 }
 
 {
     my $handle = UV::prepare();
     isa_ok($handle, 'UV::Prepare', 'got back an Prepare handle');
     isa_ok($handle, 'UV::Handle', 'it derrives from UV::Handle');
-    is($handle->loop()->is_default(), 1, 'Handle uses the default loop')
+    is($handle->loop()->is_default(), 1, 'Handle uses the default loop');
+    _cleanup_loop(UV::Loop->default());
 }
 
 {
     my $handle = UV::timer();
     isa_ok($handle, 'UV::Timer', 'got back an Timer handle');
     isa_ok($handle, 'UV::Handle', 'it derrives from UV::Handle');
-    is($handle->loop()->is_default(), 1, 'Handle uses the default loop')
+    is($handle->loop()->is_default(), 1, 'Handle uses the default loop');
+    _cleanup_loop(UV::Loop->default());
 }
 
 done_testing();

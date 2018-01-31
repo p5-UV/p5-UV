@@ -37,6 +37,7 @@ sub new {
 sub DESTROY {
     my $self = shift;
     return unless $self->_has_struct();
+    $self->stop() if ($self->can('stop') && !$self->closing() && !$self->closed());
     my $err = do { # catch
         local $@;
         eval { $self->_destruct($self->closed()); 1; }; # try
@@ -50,6 +51,7 @@ sub close {
     $self->on('close', @_) if @_; # set the callback ahead of time if exists
     return if $self->closed();
     return unless $self->_has_struct();
+    $self->stop() if ($self->can('stop') && !$self->closing());
     my $err = do { # catch
         local $@;
         eval { $self->_close(); 1; }; # try
