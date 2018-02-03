@@ -61,7 +61,14 @@ sub DESTROY {
 sub close {
     my $self = shift;
     return UV::UV_ENOSYS unless $self->_has_struct();
-    return $self->_close();
+    my $res = UV::UV_ENOSYS;
+    my $err = do { # catch
+        local $@;
+        eval { $res = $self->_close(); 1; }; # try
+        $@;
+    };
+    warn $err if $err;
+    return $res;
 }
 
 # Return the singleton uv_default_loop
