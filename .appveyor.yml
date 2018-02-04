@@ -11,9 +11,11 @@ install:
   - 'call .appveyor.cmd perl_setup'
   - '%perl% -V'
   - '%cpanm% -n Alien::Base IO::Socket::SSL'
+  - '%cpanm% --installdeps -n Alien::Base'
+  - '%cpanm% -v Alien::Base'
   - '%cpanm% --installdeps -n .'
 
 build: off
 
 test_script:
-  - 'cpanm --test-only -v .'
+  - '%cpanm% --test-only -v .'
