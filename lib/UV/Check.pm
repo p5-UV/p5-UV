@@ -1,27 +1,23 @@
 package UV::Check;
 
 our $VERSION = '1.000006';
-$VERSION = eval $VERSION;
 
 use strict;
 use warnings;
-use Moo;
-extends 'UV::Handle';
-
 use Carp ();
 use Exporter qw(import);
-use UV::Loop;
+use parent 'UV::Handle';
 
-sub BUILD {
+sub _after_new {
     my ($self, $args) = @_;
-    # add to the default set of events for a Handle object
     $self->_add_event('check', $args->{on_check});
-
-    unless (exists($args->{loop}) && UV::Loop::_is_a_loop($args->{loop})) {
-        $args->{loop} = UV::Loop->default();
-    }
-    $self->_init($args->{loop});
-    $self->{_loop} = $args->{loop};
+    my $err = do { #catch
+        local $@;
+        eval { $self->_init($self->{_loop}); 1; }; #try
+        $@;
+    };
+    Carp::croak($err) if $err; # throw
+    return $self;
 }
 
 sub start {

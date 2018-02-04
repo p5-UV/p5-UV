@@ -5,9 +5,9 @@ on 'runtime' => sub {
     requires 'warnings';
     requires 'Alien::libuv' => '0.006';
     requires 'Carp';
+    requires 'Devel::GlobalDestruction';
     requires 'Exporter' => '5.57';
     requires 'Math::Int64';
-    requires 'Moo';
     requires 'Scalar::Util';
     requires 'XSLoader' => '0.14';
 };

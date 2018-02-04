@@ -66,9 +66,9 @@
          "requires" : {
             "Alien::libuv" : "0.006",
             "Carp" : "0",
+            "Devel::GlobalDestruction" : "0",
             "Exporter" : "5.57",
             "Math::Int64" : "0",
-            "Moo" : "0",
             "Scalar::Util" : "0",
             "XSLoader" : "0.14",
             "parent" : "0",
@@ -328,11 +328,6 @@
          {
             "class" : "Dist::Zilla::Plugin::UploadToCPAN",
             "name" : "@Starter/UploadToCPAN",
-            "version" : "6.010"
-         },
-         {
-            "class" : "Dist::Zilla::Plugin::PkgVersion",
-            "name" : "PkgVersion",
             "version" : "6.010"
          },
          {

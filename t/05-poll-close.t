@@ -3,17 +3,9 @@ use warnings;
 
 use Test::More;
 use IO::Socket::INET;
-use UV;
-use UV::Loop;
+use UV ();
+use UV::Loop ();
 use UV::Poll qw(UV_READABLE UV_WRITABLE);
-
-# Some options behave differently on Windows
-sub WINLIKE () {
-    return 1 if $^O eq 'MSWin32';
-    return 1 if $^O eq 'cygwin';
-    return 1 if $^O eq 'msys';
-    return '';
-}
 
 my $NUM_SOCKETS = 64;
 
@@ -25,7 +17,7 @@ sub close_cb {
     $close_cb_called++;
 }
 
-subtest 'poll_close' => sub {
+{
     my @sockets;
     my @handles;
 
@@ -41,9 +33,9 @@ subtest 'poll_close' => sub {
         $handle->close(\&close_cb);
     }
 
-    is(UV::Loop->default_loop()->run(), 0, 'default loop run');
+    is(UV::Loop->default()->run(), 0, 'default loop run');
     is($close_cb_called, $NUM_SOCKETS, 'Got the right number of close CBs');
 
-};
+}
 
 done_testing();

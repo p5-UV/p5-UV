@@ -1,15 +1,15 @@
 package UV::Loop;
 
 our $VERSION = '1.000006';
-$VERSION = eval $VERSION;
 
 use strict;
 use warnings;
-use Moo;
-use Scalar::Util qw(blessed);
-
+use Carp ();
+use Devel::GlobalDestruction ();
 use Exporter qw(import);
-use UV;
+use Scalar::Util ();
+use UV ();
+
 our @EXPORT_OK = (@UV::Loop::EXPORT_XS,);
 
 # simple function to ensure we've been given a UV::Loop
@@ -22,24 +22,38 @@ sub _is_a_loop {
     return 1;
 }
 
-sub BUILD {
-    my ($self, $args) = @_;
+sub new {
+    my $self = bless {}, shift;
+    my $args = UV::_parse_args(@_);
     $self->on('walk', $args->{on_walk});
-    if ($args->{_default}) {
-        $self->_create(1);
-        $self->{_default} = 1;
-    }
-    else {
-        $self->_create(0);
-    }
-    $self->{_handles} = [];
-    $self->{_requests} = [];
+    $self->{data} = $args->{data};
+    $self->{_default} = (exists($args->{_default}) && $args->{_default})? 1: 0;
+    my $err = do { #catch
+        local $@;
+        eval { $self->_create($self->{_default}); 1; }; #try
+        $@;
+    };
+    Carp::croak($err) if $err; # throw
+    return $self;
 }
 
-sub DEMOLISH {
-    my ($self, $in_global_destruction) = @_;
-    return unless $self->_has_struct();
-    $self->_destruct($self->is_default());
+sub DESTROY {
+    my $self = shift;
+    my $class = Scalar::Util::blessed($self);
+    my $def = $self->is_default();
+
+    if ($self->_has_struct()) {
+        my $err = do { # catch
+            local $@;
+            eval { $self->_destruct($self->is_default()); 1; }; # try
+            $@;
+        };
+        warn $err if $err;
+    }
+    if (Devel::GlobalDestruction::in_global_destruction() && $def && $class) {
+        no strict 'refs';
+        undef(${"$class\::_default_loop"});
+    }
 }
 
 sub close {

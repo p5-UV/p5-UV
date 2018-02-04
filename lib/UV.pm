@@ -2,11 +2,10 @@ package UV;
 
 our $VERSION = '1.000006';
 our $XS_VERSION = $VERSION;
-$VERSION = eval $VERSION;
 
 use strict;
 use warnings;
-
+use Carp ();
 use Exporter qw(import);
 require XSLoader;
 XSLoader::load('UV', $XS_VERSION);
@@ -16,6 +15,26 @@ our @EXPORT_OK = (
     qw(default_loop loop err_name hrtime strerr translate_sys_error),
     qw(check timer),
 );
+
+# _parse_args (static, private)
+sub _parse_args {
+    my $args;
+    if ( @_ == 1 && ref $_[0] ) {
+        my %copy = eval { %{ $_[0] } }; # try shallow copy
+        Carp::croak("Argument to method could not be dereferenced as a hash") if $@;
+        $args = \%copy;
+    }
+    elsif (@_==1 && !ref($_[0])) {
+        $args = {single_arg => $_[0]};
+    }
+    elsif ( @_ % 2 == 0 ) {
+        $args = {@_};
+    }
+    else {
+        Carp::croak("Method got an odd number of elements");
+    }
+    return $args;
+}
 
 sub check {
     require UV::Check;
