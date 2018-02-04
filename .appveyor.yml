@@ -10,7 +10,8 @@ environment:
 install:
   - 'call .appveyor.cmd perl_setup'
   - '%perl% -V'
-  - '%cpanm% --installdeps -n --with-develop --with-recommends .'
+  - '%cpanm% -n Alien::Base IO::Socket::SSL'
+  - '%cpanm% --installdeps -n .'
 
 build: off
 
