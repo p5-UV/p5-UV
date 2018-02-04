@@ -20,8 +20,8 @@ sub TRIM {
 
 
 my @flags = ('-I.', '-I../..', $Config{ccflags});
-my @libs = (Alien::libuv->libs(),);
-push(@libs, '-lpsapi', '-luserenv', '-lIphlpapi') if WINLIKE();
+my $libs = Alien::libuv->libs();
+$libs .= ' -lpsapi -luserenv -lIphlpapi' if WINLIKE();
 {
     my $cflags = TRIM(Alien::libuv->cflags);
     my $cflags_s = TRIM(Alien::libuv->cflags_static);
@@ -43,6 +43,6 @@ my %xsbuild = (
         },
     },
     OBJECT  => '$(O_FILES)',
-    LIBS => [@libs],
+    LIBS => [$libs],
     CCFLAGS => join(' ', @flags),
 );
