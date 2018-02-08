@@ -9,6 +9,7 @@ on 'runtime' => sub {
     requires 'Math::Int64';
     requires 'Moo';
     requires 'Scalar::Util';
+    requires 'XS::Object::Magic';
     requires 'XSLoader' => '0.14';
 };
 

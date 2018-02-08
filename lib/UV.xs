@@ -17,6 +17,12 @@
 #include "p5uv_callbacks.h"
 #include "p5uv_helpers.h"
 
+#if defined(__MINGW32__) || defined(WIN32)
+#include <io.h> /* we need _get_osfhandle() on windows */
+#define _MAKE_SOCK(s, f) s = _get_osfhandle(f)
+#else
+#define _MAKE_SOCK(s,f) s = f
+#endif
 
 MODULE = UV             PACKAGE = UV            PREFIX = uv_
 
@@ -228,31 +234,27 @@ BOOT:
     PERL_MATH_INT64_LOAD_OR_CROAK;
 }
 
-void p5uv_poll__init(SV *self, int socket, int fd, uv_loop_t *loop)
+void p5uv_poll__init(SV *self, int fd, uv_loop_t *loop)
     INIT:
         uv_poll_t *handle;
         int ret;
+        uv_os_sock_t sock;
     CODE:
-        if(!xs_object_magic_has_struct_rv(aTHX_ self)) {
-            handle = Newx(handle, 1, uv_poll_t);
-            if (!handle) {
-                croak("Unable to allocate space for a poll");
-            }
-            if (NULL == loop) {
-                loop = uv_default_loop();
-            }
-            if (socket)
-                ret = uv_poll_init_socket(loop, handle, fd);
-            else
-                ret = uv_poll_init(loop, handle, fd);
-            if (0 != ret) {
-                Safefree(handle);
-                croak("Couldn't initialize handle (%i): %s", ret, uv_strerror(ret));
-            }
-            xs_object_magic_attach_struct(aTHX_ SvRV(self), handle);
-            handle->data = SvREFCNT_inc(ST(0));
-            return;
+        if (xs_object_magic_has_struct_rv(aTHX_ self)) croak("Can't re-initialie Poll");
+        handle = Newx(handle, 1, uv_poll_t);
+        if (!handle) croak("Unable to allocate space for a poll");
+
+        if (NULL == loop) loop = uv_default_loop();
+        _MAKE_SOCK(sock, fd);
+
+        ret = uv_poll_init_socket(loop, handle, sock);
+
+        if (0 != ret) {
+            Safefree(handle);
+            croak("Couldn't initialize handle (%i): %s", ret, uv_strerror(ret));
         }
+        xs_object_magic_attach_struct(aTHX_ SvRV(self), handle);
+        handle->data = SvREFCNT_inc(ST(0));
 
 int p5uv_poll__start(SV *self, int events=UV_READABLE)
     INIT:

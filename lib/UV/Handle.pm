@@ -8,9 +8,8 @@ use warnings;
 use Moo;
 
 use Exporter qw(import);
-use UV;
-
-our @EVENTS = (qw(alloc close));
+use UV ();
+use UV::Loop ();
 
 has data => (is => 'rw');
 
@@ -18,14 +17,25 @@ sub BUILD {
     my ($self, $args) = @_;
     $self->{_closed} = 0;
     $self->{_events} = [qw(alloc close)];
-    for my $event (@EVENTS) {
-        $self->on($event, $args->{"on_$event"});
+    $self->on(alloc => $args->{"on_alloc"});
+    $self->on(alloc => $args->{"on_close"});
+    my $loop = $args->{loop} || $args->{single_arg};
+    unless ($loop && UV::Loop::_is_a_loop($loop)) {
+        $loop = UV::Loop->default();
     }
+    $self->{_loop} = $loop;
 }
 
 sub DEMOLISH {
     my ($self, $in_global_destruction) = @_;
-    $self->_destruct($self->closed());
+    return unless $self->_has_struct();
+    $self->stop() if ($self->can('stop') && !$self->closing() && !$self->closed());
+    my $err = do { # catch
+        local $@;
+        eval { $self->_destruct($self->closed()); 1; }; # try
+        $@;
+    };
+    warn $err if $err;
 }
 
 sub _add_event {
@@ -40,7 +50,13 @@ sub close {
     $self->on('close', @_) if @_; # set the callback ahead of time if exists
     return if $self->closed();
     return unless $self->_has_struct();
-    return $self->_close();
+    $self->stop() if ($self->can('stop') && !$self->closing());
+    my $err = do { # catch
+        local $@;
+        eval { $self->_close(); 1; }; # try
+        $@;
+    };
+    Carp::croak($err) if $err;
 }
 
 sub closed { return (shift->{_closed})? 1: 0; }

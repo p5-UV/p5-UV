@@ -6,7 +6,7 @@ $VERSION = eval $VERSION;
 use strict;
 use warnings;
 use Moo;
-use Scalar::Util qw(blessed);
+use Scalar::Util ();
 
 use Exporter qw(import);
 use UV;
@@ -25,21 +25,33 @@ sub _is_a_loop {
 sub BUILD {
     my ($self, $args) = @_;
     $self->on('walk', $args->{on_walk});
-    if ($args->{_default}) {
-        $self->_create(1);
-        $self->{_default} = 1;
-    }
-    else {
-        $self->_create(0);
-    }
-    $self->{_handles} = [];
-    $self->{_requests} = [];
+    $self->{_default} = (exists($args->{_default}) && $args->{_default})? 1: 0;
+
+    my $err = do { #catch
+        local $@;
+        eval { $self->_create($self->{_default}); 1; }; #try
+        $@;
+    };
+    Carp::croak($err) if $err; # throw
 }
 
 sub DEMOLISH {
     my ($self, $in_global_destruction) = @_;
-    return unless $self->_has_struct();
-    $self->_destruct($self->is_default());
+    my $class = Scalar::Util::blessed($self);
+    my $def = $self->is_default();
+
+    if ($self->_has_struct()) {
+        my $err = do { # catch
+            local $@;
+            eval { $self->_destruct($def); 1; }; # try
+            $@;
+        };
+        warn $err if $err;
+    }
+    if ($in_global_destruction && $def && $class) {
+        no strict 'refs';
+        undef(${"$class\::_default_loop"});
+    }
 }
 
 sub close {

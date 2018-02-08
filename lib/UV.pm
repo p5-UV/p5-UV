@@ -8,6 +8,8 @@ use strict;
 use warnings;
 
 use Exporter qw(import);
+use Math::Int64 ();
+use XS::Object::Magic ();
 require XSLoader;
 XSLoader::load('UV', $XS_VERSION);
 

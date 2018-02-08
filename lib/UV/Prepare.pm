@@ -17,11 +17,7 @@ sub BUILD {
     # add to the default set of events for a Handle object
     $self->_add_event('prepare', $args->{on_prepare});
 
-    unless (exists($args->{loop}) && UV::Loop::_is_a_loop($args->{loop})) {
-        $args->{loop} = UV::Loop->default();
-    }
-    $self->_init($args->{loop});
-    $self->{_loop} = $args->{loop};
+    $self->_init($self->{_loop});
 }
 
 sub start {

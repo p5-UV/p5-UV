@@ -70,6 +70,7 @@
             "Math::Int64" : "0",
             "Moo" : "0",
             "Scalar::Util" : "0",
+            "XS::Object::Magic" : "0",
             "XSLoader" : "0.14",
             "parent" : "0",
             "perl" : "5.008001",

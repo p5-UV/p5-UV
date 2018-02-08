@@ -19,17 +19,22 @@ sub BUILD {
     # add to the default set of events for a Handle object
     $self->_add_event('poll', $args->{on_poll});
 
-    unless (exists($args->{loop}) && UV::Loop::_is_a_loop($args->{loop})) {
-        $args->{loop} = UV::Loop->default();
+    my $fd = $args->{fd};
+    unless (defined($fd)) {
+        Carp::croak("No file or socket descriptor provided");
     }
-    my $socket = ($args->{socket})? 1: 0;
-    $self->_init($socket, $args->{fd}, $args->{loop});
-    $self->{_loop} = $args->{loop};
+    my $err = do { #catch
+        local $@;
+        eval { $self->_init($fd, $self->{_loop}); 1; }; #try
+        $@;
+    };
+    Carp::croak($err) if $err; # throw
 }
 
 sub start {
     my $self = shift;
-    Carp::croak("Can't start a closed handle") if ($self->closed()) ;
+    Carp::croak("Can't start a closed handle") if $self->closed();
+
     my $events = shift(@_) || UV::Poll::UV_READABLE;
     if (@_) {
         $self->on('poll', shift);
