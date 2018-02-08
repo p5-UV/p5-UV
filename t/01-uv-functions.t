@@ -1,6 +1,7 @@
 use strict;
 use warnings;
 
+use IO::Socket::INET;
 use Test::More;
 use UV ();
 
@@ -40,7 +41,9 @@ subtest 'idle_handle_default_loop' => sub {
 };
 
 subtest 'poll_handle_default_loop' => sub {
-    my $handle = UV::poll(fd => fileno(\*STDIN));
+    # use a socket since windows can't poll on file descriptors
+    my $sock = IO::Socket::INET->new(Type => SOCK_STREAM);
+    my $handle = UV::poll(socket => 1, fd => fileno($sock));
     isa_ok($handle, 'UV::Poll', 'got back an Poll handle');
     isa_ok($handle, 'UV::Handle', 'it derrives from UV::Handle');
     is($handle->loop()->is_default(), 1, 'Handle uses the default loop')
