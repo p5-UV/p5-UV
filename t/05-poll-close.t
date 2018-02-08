@@ -33,7 +33,7 @@ subtest 'poll_close' => sub {
 
     for my $i (0 .. $NUM_SOCKETS-1) {
         my $socket = IO::Socket::INET->new(Type => SOCK_STREAM);
-        my $handle = UV::Poll->new(on_close => \%close_cb, fd => fileno($socket));
+        my $handle = UV::Poll->new(on_close => \&close_cb, fd => fileno($socket));
         push @sockets, $socket;
         push @handles, $handle;
         $handle->start(UV_READABLE | UV_WRITABLE, undef);

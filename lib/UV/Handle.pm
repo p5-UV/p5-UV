@@ -18,7 +18,7 @@ sub BUILD {
     $self->{_closed} = 0;
     $self->{_events} = [qw(alloc close)];
     $self->on(alloc => $args->{"on_alloc"});
-    $self->on(alloc => $args->{"on_close"});
+    $self->on(close => $args->{"on_close"});
     my $loop = $args->{loop} || $args->{single_arg};
     unless ($loop && UV::Loop::_is_a_loop($loop)) {
         $loop = UV::Loop->default();
