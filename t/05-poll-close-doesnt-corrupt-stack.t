@@ -55,9 +55,9 @@ subtest 'poll_close_doesnt_corrupt_stack' => sub {
 
     $sock = IO::Socket::INET->new(Type => SOCK_STREAM);
 
-    $handle = UV::Poll->new(socket=>1, fd=>fileno($sock));
-    is($handle->start(UV_READABLE | UV_WRITABLE, \&poll_cb), 0, 'poll started');
-    $handle->close(\&close_cb);
+    $handle = UV::Poll->new(on_poll => \&poll_cb, on_close => \&close_cb, fd=>fileno($sock));
+    is($handle->start(UV_READABLE | UV_WRITABLE), 0, 'poll started');
+    $handle->close();
 
     close_socket_and_verify_stack();
 
