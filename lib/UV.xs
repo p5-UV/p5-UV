@@ -66,6 +66,14 @@ void p5uv_handle__destruct(SV *self, int closed)
         if (!uv_is_closing(handle))
             uv_close(handle, handle_close_destroy_cb);
 
+int p5uv_handle__active(SV *self)
+    PREINIT:
+        uv_handle_t *handle;
+    CODE:
+        handle = (uv_handle_t *)xs_object_magic_get_struct_rv_pretty(aTHX_ self, "uv_handle_t in active");
+        RETVAL = uv_is_active(handle);
+    OUTPUT:
+    RETVAL
 
 void p5uv_handle__close(SV *self)
     PREINIT:
@@ -82,15 +90,6 @@ void p5uv_handle__has_struct(SV *self)
             PUSHs(&PL_sv_yes);
         else
             PUSHs(&PL_sv_no);
-
-int p5uv_handle_active(SV *self)
-    PREINIT:
-        uv_handle_t *handle;
-    CODE:
-        handle = (uv_handle_t *)xs_object_magic_get_struct_rv_pretty(aTHX_ self, "uv_handle_t in active");
-        RETVAL = uv_is_active(handle);
-    OUTPUT:
-    RETVAL
 
 int p5uv_handle_closing(SV *self)
     PREINIT:

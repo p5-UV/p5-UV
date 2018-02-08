@@ -45,6 +45,21 @@ sub _add_event {
     $self->on($event, $cb);
 }
 
+sub active {
+    my $self = shift;
+    return 0 if $self->closed();
+    return 0 unless $self->_has_struct();
+    return 0 if $self->closing();
+    my $val = 0;
+    my $err = do { # catch
+        local $@;
+        eval { $val = $self->_active(); 1; }; # try
+        $@;
+    };
+    Carp::croak($err) if $err;
+    return $val;
+}
+
 sub close {
     my $self = shift;
     $self->on('close', @_) if @_; # set the callback ahead of time if exists
