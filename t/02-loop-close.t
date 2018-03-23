@@ -2,7 +2,9 @@ use strict;
 use warnings;
 
 use Test::More;
-use UV;
+use UV::Loop ();
+use UV::Timer ();
+use UV ();
 
 {
     my $loop = UV::Loop->new();

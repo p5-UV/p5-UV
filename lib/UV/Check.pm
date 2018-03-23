@@ -5,8 +5,50 @@ $VERSION = eval $VERSION;
 
 use strict;
 use warnings;
-
+use Exporter qw(import);
 use parent 'UV::Handle';
+
+use Carp ();
+use UV::Loop ();
+
+sub new {
+    my $class = shift;
+    my $args = UV::_parse_args(@_);
+    my $loop = UV::Loop->default();
+    if (UV::Loop::_is_a_loop($args->{loop})) {
+        $loop = $args->{loop};
+    }
+    elsif (UV::Loop::_is_a_loop($args->{single_arg})) {
+        $loop = $args->{single_arg};
+    }
+
+    my $self;
+    my $err = do { #catch
+        local $@;
+        eval {
+            $self = _construct($class, $loop);
+            die "Unable to create Check handle." unless $self;
+            my $events = $self->_events;
+            die "Unable to get events list." unless $events && CORE::ref($events) eq 'ARRAY';
+            for my $e (@{$events}) {
+                $self->on($e, $args->{"on_$e"}) if $args->{"on_$e"};
+            }
+            1;
+        }; #try
+        $@;
+    };
+    Carp::croak($err) if $err; # throw
+    return $self;
+}
+
+sub start {
+    my $self = shift;
+    if (@_) {
+        $self->on('check', shift);
+    }
+    return $self->_start();
+}
+
 
 1;
 

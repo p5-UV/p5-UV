@@ -4,7 +4,8 @@ use warnings;
 use Test::More;
 
 use Try::Tiny qw(try catch);
-use UV;
+use UV ();
+use UV::Timer ();
 
 my $once_cb_called = 0;
 my $once_close_cb_called = 0;
@@ -21,15 +22,11 @@ sub _cleanup_loop {
 
     $loop->walk(sub {
         my $handle = shift;
-        if ($handle->can('stop')) {
-            $handle->stop();
-        }
-        if (!$handle->closing()) {
-            $handle->close();
-        }
+        $handle->stop();
+        $handle->close();
     });
     $loop->run(UV::Loop::UV_RUN_DEFAULT);
-    is($loop->close(), 0, 'loop closed');
+    $loop->close();
 }
 
 sub once_close_cb {
@@ -134,7 +131,7 @@ subtest 'timer_start_twice' => sub {
 subtest 'timer_init' => sub {
     my $handle = UV::Timer->new();
     isa_ok($handle, 'UV::Timer', 'Got a new timer');
-    is(0, $handle->get_repeat(), 'Get-repeat value is zero');
+    is(0, $handle->repeat(), 'Get-repeat value is zero');
     is(0, $handle->is_active(), 'is_active is zero');
     _cleanup_loop(UV::default_loop());
 };
@@ -269,25 +266,7 @@ subtest 'timer_run_once' => sub {
     _cleanup_loop(UV::default_loop());
 };
 
-subtest 'timer_null_callback' => sub {
-    my $timer = UV::Timer->new();
-    isa_ok($timer, 'UV::Timer', 'got a new timer');
-    my ($err, $res);
-    try {
-        # attempt to pass a non-valid callback.
-        # sub {}, and undef are good. anything else should fail
-        $res = $timer->start(100, 100, 22);
-    }
-    catch {
-        $err = $_;
-    };
-    ok($err, 'Got an error from the bad callback in start');
-    is($res, undef, 'got a bad start return value');
-    _cleanup_loop(UV::default_loop());
-};
-
 my $timer_early_check_expected_time;
-
 
 sub timer_early_check_cb {
     my $hrtime = UV::hrtime() / 1000000;

@@ -2,14 +2,11 @@ use strict;
 use warnings;
 
 use Test::More;
-use UV;
+use UV ();
+use UV::Check ();
+use UV::Prepare ();
+use UV::Timer ();
 
-sub _cleanup_loop {
-    my $loop = shift;
-    $loop->walk(sub {shift->close()});
-    $loop->run(UV::Loop::UV_RUN_DEFAULT);
-    $loop->close();
-}
 
 my $prepare_handle;
 my $check_handle;
@@ -66,12 +63,11 @@ sub check_cb {
     is(1, $check_cb_called, 'check cb called once');
     is(1, $timer_cb_called, 'timer cb called once');
 
-    $prepare_handle->close(sub {});
-    $check_handle->close(sub {});
-    $timer_handle->close(sub {});
+    $prepare_handle->close(undef);
+    $check_handle->close(undef);
+    $timer_handle->close(undef);
 
     is(0, UV::default_loop()->run(UV::Loop::UV_RUN_ONCE), 'loop run once');
-    _cleanup_loop(UV::default_loop());
 }
 
 done_testing();

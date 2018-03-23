@@ -2,7 +2,8 @@ use strict;
 use warnings;
 
 use Test::More;
-use UV;
+use UV ();
+use UV::Timer ();
 
 my $time = UV::hrtime();
 
@@ -21,7 +22,8 @@ sub after_work_cb {
     is($status, 0, 'Status is 0 in the after_work callback');
 }
 
-subtest 'loop_alive' => sub {
+{
+    diag("Loop alive");
     my $r = 0;
     is(UV::default_loop()->alive(), 0, 'default loop is not alive');
 
@@ -34,7 +36,7 @@ subtest 'loop_alive' => sub {
     $r = UV::default_loop()->run(UV::Loop::UV_RUN_DEFAULT);
     is($r, 0, 'loop ran fine');
     is(UV::default_loop()->alive(), 0, 'default loop is not alive anymore');
-};
+}
 
 diag("the rest of these tests can't run until we implement uv_req_t objects");
 

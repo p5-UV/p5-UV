@@ -130,7 +130,7 @@
          "version" : "1.000003"
       }
    },
-   "release_status" : "testing",
+   "release_status" : "stable",
    "resources" : {
       "bugtracker" : {
          "web" : "https://github.com/genio/p5-UV/issues"
@@ -171,7 +171,7 @@
                }
             },
             "name" : "Git::GatherDir",
-            "version" : "2.042"
+            "version" : "2.043"
          },
          {
             "class" : "Dist::Zilla::Plugin::PruneCruft",
@@ -281,7 +281,7 @@
                }
             },
             "name" : "@Starter/Test::Compile",
-            "version" : "2.057"
+            "version" : "2.058"
          },
          {
             "class" : "Dist::Zilla::Plugin::MakeMaker::Awesome",
@@ -296,7 +296,7 @@
                }
             },
             "name" : "@Starter/MakeMaker::Awesome",
-            "version" : "0.39"
+            "version" : "0.41"
          },
          {
             "class" : "Dist::Zilla::Plugin::Manifest",
@@ -392,7 +392,7 @@
                }
             },
             "name" : "Git::Contributors",
-            "version" : "0.030"
+            "version" : "0.032"
          },
          {
             "class" : "Dist::Zilla::Plugin::GithubMeta",
@@ -419,7 +419,7 @@
                }
             },
             "name" : "@Git/Check",
-            "version" : "2.042"
+            "version" : "2.043"
          },
          {
             "class" : "Dist::Zilla::Plugin::Git::Commit",
@@ -445,7 +445,7 @@
                }
             },
             "name" : "@Git/Commit",
-            "version" : "2.042"
+            "version" : "2.043"
          },
          {
             "class" : "Dist::Zilla::Plugin::Git::Tag",
@@ -467,7 +467,7 @@
                }
             },
             "name" : "@Git/Tag",
-            "version" : "2.042"
+            "version" : "2.043"
          },
          {
             "class" : "Dist::Zilla::Plugin::Git::Push",
@@ -484,7 +484,7 @@
                }
             },
             "name" : "@Git/Push",
-            "version" : "2.042"
+            "version" : "2.043"
          },
          {
             "class" : "Dist::Zilla::Plugin::Test::Portability",
@@ -551,12 +551,12 @@
          {
             "class" : "Dist::Zilla::Plugin::CheckChangesHasContent",
             "name" : "CheckChangesHasContent",
-            "version" : "0.010"
+            "version" : "0.011"
          },
          {
             "class" : "Dist::Zilla::Plugin::Test::ChangesHasContent",
             "name" : "Test::ChangesHasContent",
-            "version" : "0.010"
+            "version" : "0.011"
          },
          {
             "class" : "Dist::Zilla::Plugin::Test::Kwalitee",
@@ -577,7 +577,7 @@
          {
             "class" : "Dist::Zilla::Plugin::Test::Pod::Coverage::Configurable",
             "name" : "Test::Pod::Coverage::Configurable",
-            "version" : "0.06"
+            "version" : "0.07"
          },
          {
             "class" : "Dist::Zilla::Plugin::Test::PodSpelling",
@@ -618,7 +618,7 @@
                }
             },
             "name" : "Test::PodSpelling",
-            "version" : "2.007004"
+            "version" : "2.007005"
          },
          {
             "class" : "Dist::Zilla::Plugin::CopyFilesFromBuild",
@@ -689,7 +689,7 @@
       "zilla" : {
          "class" : "Dist::Zilla::Dist::Builder",
          "config" : {
-            "is_trial" : 1
+            "is_trial" : 0
          },
          "version" : "6.010"
       }

@@ -4,6 +4,7 @@ use warnings;
 use Test::More;
 use IO::Socket::INET;
 use UV;
+use UV::Loop ();
 use UV::Poll qw(UV_READABLE UV_WRITABLE);
 
 # Some options behave differently on Windows
@@ -41,7 +42,7 @@ subtest 'poll_close' => sub {
 
     for my $i (0 .. $NUM_SOCKETS-1) {
         my $socket = IO::Socket::INET->new(Type => SOCK_STREAM);
-        my $handle = UV::Poll->new_socket(fileno($socket));
+        my $handle = UV::Poll->new($socket);
         push @sockets, $socket;
         push @handles, $handle;
         $handle->start(UV_READABLE | UV_WRITABLE, undef);

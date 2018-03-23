@@ -7,7 +7,58 @@ use strict;
 use warnings;
 use Exporter qw(import);
 
-use UV;
+use Carp ();
+use UV ();
+
+sub DESTROY {
+    my $self = shift;
+    my $err = do { # catch
+        local $@;
+        eval { $self->_destruct(); 1; }; # try
+        $@;
+    };
+    warn $err if $err;
+}
+
+sub close {
+    my $self = shift;
+    $self->on('close', @_) if @_; # set the callback ahead of time if exists
+    return if $self->closed() || $self->closing();
+    my $err = do { # catch
+        local $@;
+        eval { $self->_close(); }; # try
+        $@;
+    };
+    Carp::croak($err) if $err; # throw
+}
+
+sub on {
+    my $self = shift;
+    my $event = lc(shift || '');
+    return unless $self && $event && !CORE::ref($event);
+
+    my $events;
+    my $cbs;
+    my $err = do { # catch
+        local $@;
+        eval {
+            $events = $self->_events();
+            $cbs = $self->_callbacks();
+            die("Invalid events array") unless $events && CORE::ref($events) eq 'ARRAY';
+            die("Invalid callbacks hash") unless $cbs && CORE::ref($cbs) eq 'HASH';
+            1;
+        }; # try
+        $@;
+    };
+    Carp::croak("Unable to grab callbacks and events: $err") if ($err);
+    return $cbs->{"on_$event"} unless @_;
+
+    if ($event && grep {$event eq $_} @{$events}) {
+        my $cb = ($_[0] && CORE::ref($_[0]) eq 'CODE')? shift: undef;
+        $cbs->{"on_$event"} = $cb;
+    }
+    return $self;
+}
 
 1;
 

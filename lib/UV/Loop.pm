@@ -7,7 +7,88 @@ use strict;
 use warnings;
 use Exporter qw(import);
 
-use UV;
+use Carp qw ();
+use Scalar::Util ();
+use UV ();
+
+# simple function to ensure we've been given a UV::Loop
+# this is useful in new Handle construction
+sub _is_a_loop {
+    my $loop = shift;
+    return undef unless $loop;
+    return undef unless ref($loop) && Scalar::Util::blessed($loop);
+    return undef unless $loop->isa('UV::Loop');
+    return 1;
+}
+
+sub new {
+    my $class = shift;
+    my $args = UV::_parse_args(@_);
+    my $self;
+    my $err = do { #catch
+        local $@;
+        eval {
+            $self = $class->_construct();
+            1;
+        }; #try
+        $@;
+    };
+    Carp::croak($err) if $err; # throw
+    return $self;
+}
+
+sub default {
+    my $class = shift;
+    my $self;
+    my $err = do { #catch
+        local $@;
+        eval {
+            $self = $class->_singleton();
+            1;
+        }; #try
+        $@;
+    };
+    Carp::croak($err) if $err; # throw
+    return $self;
+}
+
+sub default_loop { shift->default(@_); }
+
+sub on {
+    my $self = shift;
+    my $event = lc(shift || '');
+    return unless $self && $event && !CORE::ref($event);
+
+    my $events;
+    my $cbs;
+    my $err = do { # catch
+        local $@;
+        eval {
+            $events = $self->_events();
+            $cbs = $self->_callbacks();
+            die("Invalid events array") unless $events && CORE::ref($events) eq 'ARRAY';
+            die("Invalid callbacks hash") unless $cbs && CORE::ref($cbs) eq 'HASH';
+            1;
+        }; # try
+        $@;
+    };
+    Carp::croak("Unable to grab callbacks and events: $err") if ($err);
+    return $cbs->{"on_$event"} unless @_;
+
+    if ($event && grep {$event eq $_} @{$events}) {
+        my $cb = ($_[0] && CORE::ref($_[0]) eq 'CODE')? shift: undef;
+        $cbs->{"on_$event"} = $cb;
+    }
+    return $self;
+}
+
+sub walk {
+    my $self = shift;
+    if (@_) {
+        $self->on('walk', shift);
+    }
+    return $self->_walk();
+}
 
 1;
 

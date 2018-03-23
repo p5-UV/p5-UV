@@ -10,8 +10,9 @@ use IO::Socket::INET;
 use POSIX ();
 use Socket qw(pack_sockaddr_in inet_aton);
 use Try::Tiny qw(try catch);
-use UV;
+use UV ();
 use UV::Poll qw(UV_READABLE UV_WRITABLE UV_DISCONNECT UV_PRIORITIZED);
+use UV::Timer ();
 
 use constant UNIDIRECTIONAL => 0;
 use constant DUPLEX => 1;
@@ -97,7 +98,7 @@ sub create_connection_context {
     $context->{sock} = $sock;
     $context->{is_server_connection} = $is_server_connection;
 
-    $context->{poll_handle} = UV::Poll->new_socket(fileno($sock));
+    $context->{poll_handle} = UV::Poll->new($sock);
     isa_ok($context->{poll_handle}, 'UV::Poll', 'Got a new UV::Poll');
 
     $context->{open_handles}++;
@@ -442,7 +443,6 @@ sub start_poll_test {
     $disconnects = 0;
     start_server();
     start_client() for (0 .. NUM_CLIENTS-1);
-
     is(UV::Loop->default_loop()->run(), 0, 'default loop run');
 
     # Assert that at most five percent of the writable wakeups was spurious.
@@ -540,7 +540,7 @@ subtest 'poll_nested_kqueue' => sub {
 
     ok($sock != -1, 'good socket');
 
-    my $poll_handle = UV::Poll->new(fileno($sock));
+    my $poll_handle = UV::Poll->new($sock);
     isa_ok($poll_handle, 'UV::Poll', 'Got a new UV::Poll');
     is($poll_handle->start(UV_READABLE, \&abort), 0, 'poll started');
     isnt(UV::Loop->default_loop()->run(UV::Loop::UV_RUN_NOWAIT), 0, 'default loop run');

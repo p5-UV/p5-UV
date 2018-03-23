@@ -2,7 +2,12 @@ use strict;
 use warnings;
 
 use Test::More;
-use UV;
+use UV ();
+use UV::Loop ();
+use UV::Check ();
+use UV::Idle ();
+use UV::Prepare ();
+use UV::Timer ();
 
 use constant IDLE_COUNT => 7;
 use constant ITERATIONS => 21;

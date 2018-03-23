@@ -2,7 +2,7 @@ use strict;
 use warnings;
 
 use Test::More;
-use UV;
+use UV ();
 
 sub _cleanup_loop {
     my $loop = shift;
@@ -35,7 +35,7 @@ sub repeat_1_cb {
     my $ms = UV::default_loop()->now() - $start_time;
     # diag("repeat_1_cb called after $ms ms");
 
-    is($handle->get_repeat(), 50, 'Got the right timer repeat value');
+    is($handle->repeat(), 50, 'Got the right timer repeat value');
     $repeat_1_cb_called++;
 
     is(0, $repeat_2->again(), 'Repeat 2 again success');
@@ -56,13 +56,13 @@ sub repeat_2_cb {
     #diag("repeat_2_cb called after $ms ms");
     $repeat_2_cb_called++;
 
-    if (0 == $repeat_2->get_repeat()) {
+    if (0 == $repeat_2->repeat()) {
         is(0, $handle->is_active(), 'not active');
         $handle->close(\&close_cb);
         return;
     }
-    is(100, $repeat_2->get_repeat(), 'Repeat 2 repeat correct');
-    $repeat_2->set_repeat(0);
+    is(100, $repeat_2->repeat(), 'Repeat 2 repeat correct');
+    $repeat_2->repeat(0);
 }
 
 {
@@ -70,27 +70,27 @@ sub repeat_2_cb {
     ok(0 < $start_time, "got a positive start time");
 
     # Verify that it is not possible to uv_timer_again a never-started timer
-    $dummy = UV::Timer->new();
+    $dummy = UV::timer();
     isa_ok($dummy, 'UV::Timer', 'Got a new timer');
     is(UV::UV_EINVAL, $dummy->again(), '->again erred as expected');
     $dummy->unref();
 
     # Start timer repeat_1
-    $repeat_1 = UV::Timer->new();
+    $repeat_1 = UV::timer();
     isa_ok($repeat_1, 'UV::Timer', 'repeat_1 timer new');
     is(0, $repeat_1->start(50, 0, \&repeat_1_cb), 'repeat_1 started');
-    is(0, $repeat_1->get_repeat(), 'repeat_1 has the right repeat');
+    is(0, $repeat_1->repeat(), 'repeat_1 has the right repeat');
 
     # Actually make repeat_1 repeating
-    $repeat_1->set_repeat(50);
-    is(50, $repeat_1->get_repeat(), 'got the right repeat value');
+    $repeat_1->repeat(50);
+    is(50, $repeat_1->repeat(), 'got the right repeat value');
 
     # Start another repeating timer. It'll be again()ed by the repeat_1 so
     # it should not time out until repeat_1 stops
-    $repeat_2 = UV::Timer->new();
+    $repeat_2 = UV::timer();
     isa_ok($repeat_2, 'UV::Timer', 'repeat_2 timer new');
     is(0, $repeat_2->start(100, 100, \&repeat_2_cb), 'repeat_2 started');
-    is(100, $repeat_2->get_repeat(), 'Got the right repeat value for repeat_2');
+    is(100, $repeat_2->repeat(), 'Got the right repeat value for repeat_2');
 
     UV::default_loop()->run(UV::Loop::UV_RUN_DEFAULT);
 

@@ -2,7 +2,10 @@ use strict;
 use warnings;
 
 use Test::More;
-use UV;
+use UV ();
+use UV::Check ();
+use UV::Idle ();
+use UV::Timer ();
 
 my $idle_handle;
 my $check_handle;

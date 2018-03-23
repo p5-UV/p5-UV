@@ -2,7 +2,9 @@ use strict;
 use warnings;
 
 use Test::More;
-use UV;
+use UV ();
+use UV::Prepare ();
+use UV::Timer ();
 
 my $prepare_called = 0;
 my $timer_called = 0;

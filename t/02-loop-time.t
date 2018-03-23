@@ -2,7 +2,8 @@ use strict;
 use warnings;
 
 use Test::More;
-use UV;
+use UV ();
+use UV::Loop ();
 
 sub _cleanup_loop {
     my $loop = shift;
@@ -12,7 +13,7 @@ sub _cleanup_loop {
 }
 
 subtest 'default_loop_update_time' => sub {
-    my $start = UV::Loop->default_loop()->now();
+    my $start = UV::Loop->default()->now();
     ok($start, "  Start time is $start");
     while (UV::Loop->default_loop()->now() - $start < 500) {
         is(0, UV::Loop->default_loop()->run(UV::Loop::UV_RUN_NOWAIT), "  run(UV_RUN_NOWAIT): ok for a half-second");
@@ -39,7 +40,7 @@ sub cb {
 subtest 'default_loop_backend_timeout' => sub {
     my $loop = UV::Loop->default();
     isa_ok($loop, 'UV::Loop', '->default(): got a new default Loop');
-    my $timer = UV::Timer->new();
+    my $timer = UV::timer();
     isa_ok($timer, 'UV::Timer', 'timer: got a new timer');
 
     is($loop->alive(), 0, 'loop->alive: not alive yet');

@@ -5,9 +5,68 @@ $VERSION = eval $VERSION;
 
 use strict;
 use warnings;
-
+use Exporter qw(import);
 use parent 'UV::Handle';
 
+use Carp ();
+use UV::Loop ();
+
+sub new {
+    my $class = shift;
+    my $args = UV::_parse_args(@_);
+    my $loop = UV::Loop->default();
+    if (UV::Loop::_is_a_loop($args->{loop})) {
+        $loop = $args->{loop};
+    }
+    elsif (UV::Loop::_is_a_loop($args->{single_arg})) {
+        $loop = $args->{single_arg};
+    }
+    my $fd;
+    for my $key (qw(fd fh socket single_arg)) {
+        if (defined($fd = $args->{$key})) {
+            if (CORE::ref($fd) eq 'GLOB' || CORE::ref($fd) =~ /^IO::Socket/) {
+                $fd = fileno($fd);
+                last;
+            }
+            elsif (!CORE::ref($fd) && $fd =~ /\A[0-9]+\z/) {
+                last;
+            }
+            else {
+                $fd = undef;
+            }
+        }
+    }
+    unless (defined($fd)) {
+        Carp::croak("No file or socket descriptor provided");
+    }
+
+    my $self;
+    my $err = do { #catch
+        local $@;
+        eval {
+            $self = _construct($class, $fd, $loop);
+            die "Unable to create Poll handle" unless $self;
+            my $events = $self->_events;
+            die "Unable to get events list" unless $events && CORE::ref($events) eq 'ARRAY';
+            for my $e (@{$events}) {
+                $self->on($e, $args->{"on_$e"}) if $args->{"on_$e"};
+            }
+            1;
+        }; #try
+        $@;
+    };
+    Carp::croak($err) if $err; # throw
+    return $self;
+}
+
+sub start {
+    my $self = shift;
+    my $events = shift(@_) || UV::Poll::UV_READABLE;
+    if (@_) {
+        $self->on('poll', shift);
+    }
+    return $self->_start($events);
+}
 
 1;
 
