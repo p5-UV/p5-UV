@@ -13,6 +13,10 @@
 
 #include "ppport.h"
 
+#ifdef __MINGW32__
+#include <stdint.h>
+#endif
+
 #define MATH_INT64_C_API_REQUIRED_VERSION 2
 #define MATH_INT64_VERSION MATH_INT64_C_API_REQUIRED_VERSION
 
