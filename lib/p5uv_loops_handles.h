@@ -117,8 +117,8 @@ loop_data_t* loop_data_new(pTHX)
     data_ptr->closed = 0;
     data_ptr->events = newAV();
     data_ptr->callbacks = newHV();
-    av_push(data_ptr->events, newSVpv("alloc", 0));
-    hv_store(data_ptr->callbacks, "on_alloc", 7, newSV(0), 0);
+    av_push(data_ptr->events, newSVpv("walk", 0));
+    hv_store(data_ptr->callbacks, "on_walk", 7, newSV(0), 0);
     return data_ptr;
 }
 
