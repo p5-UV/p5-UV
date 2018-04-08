@@ -374,18 +374,18 @@ void handle_close_cb(uv_handle_t* handle)
 
     dTHX;
 
-    DEBUG_PRINT("C -- handle_close_cb() called.\n");
+    DEBUG_PRINT("called.\n");
 
     if (!handle || !handle->data) return;
     data_ptr = handle_data(handle);
     if (!data_ptr) return;
     data_ptr->closed = 1;
 
-    DEBUG_PRINT("C -- handle_close_cb() checking for user callback.\n");
+    DEBUG_PRINT("checking for user callback.\n");
     /* nothing else to do if we don't have a callback to call */
     callback = hv_fetchs(data_ptr->callbacks, "on_close", FALSE);
     if (!callback || !SvOK(*callback)) return;
-    DEBUG_PRINT("C -- handle_close_cb() found user callback.\n");
+    DEBUG_PRINT("found user callback.\n");
 
     /* provide info to the caller: invocant */
     dSP;
@@ -401,7 +401,6 @@ void handle_close_cb(uv_handle_t* handle)
 
     FREETMPS;
     LEAVE;
-    fprintf(stderr, "C -- handle_close_cb() all callbacks complete.\n");
 }
 
 void handle_close_destroy_cb(uv_handle_t* handle)
