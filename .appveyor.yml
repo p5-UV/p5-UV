@@ -6,7 +6,6 @@ matrix:
 
 environment:
   matrix:
-    - perl_type: cygwin
     - perl_type: strawberry
       perl_version: 5.26.1.1
     - perl_type: strawberry

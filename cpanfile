@@ -3,14 +3,14 @@ on 'runtime' => sub {
     requires 'parent';
     requires 'strict';
     requires 'warnings';
-    requires 'Alien::libuv' => '0.006';
+    requires 'Alien::libuv' => '1.000';
     requires 'Exporter' => '5.57';
     requires 'Math::Int64';
     requires 'XSLoader' => '0.14';
 };
 
 on 'build' => sub {
-    requires 'Alien::libuv' => '0.006';
+    requires 'Alien::libuv' => '1.000';
     requires 'Config';
     requires 'ExtUtils::MakeMaker' => '7.12';
     requires 'Math::Int64';
@@ -21,7 +21,7 @@ on 'configure' => sub {
 };
 
 on 'test' => sub {
-    requires 'Alien::libuv';
+    requires 'Alien::libuv' => '1.000';
     requires 'Errno';
     requires 'FindBin';
     requires 'IO::Handle';
