@@ -459,7 +459,7 @@ SV * p5uv_poll__construct(SV *class, long fd, uv_loop_t *loop = NULL)
     DEBUG_PRINT("converted FD %i to uv_os_sock_t\n", fd);
 
 
-    res = uv_poll_init_socket(loop, handle, sock);
+    res = uv_poll_init(loop, handle, fd);
     if (0 == res) {
         DEBUG_PRINT("socket initialized: %i\n", res);
         data_ptr = handle_data(handle);

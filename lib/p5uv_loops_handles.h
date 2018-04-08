@@ -479,12 +479,16 @@ void handle_poll_cb(uv_poll_t* handle, int status, int events)
 
     dTHX;
 
+    DEBUG_PRINT("polling.\n");
     if (!handle || !handle->data) return;
     data_ptr = handle_data(handle);
+    if (!data_ptr) return;
+    DEBUG_PRINT("checking for user callbacks.\n");
 
     /* nothing else to do if we don't have a callback to call */
     callback = hv_fetchs(data_ptr->callbacks, "on_poll", FALSE);
     if (!callback || !SvOK(*callback)) return;
+    DEBUG_PRINT("found user callback.\n");
 
     /* provide info to the caller: invocant */
     dSP;
