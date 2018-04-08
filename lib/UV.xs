@@ -101,7 +101,7 @@ void p5uv_loop__walk(uv_loop_t *loop)
         loop_data_t *data_ptr;
         SV *cb;
     CODE:
-        if (loop_closed(loop)) Perl_croak(aTHX_ "Can't operate on a closed loop.");
+        if (loop_closed(aTHX_ loop)) Perl_croak(aTHX_ "Can't operate on a closed loop.");
 
         if (!loop || !loop->data) return;
         data_ptr = loop_data(loop);
@@ -144,20 +144,20 @@ void DESTROY (uv_loop_t *loop)
 
 int p5uv_loop_is_default(const uv_loop_t* loop)
     CODE:
-        RETVAL=loop_is_default(loop);
+        RETVAL=loop_is_default(aTHX_ loop);
     OUTPUT:
     RETVAL
 
 int p5uv_loop_backend_fd(const uv_loop_t* loop)
     CODE:
-        if (loop_closed(loop)) Perl_croak(aTHX_ "Can't operate on a closed loop.");
+        if (loop_closed(aTHX_ loop)) Perl_croak(aTHX_ "Can't operate on a closed loop.");
         RETVAL=uv_backend_fd(loop);
     OUTPUT:
     RETVAL
 
 int p5uv_loop_backend_timeout(const uv_loop_t* loop)
     CODE:
-        if (loop_closed(loop)) Perl_croak(aTHX_ "Can't operate on a closed loop.");
+        if (loop_closed(aTHX_ loop)) Perl_croak(aTHX_ "Can't operate on a closed loop.");
         RETVAL = uv_backend_timeout(loop);
     OUTPUT:
     RETVAL
@@ -174,7 +174,7 @@ int p5uv_loop_close(uv_loop_t *loop)
                 if (data_ptr->is_default) {
                     default_loop = NULL;
                 }
-                loop_data_destroy(data_ptr);
+                loop_data_destroy(aTHX_ data_ptr);
             }
         }
         RETVAL = res;
@@ -183,46 +183,46 @@ int p5uv_loop_close(uv_loop_t *loop)
 
 int p5uv_loop_closed(uv_loop_t *loop)
     CODE:
-        RETVAL = loop_closed(loop);
+        RETVAL = loop_closed(aTHX_ loop);
     OUTPUT:
     RETVAL
 
 int p5uv_loop_alive(const uv_loop_t* loop)
     CODE:
         RETVAL = 0;
-        if (!loop_closed(loop)) RETVAL = uv_loop_alive(loop);
+        if (!loop_closed(aTHX_ loop)) RETVAL = uv_loop_alive(loop);
     OUTPUT:
     RETVAL
 
 int p5uv_loop_configure(uv_loop_t *loop, uv_loop_option option, int value)
     CODE:
-    if (loop_closed(loop)) Perl_croak(aTHX_ "Can't operate on a closed loop.");
+    if (loop_closed(aTHX_ loop)) Perl_croak(aTHX_ "Can't operate on a closed loop.");
     RETVAL = uv_loop_configure(loop, option, value);
     OUTPUT:
     RETVAL
 
 uint64_t p5uv_loop_now(const uv_loop_t* loop)
     CODE:
-        if (loop_closed(loop)) Perl_croak(aTHX_ "Can't operate on a closed loop.");
+        if (loop_closed(aTHX_ loop)) Perl_croak(aTHX_ "Can't operate on a closed loop.");
         RETVAL=uv_now(loop);
     OUTPUT:
     RETVAL
 
 int p5uv_loop_run(uv_loop_t* loop, uv_run_mode mode=UV_RUN_DEFAULT)
     CODE:
-        if (loop_closed(loop)) Perl_croak(aTHX_ "Can't operate on a closed loop.");
+        if (loop_closed(aTHX_ loop)) Perl_croak(aTHX_ "Can't operate on a closed loop.");
         RETVAL = uv_run(loop, mode);
     OUTPUT:
     RETVAL
 
 void p5uv_loop_stop(uv_loop_t* loop)
     CODE:
-    if (loop_closed(loop)) Perl_croak(aTHX_ "Can't operate on a closed loop.");
+    if (loop_closed(aTHX_ loop)) Perl_croak(aTHX_ "Can't operate on a closed loop.");
     uv_stop(loop);
 
 void p5uv_loop_update_time(uv_loop_t* loop)
     CODE:
-    if (loop_closed(loop)) Perl_croak(aTHX_ "Can't operate on a closed loop.");
+    if (loop_closed(aTHX_ loop)) Perl_croak(aTHX_ "Can't operate on a closed loop.");
     uv_update_time(loop);
 
 MODULE = UV             PACKAGE = UV::Handle      PREFIX = p5uv_handle_
@@ -297,7 +297,7 @@ int p5uv_handle_closing(uv_handle_t *handle)
 
 int p5uv_handle_closed(uv_handle_t *handle)
     CODE:
-        RETVAL = handle_closed(handle);
+        RETVAL = handle_closed(aTHX_ handle);
     OUTPUT:
     RETVAL
 

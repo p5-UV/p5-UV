@@ -275,7 +275,7 @@ void handle_destroy(pTHX_ uv_handle_t *handle)
     if (handle->data) {
         data_ptr = (handle_data_t *)(handle->data);
         if (data_ptr) {
-            handle_data_destroy(data_ptr);
+            handle_data_destroy(aTHX_ data_ptr);
             handle->data = NULL;
         }
     }

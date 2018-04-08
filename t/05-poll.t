@@ -91,7 +91,7 @@ sub get_context {
         LocalAddr => '0.0.0.0',
         # ReusePort => 1,
         Blocking => 0,
-        Proto => Socket::IPPROTO_IP,
+        #Proto => Socket::IPPROTO_IP,
         Listen => 100,
     );
     ok(defined($context->{server_sock}), 'server_sock: IO::Socket::INET defined');
@@ -103,7 +103,7 @@ sub get_context {
         PeerPort => $context->{server_sock}->sockport,
         # ReusePort => 1,
         Blocking => 0,
-        Proto => Socket::IPPROTO_IP,
+        #Proto => Socket::IPPROTO_IP,
     );
     ok(defined($context->{client_sock}), 'client_sock: IO::Socket::INET defined');
     ok( !$@, 'client_sock: got a good socket');

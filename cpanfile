@@ -27,7 +27,7 @@ on 'test' => sub {
     requires 'IO::Handle';
     requires 'IO::Socket::INET';
     requires 'POSIX';
-    requires 'Socket';
+    requires 'Socket' => '2.000';
     requires 'Test::More' => '0.88';
     requires 'Try::Tiny';
 

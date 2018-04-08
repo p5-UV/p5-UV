@@ -80,7 +80,7 @@ my %WriteMakefileArgs = (
     "IO::Handle" => 0,
     "IO::Socket::INET" => 0,
     "POSIX" => 0,
-    "Socket" => 0,
+    "Socket" => "2.000",
     "Test::More" => "0.88",
     "Try::Tiny" => 0
   },
@@ -107,7 +107,7 @@ my %FallbackPrereqs = (
   "IO::Socket::INET" => 0,
   "Math::Int64" => 0,
   "POSIX" => 0,
-  "Socket" => 0,
+  "Socket" => "2.000",
   "Test::More" => "0.88",
   "Try::Tiny" => 0,
   "XSLoader" => "0.14",
