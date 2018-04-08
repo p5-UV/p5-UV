@@ -3,59 +3,45 @@ use warnings;
 
 use Test::More;
 use IO::Socket::INET;
+use Socket;
 use UV;
 use UV::Loop ();
 use UV::Poll qw(UV_READABLE UV_WRITABLE);
 
-# Some options behave differently on Windows
-sub WINLIKE () {
-    return 1 if $^O eq 'MSWin32';
-    return 1 if $^O eq 'cygwin';
-    return 1 if $^O eq 'msys';
-    return '';
-}
-
-sub _cleanup_loop {
-    my $loop = shift;
-    $loop->walk(sub {
-        my $handle = shift;
-        $handle->stop() if $handle->can('stop');
-        $handle->close() unless $handle->closing();
-    });
-    $loop->run(UV::Loop::UV_RUN_DEFAULT);
-    is($loop->close(), 0, 'loop closed');
-}
-
 my $NUM_SOCKETS = 64;
-
-
 my $close_cb_called = 0;
 
 
 sub close_cb {
     $close_cb_called++;
+    ok("close_cb: got here");
 }
 
-subtest 'poll_close' => sub {
+{
+    # subtest 'poll_close' => sub
     my @sockets;
     my @handles;
 
     for my $i (0 .. $NUM_SOCKETS-1) {
-        my $socket = IO::Socket::INET->new(Type => SOCK_STREAM);
-        my $handle = UV::Poll->new($socket);
+        my $socket = IO::Socket::INET->new(
+            Type=>SOCK_STREAM,
+            Blocking => 0,
+        );
+        isa_ok($socket, 'IO::Socket', 'Got a new socket');
+        ok(!$@, 'no errors from socket');
+        my $handle = UV::Poll->new(fd => $socket->fileno(), on_close => \&close_cb);
+        isa_ok($handle, 'UV::Poll', 'Got a new poll');
         push @sockets, $socket;
         push @handles, $handle;
-        $handle->start(UV_READABLE | UV_WRITABLE, undef);
+        is($handle->start(UV_READABLE | UV_WRITABLE), 0, 'poll started successfully');
     }
 
     for my $handle (@handles) {
-        $handle->close(\&close_cb);
+        $handle->close();
     }
 
     is(UV::Loop->default_loop()->run(), 0, 'default loop run');
     is($close_cb_called, $NUM_SOCKETS, 'Got the right number of close CBs');
-
-    _cleanup_loop(UV::Loop->default_loop());
-};
+}
 
 done_testing();
