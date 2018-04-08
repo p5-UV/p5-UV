@@ -81,6 +81,7 @@ extern int loop_closed(pTHX_ const uv_loop_t *loop);
 extern uv_loop_t* loop_new(pTHX_ SV *class, int want_default);
 extern int loop_is_default(pTHX_ const uv_loop_t *loop);
 
+
 /* loop functions */
 SV* loop_bless(pTHX_ uv_loop_t *loop)
 {
@@ -250,6 +251,7 @@ handle_data_t* handle_data_new(pTHX)
         croak("Cannot allocate space for handle data.");
     }
 
+    data_ptr->self = NULL;
     /* setup the user data */
     data_ptr->closed = 0;
     data_ptr->user_data = NULL;
@@ -556,5 +558,6 @@ void handle_timer_cb(uv_timer_t* handle)
     FREETMPS;
     LEAVE;
 }
+
 
 #endif

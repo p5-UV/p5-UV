@@ -149,6 +149,22 @@ Event loops that work properly on all platforms. YAY!
 
 =head3 UV_LOOP_BLOCK_SIGNAL
 
+=head1 EVENTS
+
+L<UV::Loop> makes the following extra events available.
+
+=head2 walk
+
+    $loop->on("walk", sub { say "We are walking!"});
+    $loop->on("walk", sub {
+        # the handle instance this event fired on and the buffer size in use
+        my ($handle) = @_;
+        say "walking over active handles";
+    });
+
+The L<walk|http://docs.libuv.org/en/v1.x/loop.html#c.uv_walk_cb> callback
+fires when a C<< $loop->walk() >> method gets called.
+
 =head1 METHODS
 
 L<UV::Loop> makes the following methods available.
@@ -207,6 +223,13 @@ finished executing and all open handles and requests have been closed, or it
 will return C<UV::UV_EBUSY>. After this method returns, the user can free the
 memory allocated for the loop.
 
+=head2 closed
+
+    # lets us know if this loop is closed
+    my $bool = $loop->closed();
+
+A read-only method to let us know if the loop is closed.
+
 =head2 configure
 
     my $int = $loop->configure();
@@ -248,6 +271,13 @@ A synonym for the L<UV::Loop/"new"> constructor.
 
 A synonym for the L<UV::Loop/"new"> constructor.
 
+=head2 is_default
+
+    # lets us know if this loop is the default loop for this context
+    my $bool = $loop->is_default();
+
+A read-only method to let us know if we're dealing with the default loop.
+
 =head2 loop_alive
 
     my $int = $loop->loop_alive();
@@ -272,6 +302,22 @@ The timestamp increases monotonically from some arbitrary point in time. Don't
 make assumptions about the starting point, you will only get disappointed.
 
 B<* Note:> Use L<UV/"hrtime"> if you need sub-millisecond granularity.
+
+=head2 on
+
+    # set a walk event callback to print the handle's data attribute
+    $loop->on('walk', sub {
+        my $hndl = shift;
+        say $hndl->data();
+        say "walking!"
+    });
+
+    # clear out the walk event callback for the loop
+    $loop->on(walk => undef);
+    $loop->on(walk => sub {});
+
+The C<on> method allows you to subscribe to L<UV::Loop/"EVENTS"> emitted by
+any UV::Loop.
 
 =head2 run
 
@@ -341,7 +387,6 @@ subjective but probably on the order of a millisecond or more.
     # call with no callback
     $loop->walk();
     $loop->walk(undef);
-    $loop->walk(sub {});
 
     # instead, let's walk the loop and cleanup any handles attached and then
     # completely close the loop.
@@ -358,7 +403,6 @@ The L<walk|http://docs.libuv.org/en/v1.x/loop.html#c.uv_walk> method will
 C<walk> the list of handles and fire off the callback supplied.
 
 This is an excellent way to ensure your loop is completely cleaned up.
-
 
 =head1 AUTHOR
 

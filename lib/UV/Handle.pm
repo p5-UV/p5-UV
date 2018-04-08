@@ -253,6 +253,13 @@ In-progress requests, like C<< $handle->connect() >> or C<< $handle->write >>,
 are canceled and have their callbacks called asynchronously with
 C<< status = UV::UV_ECANCELED >>.
 
+=head2 closed
+
+    # are we officially closed?
+    my $int = $handle->closed();
+
+Read-only method to let us know if the handle is closed.
+
 =head2 closing
 
     my $int = $handle->closing();

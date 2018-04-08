@@ -37,7 +37,7 @@ sub timer_cb {
     else {
         is(0, $loop->configure(UV_LOOP_BLOCK_SIGNAL, SIGPROF), 'Configure worked properly');
     }
-    
+
     my $timer = UV::Timer->new($loop);
     isa_ok($timer, 'UV::Timer', 'got a new timer for the loop');
     is(0, $timer->start(10, 0, \&timer_cb), 'Timer started');

@@ -607,6 +607,7 @@
                      "ref",
                      "scalable",
                      "stopwords",
+                     "threadpool",
                      "un",
                      "unref",
                      "uptime",

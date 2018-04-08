@@ -145,19 +145,16 @@ The L<again|http://docs.libuv.org/en/v1.x/timer.html#c.uv_timer_again> method
 stops the timer, and if it is repeating, restarts it using the repeat value as
 the timeout.  If the timer has never been started, it returns C<UV::UV_EINVAL>.
 
-=head2 get_repeat
+=head2 repeat
 
-    my $uint64_t = $timer->get_repeat();
+    my $uint64_t = $timer->repeat();
+    $timer = $timer->repeat(12345); # method chaining
 
-The L<get_repeat|http://docs.libuv.org/en/v1.x/timer.html#c.uv_timer_get_repeat>
-method returns the timer's repeat value.
+The repeat method returns the timer's repeat value via:  L<get_repeat|http://docs.libuv.org/en/v1.x/timer.html#c.uv_timer_get_repeat>
+or sets the timer's repeat value via
+L<set repeat|http://docs.libuv.org/en/v1.x/timer.html#c.uv_timer_set_repeat>.
 
-=head2 set_repeat
-
-    $timer->set_repeat(12345);
-
-The L<set repeat|http://docs.libuv.org/en/v1.x/timer.html#c.uv_timer_set_repeat>
-method sets the repeat interval in I<milliseconds>. The timer will be scheduled
+The repeat value is set in I<milliseconds>. The timer will be scheduled
 to run on the given interval, regardless of the callback execution duration,
 and will follow normal timer semantics in the case of a time-slice overrun.
 

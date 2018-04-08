@@ -1,14 +1,6 @@
 use Config;
 use Alien::libuv ();
 
-# Some options behave differently on Windows
-sub WINLIKE () {
-    return 1 if $^O eq 'MSWin32';
-    return 1 if $^O eq 'cygwin';
-    return 1 if $^O eq 'msys';
-    return '';
-}
-
 # make sure we actually get stuff back from Alien::libuv
 sub TRIM {
     my $s = shift;
@@ -21,7 +13,6 @@ sub TRIM {
 
 my @flags = ('-I.', '-I../..', $Config{ccflags});
 my $libs = Alien::libuv->libs();
-$libs .= ' -lpsapi -luserenv -lIphlpapi' if WINLIKE();
 {
     my $cflags = TRIM(Alien::libuv->cflags);
     my $cflags_s = TRIM(Alien::libuv->cflags_static);
