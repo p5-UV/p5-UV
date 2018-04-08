@@ -44,6 +44,7 @@ sub new {
     my $err = do { #catch
         local $@;
         eval {
+            print "Socket ID: $fd\n";
             $self = _construct($class, $fd, $loop);
             die "Unable to create Poll handle" unless $self;
             my $events = $self->_events;
@@ -65,7 +66,17 @@ sub start {
     if (@_) {
         $self->on('poll', shift);
     }
-    return $self->_start($events);
+    my $res;
+    my $err = do { #catch
+        local $@;
+        eval {
+            $res = $self->start($events);
+            1;
+        }; #try
+        $@;
+    };
+    Carp::croak($err) if $err; # throw
+    return $res;
 }
 
 1;

@@ -14,6 +14,16 @@
 #include "p5uv_constants.h"
 #include "p5uv_loops_handles.h"
 
+#if defined(_WIN32_WINNT)
+#include <fcntl.h>
+#include <sys/socket.h>
+#include <unistd.h>
+#include <io.h> /* we need _get_osfhandle() on windows */
+#define _MAKE_SOCK(s, f) s = _get_osfhandle(f)
+#else
+#define _MAKE_SOCK(s,f) s = f
+#endif
+
 /* store the singleton default_loop. not thread-safe */
 static uv_loop_t *default_loop;
 static uv_loop_t* get_loop_singleton(pTHX_ SV *class)
@@ -428,8 +438,9 @@ SV * p5uv_poll__construct(SV *class, int fd, uv_loop_t *loop = NULL)
     int res;
     handle_data_t *data_ptr;
     uv_poll_t *handle = (uv_poll_t *)handle_new(aTHX_ class, UV_POLL);
+
     if (!loop) loop = get_loop_singleton(aTHX_ newSVpv("UV::Loop", 8));
-    res = uv_poll_init(loop, handle, fd);
+    res = uv_poll_init_socket(loop, handle, (uv_os_sock_t)fd);
     if (0 != res) {
         handle_destroy(aTHX_ (uv_handle_t *)handle);
         croak("Couldn't initialize handle (%i): %s", res, uv_strerror(res));

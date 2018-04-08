@@ -306,12 +306,12 @@ uv_handle_t* handle_new(pTHX_ SV *class, const uv_handle_type type)
 /* HANDLE callbacks */
 void handle_alloc_cb(uv_handle_t* handle, size_t suggested_size, uv_buf_t* buf)
 {
+    dTHX;
     SV **callback;
     handle_data_t *data_ptr;
     buf->base = malloc(suggested_size);
     buf->len = suggested_size;
 
-    dTHX;
 
     if (!handle || !handle->data) return;
     data_ptr = handle_data(handle);
