@@ -8,7 +8,7 @@ use UV;
 use UV::Loop ();
 use UV::Poll qw(UV_READABLE UV_WRITABLE);
 
-my $NUM_SOCKETS = 64;
+my $NUM_SOCKETS = 1; #64;
 my $close_cb_called = 0;
 
 

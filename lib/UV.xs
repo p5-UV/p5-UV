@@ -10,6 +10,13 @@
 #include <assert.h>
 #include <stdlib.h>
 
+#if defined(DEBUG) && DEBUG > 0
+ #define DEBUG_PRINT(fmt, args...) fprintf(stderr, "C -- %s:%d:%s(): " fmt, \
+    __FILE__, __LINE__, __func__, ##args)
+#else
+ #define DEBUG_PRINT(fmt, args...) /* Don't do anything in release builds */
+#endif
+
 #include <uv.h>
 #include "p5uv_constants.h"
 #include "p5uv_loops_handles.h"
@@ -19,7 +26,7 @@
 #include <sys/socket.h>
 #include <unistd.h>
 #include <io.h> /* we need _get_osfhandle() on windows */
-#define _MAKE_SOCK(s, f) s = _get_osfhandle(f)
+#define _MAKE_SOCK(s, f) s = (uv_os_sock_t)_get_osfhandle(f)
 #else
 #define _MAKE_SOCK(s,f) s = f
 #endif
@@ -270,7 +277,11 @@ SV *p5uv_handle__callbacks(uv_handle_t *handle)
 
 void p5uv_handle__close(uv_handle_t *handle)
     CODE:
-    uv_close(handle, handle_close_cb);
+    DEBUG_PRINT("close called\n");
+    if (!handle_closed(aTHX_ handle)) {
+        DEBUG_PRINT("handle isn't closed. let's try uv_close()\n");
+        uv_close(handle, handle_close_cb);
+    }
 
 SV *p5uv_handle__events(uv_handle_t *handle)
     CODE:
@@ -433,23 +444,36 @@ MODULE = UV             PACKAGE = UV::Poll      PREFIX = p5uv_poll_
 
 PROTOTYPES: ENABLE
 
-SV * p5uv_poll__construct(SV *class, int fd, uv_loop_t *loop = NULL)
+SV * p5uv_poll__construct(SV *class, long fd, uv_loop_t *loop = NULL)
     CODE:
     int res;
     handle_data_t *data_ptr;
+    uv_os_sock_t sock;
     uv_poll_t *handle = (uv_poll_t *)handle_new(aTHX_ class, UV_POLL);
 
     if (!loop) loop = get_loop_singleton(aTHX_ newSVpv("UV::Loop", 8));
-    res = uv_poll_init_socket(loop, handle, (uv_os_sock_t)fd);
-    if (0 != res) {
-        handle_destroy(aTHX_ (uv_handle_t *)handle);
-        croak("Couldn't initialize handle (%i): %s", res, uv_strerror(res));
-    }
-    data_ptr = handle_data(handle);
-    av_push(data_ptr->events, newSVpv("poll", 0));
-    hv_store(data_ptr->callbacks, "on_poll", 7, newSV(0), 0);
+    DEBUG_PRINT("operating on FD %i\n", fd);
+    DEBUG_PRINT("got a handle and loop object\n");
 
-    RETVAL = handle_bless(aTHX_ (uv_handle_t *)handle);
+    _MAKE_SOCK(sock, fd);
+    DEBUG_PRINT("converted FD %i to uv_os_sock_t\n", fd);
+
+
+    res = uv_poll_init_socket(loop, handle, sock);
+    if (0 == res) {
+        DEBUG_PRINT("socket initialized: %i\n", res);
+        data_ptr = handle_data(handle);
+        av_push(data_ptr->events, newSVpv("poll", 0));
+        hv_store(data_ptr->callbacks, "on_poll", 7, newSV(0), 0);
+
+        RETVAL = handle_bless(aTHX_ (uv_handle_t *)handle);
+    }
+    else {
+        DEBUG_PRINT("socket initialization failure: %i: %s\n", res, uv_strerror(res));
+        RETVAL = &PL_sv_undef;
+        handle_destroy(aTHX_ (uv_handle_t *)handle);
+        Perl_croak(aTHX_ "Couldn't initialize handle (%i): %s", res, uv_strerror(res));
+    }
     OUTPUT:
     RETVAL
 

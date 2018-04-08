@@ -12,6 +12,7 @@ sub TRIM {
 
 
 my @flags = ('-I.', '-I../..', $Config{ccflags});
+push @flags, '-DDEBUG' if $ENV{PERL_UV_DEBUG};
 my $libs = Alien::libuv->libs();
 {
     my $cflags = TRIM(Alien::libuv->cflags);

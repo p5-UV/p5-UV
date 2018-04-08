@@ -24,3 +24,6 @@ xx*
 *.o
 lib/*.c
 lib/UV/*.c
+lib/UV.def
+.vscode/*
+*.old

@@ -9,6 +9,7 @@ use Exporter qw(import);
 
 use Carp ();
 use UV ();
+use constant DEBUG => $ENV{PERL_UV_DEBUG};
 
 sub DESTROY {
     my $self = shift;
@@ -22,14 +23,23 @@ sub DESTROY {
 
 sub close {
     my $self = shift;
+    print STDERR "UV::Handle->close() called\n" if DEBUG;
     $self->on('close', @_) if @_; # set the callback ahead of time if exists
     return if $self->closed() || $self->closing();
+    print STDERR "UV::Handle->close() handle isn't already closed. let's move to C land\n" if DEBUG;
     my $err = do { # catch
         local $@;
-        eval { $self->_close(); }; # try
+        eval {
+            #print STDERR "UV::Handle->close() call stop if we can first.\n" if DEBUG;
+            #$self->stop() if $self->can('stop');
+            print STDERR "UV::Handle->close() call _close.\n" if DEBUG;
+            $self->_close();
+            1;
+        }; # try
         $@;
     };
     Carp::croak($err) if $err; # throw
+    print STDERR "UV::Handle->close() done with no errors.\n" if DEBUG;
 }
 
 sub on {

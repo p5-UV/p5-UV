@@ -11,8 +11,11 @@ use parent 'UV::Handle';
 use Carp ();
 use UV::Loop ();
 
+use constant DEBUG => $ENV{PERL_UV_DEBUG};
+
 sub new {
     my $class = shift;
+    print STDERR "UV::Poll->new() called\n" if DEBUG;
     my $args = UV::_parse_args(@_);
     my $loop = UV::Loop->default();
     if (UV::Loop::_is_a_loop($args->{loop})) {
@@ -40,18 +43,21 @@ sub new {
         Carp::croak("No file or socket descriptor provided");
     }
 
+    print STDERR "UV::Poll->new() found file descriptor $fd\n" if DEBUG;
+
     my $self;
     my $err = do { #catch
         local $@;
         eval {
-            print "Socket ID: $fd\n";
             $self = _construct($class, $fd, $loop);
             die "Unable to create Poll handle" unless $self;
+            print STDERR "UV::Poll->new() C constructor completed successfully\n" if DEBUG;
             my $events = $self->_events;
             die "Unable to get events list" unless $events && CORE::ref($events) eq 'ARRAY';
             for my $e (@{$events}) {
                 $self->on($e, $args->{"on_$e"}) if $args->{"on_$e"};
             }
+            print STDERR "UV::Poll->new() event callbacks added\n" if DEBUG;
             1;
         }; #try
         $@;
@@ -63,6 +69,7 @@ sub new {
 sub start {
     my $self = shift;
     my $events = shift(@_) || UV::Poll::UV_READABLE;
+    print STDERR "UV::Poll->start() entered with events: $events\n" if DEBUG;
     if (@_) {
         $self->on('poll', shift);
     }
@@ -70,12 +77,14 @@ sub start {
     my $err = do { #catch
         local $@;
         eval {
-            $res = $self->start($events);
+            print STDERR "UV::Poll->start() Calling C _start($events)\n" if DEBUG;
+            $res = $self->_start($events);
             1;
         }; #try
         $@;
     };
     Carp::croak($err) if $err; # throw
+    print STDERR "UV::Poll->start() no errors from C land\n" if DEBUG;
     return $res;
 }
 
