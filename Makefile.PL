@@ -10,14 +10,6 @@ use ExtUtils::MakeMaker;
 use Config;
 use Alien::libuv ();
 
-# Some options behave differently on Windows
-sub WINLIKE () {
-    return 1 if $^O eq 'MSWin32';
-    return 1 if $^O eq 'cygwin';
-    return 1 if $^O eq 'msys';
-    return '';
-}
-
 # make sure we actually get stuff back from Alien::libuv
 sub TRIM {
     my $s = shift;
@@ -27,9 +19,8 @@ sub TRIM {
     return $s;
 }
 
-my @flags = ('-I.', '-I../..', $Config{ccflags});
+my @flags = ('-I.', $Config{ccflags});
 my $libs = Alien::libuv->libs();
-$libs .= ' -lpsapi -luserenv -lIphlpapi' if WINLIKE();
 {
     my $cflags = TRIM(Alien::libuv->cflags);
     my $cflags_s = TRIM(Alien::libuv->cflags_static);
@@ -59,20 +50,20 @@ my %WriteMakefileArgs = (
   "ABSTRACT" => "Perl interface to libuv",
   "AUTHOR" => "Chase Whitener <capoeirab\@cpan.org>, Daisuke Murase <typester\@cpan.org>",
   "BUILD_REQUIRES" => {
-    "Alien::libuv" => "0.006",
+    "Alien::libuv" => "1.000",
     "Config" => 0,
     "ExtUtils::MakeMaker" => "7.12",
     "Math::Int64" => 0
   },
   "CONFIGURE_REQUIRES" => {
-    "Alien::libuv" => "0.006",
+    "Alien::libuv" => "1.000",
     "ExtUtils::MakeMaker" => "7.12"
   },
   "DISTNAME" => "UV",
   "LICENSE" => "perl",
   "NAME" => "UV",
   "PREREQ_PM" => {
-    "Alien::libuv" => "0.006",
+    "Alien::libuv" => "1.000",
     "Carp" => 0,
     "Devel::GlobalDestruction" => 0,
     "Exporter" => "5.57",
@@ -85,7 +76,7 @@ my %WriteMakefileArgs = (
     "warnings" => 0
   },
   "TEST_REQUIRES" => {
-    "Alien::libuv" => "0.006",
+    "Alien::libuv" => "1.000",
     "Errno" => 0,
     "ExtUtils::MakeMaker" => "7.12",
     "File::Spec" => 0,
@@ -109,7 +100,7 @@ my %WriteMakefileArgs = (
 );
 
 my %FallbackPrereqs = (
-  "Alien::libuv" => "0.006",
+  "Alien::libuv" => "1.000",
   "Carp" => 0,
   "Config" => 0,
   "Devel::GlobalDestruction" => 0,

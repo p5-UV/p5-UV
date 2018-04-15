@@ -3,9 +3,10 @@ call :%*
 goto :eof
 
 :perl_setup
-if not defined perl_type set perl_type=system
+if not defined perl_type set perl_type=strawberry
+cinst -y curl
 if "%perl_type%" == "cygwin" (
-  start /wait c:\cygwin\setup-x86.exe -q -g -P perl -P make -P gcc -P gcc-g++ -P libcrypt-devel -P openssl-devel -P autoconf -P automake -P libtool
+  start /wait c:\cygwin\setup-x86.exe -q -g -P perl -P binutils -P make -P gcc -P gcc-core -P gcc-g++ -P make -P pkg-config -P libcrypt-devel -P openssl-devel -P curl
   set "PATH=C:\cygwin\usr\local\bin;C:\cygwin\bin;%PATH%"
 ) else if "%perl_type%" == "strawberry" (
   if not defined perl_version (
@@ -18,12 +19,6 @@ if "%perl_type%" == "cygwin" (
     exit /b 1
   )
   set "PATH=C:\Strawberry\perl\site\bin;C:\Strawberry\perl\bin;C:\Strawberry\c\bin;%PATH%"
-) else if "%perl_type%" == "system" (
-  mkdir c:\dmake
-  cinst -y curl
-  curl http://www.cpan.org/authors/id/S/SH/SHAY/dmake-4.12.2.2.zip -o c:\dmake\dmake.zip
-  7z x c:\dmake\dmake.zip -oc:\ >NUL
-  set "PATH=c:\dmake;C:\MinGW\bin;%PATH%"
 ) else (
   echo.Unknown perl type "%perl_type%"! 1>&2
   exit /b 1
