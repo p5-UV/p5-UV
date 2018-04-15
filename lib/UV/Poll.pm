@@ -48,10 +48,21 @@ sub start {
     Carp::croak("Can't start a closed handle") if $self->closed();
 
     my $events = shift(@_) || UV::Poll::UV_READABLE;
+
     if (@_) {
         $self->on('poll', shift);
     }
-    return $self->_start($events);
+    my $res;
+    my $err = do { #catch
+        local $@;
+        eval {
+            $res = $self->_start($events);
+            1;
+        }; #try
+        $@;
+    };
+    Carp::croak($err) if $err; # throw
+    return $res;
 }
 
 1;

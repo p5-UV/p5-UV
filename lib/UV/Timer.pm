@@ -38,7 +38,17 @@ sub start {
     if (@_) {
         $self->on('timer', shift);
     }
-    return $self->_start($timeout, $repeat);
+    my $res;
+    my $err = do { #catch
+        local $@;
+        eval {
+            $res = $self->_start($timeout, $repeat);
+            1;
+        }; #try
+        $@;
+    };
+    Carp::croak($err) if $err; # throw
+    return $res;
 }
 1;
 
