@@ -13,6 +13,7 @@ Revision history for Perl extension {{$dist->name}}
       Alien::libuv
     - Bumped the requirement of Alien::libuv to 1.000
     - Removed some bad Poll tests
+    - Add try/catch block for all Handle start methods
 
 1.000005  2018-01-28 (TRIAL)
     - Update 02-loop-alive.t to more closely resemble libuv's

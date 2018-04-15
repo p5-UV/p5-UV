@@ -50,15 +50,15 @@ sub _cleanup_loop {
     _cleanup_loop(UV::Loop->default());
 }
 
-{
-    # use a socket since windows can't poll on file descriptors
-    my $sock = IO::Socket::INET->new(Type => SOCK_STREAM);
-    my $handle = UV::poll(fd => $sock->fileno());
-    isa_ok($handle, 'UV::Poll', 'got back an Poll handle');
-    isa_ok($handle, 'UV::Handle', 'it derrives from UV::Handle');
-    is($handle->loop()->is_default(), 1, 'Handle uses the default loop');
-    _cleanup_loop(UV::Loop->default());
-}
+# {
+#     # use a socket since windows can't poll on file descriptors
+#     my $sock = IO::Socket::INET->new(Type => SOCK_STREAM);
+#     my $handle = UV::poll(fd => $sock->fileno());
+#     isa_ok($handle, 'UV::Poll', 'got back an Poll handle');
+#     isa_ok($handle, 'UV::Handle', 'it derrives from UV::Handle');
+#     is($handle->loop()->is_default(), 1, 'Handle uses the default loop');
+#     _cleanup_loop(UV::Loop->default());
+# }
 
 {
     my $handle = UV::prepare();

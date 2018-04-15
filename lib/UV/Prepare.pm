@@ -26,7 +26,17 @@ sub start {
     if (@_) {
         $self->on('prepare', shift);
     }
-    return $self->_start();
+    my $res;
+    my $err = do { #catch
+        local $@;
+        eval {
+            $res = $self->_start();
+            1;
+        }; #try
+        $@;
+    };
+    Carp::croak($err) if $err; # throw
+    return $res;
 }
 
 1;
