@@ -9,6 +9,10 @@ Revision history for Perl extension {{$dist->name}}
       standard ->new() constructor now.
     - Updated documentation for the Handle classes to better indicate their
       use.
+    - Removed extra library detection for windows as this is now done in
+      Alien::libuv
+    - Bumped the requirement of Alien::libuv to 1.000
+    - Removed some bad Poll tests
 
 1.000005  2018-01-28 (TRIAL)
     - Update 02-loop-alive.t to more closely resemble libuv's

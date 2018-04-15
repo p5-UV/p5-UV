@@ -3,7 +3,7 @@ on 'runtime' => sub {
     requires 'parent';
     requires 'strict';
     requires 'warnings';
-    requires 'Alien::libuv' => '0.006';
+    requires 'Alien::libuv' => '1.000';
     requires 'Carp';
     requires 'Devel::GlobalDestruction';
     requires 'Exporter' => '5.57';
@@ -14,19 +14,19 @@ on 'runtime' => sub {
 };
 
 on 'build' => sub {
-    requires 'Alien::libuv' => '0.006';
+    requires 'Alien::libuv' => '1.000';
     requires 'Config';
     requires 'ExtUtils::MakeMaker' => '7.12';
     requires 'Math::Int64';
 };
 
 on 'configure' => sub {
-    requires 'Alien::libuv' => '0.006';
+    requires 'Alien::libuv' => '1.000';
     requires 'ExtUtils::MakeMaker' => '7.12';
 };
 
 on 'test' => sub {
-    requires 'Alien::libuv';
+    requires 'Alien::libuv' => '1.000';
     requires 'Errno';
     requires 'FindBin';
     requires 'IO::Handle';
