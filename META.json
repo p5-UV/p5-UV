@@ -50,6 +50,7 @@
             "Test::CPAN::Changes" : "0.4",
             "Test::CPAN::Meta" : "0",
             "Test::CheckManifest" : "1.29",
+            "Test::CleanNamespaces" : "0.15",
             "Test::EOL" : "0",
             "Test::Kwalitee" : "1.22",
             "Test::More" : "0.88",
@@ -102,35 +103,35 @@
    "provides" : {
       "UV" : {
          "file" : "lib/UV.pm",
-         "version" : "1.000006"
+         "version" : "1.000007"
       },
       "UV::Check" : {
          "file" : "lib/UV/Check.pm",
-         "version" : "1.000006"
+         "version" : "1.000007"
       },
       "UV::Handle" : {
          "file" : "lib/UV/Handle.pm",
-         "version" : "1.000006"
+         "version" : "1.000007"
       },
       "UV::Idle" : {
          "file" : "lib/UV/Idle.pm",
-         "version" : "1.000006"
+         "version" : "1.000007"
       },
       "UV::Loop" : {
          "file" : "lib/UV/Loop.pm",
-         "version" : "1.000006"
+         "version" : "1.000007"
       },
       "UV::Poll" : {
          "file" : "lib/UV/Poll.pm",
-         "version" : "1.000006"
+         "version" : "1.000007"
       },
       "UV::Prepare" : {
          "file" : "lib/UV/Prepare.pm",
-         "version" : "1.000006"
+         "version" : "1.000007"
       },
       "UV::Timer" : {
          "file" : "lib/UV/Timer.pm",
-         "version" : "1.000006"
+         "version" : "1.000007"
       }
    },
    "release_status" : "testing",
@@ -145,7 +146,7 @@
          "web" : "https://github.com/genio/p5-UV"
       }
    },
-   "version" : "1.000006",
+   "version" : "1.000007",
    "x_Dist_Zilla" : {
       "perl" : {
          "version" : "5.026001"
@@ -452,7 +453,7 @@
                   "branch" : null,
                   "changelog" : "Changes",
                   "signed" : 0,
-                  "tag" : "v1.000006",
+                  "tag" : "v1.000007",
                   "tag_format" : "v%v",
                   "tag_message" : "v%v"
                },
@@ -493,6 +494,17 @@
             },
             "name" : "Test::Portability",
             "version" : "2.001000"
+         },
+         {
+            "class" : "Dist::Zilla::Plugin::Test::CleanNamespaces",
+            "config" : {
+               "Dist::Zilla::Plugin::Test::CleanNamespaces" : {
+                  "filename" : "xt/author/clean-namespaces.t",
+                  "skips" : []
+               }
+            },
+            "name" : "Test::CleanNamespaces",
+            "version" : "0.006"
          },
          {
             "class" : "Dist::Zilla::Plugin::Test::NoTabs",
