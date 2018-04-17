@@ -1,6 +1,8 @@
 Revision history for Perl extension {{$dist->name}}
 
-{{$NEXT}} (TRIAL)
+{{$NEXT}}
+
+1.000006  2018-04-16 (TRIAL)
     - Removed is_closing()
     - Removed is_active()
     - Removed loop_configure()
