@@ -1,6 +1,7 @@
 Revision history for Perl extension {{$dist->name}}
 
 {{$NEXT}}
+    - Fix bug in call to Newx().
 
 1.000007  2018-04-20 (TRIAL)
     - Fixed typo in test suite
@@ -11,7 +12,7 @@ Revision history for Perl extension {{$dist->name}}
       set
     - Loop destructor should just call ->close()
     - Simplify the loop singleton
-    
+
 
 1.000006  2018-04-16 (TRIAL)
     - Removed is_closing()
