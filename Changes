@@ -1,6 +1,8 @@
 Revision history for Perl extension {{$dist->name}}
 
 {{$NEXT}}
+
+1.000008  2018-04-21
     - Fix bug in call to Newx(). (Jim Keenan: issues/24)
     - Update UV::Loop documentation to better cover the close method.
     - No longer need Devel::GlobalDestruction.
