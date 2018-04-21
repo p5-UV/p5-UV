@@ -1,6 +1,8 @@
 Revision history for Perl extension {{$dist->name}}
 
-{{$NEXT}} (TRIAL)
+{{$NEXT}}
+
+1.000007  2018-04-20 (TRIAL)
     - Fixed typo in test suite
     - Added in Test::CleanNamespaces
     - Consolidate down to one BOOT block
