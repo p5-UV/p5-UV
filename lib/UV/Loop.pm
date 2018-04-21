@@ -6,7 +6,6 @@ use strict;
 use warnings;
 
 use Carp ();
-use Devel::GlobalDestruction ();
 use Exporter qw(import);
 use Scalar::Util ();
 use UV ();
@@ -150,19 +149,19 @@ UV::Loop - Looping with libuv
   use strict;
   use warnings;
 
-  use UV;
+  use UV::Loop ();
 
   # A new, non-default loop
   my $loop = UV::Loop->new();
 
   # a new loop with the walk callback provided:
-  my $loop = UV::Loop->new(
+  $loop = UV::Loop->new(
     on_walk => sub {say "walking!"},
   );
 
   # A new default loop instance (Singleton)
-  my $loop = UV::Loop->default_loop(); # singleton constructor
-  my $loop = UV::Loop->default(); # singleton constructor
+  $loop = UV::Loop->default_loop(); # singleton constructor
+  $loop = UV::Loop->default(); # singleton constructor
 
   # run a loop with one of three options:
   # UV_RUN_DEFAULT, UV_RUN_ONCE, UV_RUN_NOWAIT
@@ -197,6 +196,7 @@ Event loops that work properly on all platforms. YAY!
 =head3 SIGPROF
 
 =head3 UV_LOOP_BLOCK_SIGNAL
+
 
 =head1 EVENTS
 
@@ -265,13 +265,38 @@ for no timeout.
 
 =head2 close
 
+    my $loop = UV::Loop->default();
     $loop->close();
+    # $loop is no longer a valid handle to the default loop.
+    # we must grab another default loop to continue after a close call.
+    $loop = UV::Loop->default();
+    # with a non-default loop, we render that loop useless.
+    $loop = UV::Loop->new();
+    $loop->close();
+    $loop->run(); # BOOM. error. the loop no longer exists here.
 
 The L<close|http://docs.libuv.org/en/v1.x/loop.html#c.uv_loop_close> method
 releases all internal loop resources. Call this method only when the loop has
 finished executing and all open handles and requests have been closed, or it
-will return C<UV::UV_EBUSY>. After this method returns, the user can free the
-memory allocated for the loop.
+will return C<UV::UV_EBUSY>.
+
+Calling C<close> on a loop will effectively destroy that loop. You will not be
+able to continue using the loop after calling C<close>.
+
+C<close> is essentially a wrapper around:
+
+    $loop->walk(sub {
+        my $handle = shift;
+        $handle->stop() if $handle->can('stop');
+        $handle->close() unless $handle->closing();
+        $handle->unref();
+    });
+    if (0 == $loop->run(UV::Loop::UV_RUN_DEFAULT)) {
+        # all loop memory is freed here.
+        if (0 == $loop->close()) {
+            $loop = undef;
+        }
+    }
 
 =head2 configure
 
@@ -345,7 +370,6 @@ B<* Note:> Use L<UV/"hrtime"> if you need sub-millisecond granularity.
 
     # clear out the walk event callback for the loop
     $loop->on(walk => undef);
-    $loop->on(walk => sub {});
 
 The C<on> method allows you to subscribe to L<UV::Loop/"EVENTS"> emitted by
 any UV::Loop.
@@ -418,7 +442,6 @@ subjective but probably on the order of a millisecond or more.
     # call with no callback
     $loop->walk();
     $loop->walk(undef);
-    $loop->walk(sub {});
 
     # instead, let's walk the loop and cleanup any handles attached and then
     # completely close the loop.
