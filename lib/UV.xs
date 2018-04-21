@@ -13,6 +13,14 @@
 #include "xs_object_magic.h"
 
 #include <uv.h>
+
+#if defined(DEBUG) && DEBUG > 0
+ #define DEBUG_PRINT(fmt, args...) fprintf(stderr, "C -- %s:%d:%s(): " fmt, \
+    __FILE__, __LINE__, __func__, ##args)
+#else
+ #define DEBUG_PRINT(fmt, args...) /* Don't do anything in release builds */
+#endif
+
 #include "p5uv_constants.h"
 #include "p5uv_callbacks.h"
 #include "p5uv_helpers.h"
@@ -32,6 +40,9 @@ BOOT:
 {
     PERL_MATH_INT64_LOAD_OR_CROAK;
     constants_export_uv(aTHX);
+    constants_export_uv_handle(aTHX);
+    constants_export_uv_poll(aTHX);
+    constants_export_uv_loop(aTHX);
 }
 
 const char* uv_err_name(int err)
@@ -47,12 +58,6 @@ const char* uv_version_string()
 MODULE = UV             PACKAGE = UV::Handle      PREFIX = p5uv_handle_
 
 PROTOTYPES: ENABLE
-
-BOOT:
-{
-    PERL_MATH_INT64_LOAD_OR_CROAK;
-    constants_export_uv_handle(aTHX);
-}
 
 void p5uv_handle__destruct(SV *self, int closed)
     PREINIT:
@@ -80,7 +85,7 @@ void p5uv_handle__close(SV *self)
         uv_handle_t *handle;
     CODE:
         handle = (uv_handle_t *)xs_object_magic_get_struct_rv_pretty(aTHX_ self, "uv_handle_t in _close");
-        if (uv_is_closing(handle)) return;
+        if (!handle) return;
         uv_close(handle, handle_close_cb);
 
 void p5uv_handle__has_struct(SV *self)
@@ -127,11 +132,6 @@ MODULE = UV             PACKAGE = UV::Check      PREFIX = p5uv_check_
 
 PROTOTYPES: ENABLE
 
-BOOT:
-{
-    PERL_MATH_INT64_LOAD_OR_CROAK;
-}
-
 void p5uv_check__init(SV *self, uv_loop_t *loop)
     INIT:
         uv_check_t *handle;
@@ -176,11 +176,6 @@ int p5uv_check_stop(SV *self)
 MODULE = UV             PACKAGE = UV::Idle      PREFIX = p5uv_idle_
 
 PROTOTYPES: ENABLE
-
-BOOT:
-{
-    PERL_MATH_INT64_LOAD_OR_CROAK;
-}
 
 void p5uv_idle__init(SV *self, uv_loop_t *loop)
     INIT:
@@ -227,12 +222,6 @@ MODULE = UV             PACKAGE = UV::Poll      PREFIX = p5uv_poll_
 
 PROTOTYPES: ENABLE
 
-BOOT:
-{
-    constants_export_uv_poll(aTHX);
-    PERL_MATH_INT64_LOAD_OR_CROAK;
-}
-
 void p5uv_poll__init(SV *self, int fd, uv_loop_t *loop)
     INIT:
         uv_poll_t *handle;
@@ -277,11 +266,6 @@ int p5uv_poll_stop(SV *self)
 MODULE = UV             PACKAGE = UV::Prepare      PREFIX = p5uv_prepare_
 
 PROTOTYPES: ENABLE
-
-BOOT:
-{
-    PERL_MATH_INT64_LOAD_OR_CROAK;
-}
 
 void p5uv_prepare__init(SV *self, uv_loop_t *loop)
     INIT:
@@ -328,11 +312,6 @@ int p5uv_prepare_stop(SV *self)
 MODULE = UV             PACKAGE = UV::Timer      PREFIX = p5uv_timer_
 
 PROTOTYPES: ENABLE
-
-BOOT:
-{
-    PERL_MATH_INT64_LOAD_OR_CROAK;
-}
 
 void p5uv_timer__init(SV *self, uv_loop_t *loop)
     INIT:
@@ -405,20 +384,48 @@ MODULE = UV             PACKAGE = UV::Loop      PREFIX = p5uv_loop_
 
 PROTOTYPES: ENABLE
 
-BOOT:
-{
-    PERL_MATH_INT64_LOAD_OR_CROAK;
-    constants_export_uv_loop(aTHX);
-}
-
-int p5uv_loop__close(SV *self)
+int p5uv_loop__close(SV *self, int is_default=0)
     PREINIT:
         uv_loop_t *loop;
+        int res;
     CODE:
         RETVAL = 0;
         loop = (uv_loop_t *)xs_object_magic_get_struct_rv_pretty(aTHX_ self, "uv_loop_t in _close");
-        if (0 != uv_loop_alive(loop)) {
+        DEBUG_PRINT("Got the loop object. Is default? %i\n", is_default);
+
+        /* drop out if we are without a loop */
+        if (loop) {
+            DEBUG_PRINT("Loop object is good\n");
+            /* if the loop is alive, let's walk it and close everything */
+            if (0 != uv_loop_alive(loop)) {
+                DEBUG_PRINT("Loop is alive. We need to walk and close handles/requests.\n");
+                uv_walk(loop, loop_walk_close_cb, NULL);
+                DEBUG_PRINT("We need to run the loop so the handles/requests can close.\n");
+                RETVAL = uv_run(loop, UV_RUN_DEFAULT);
+                if (0 != RETVAL) {
+                    DEBUG_PRINT("Loop run errored!\n");
+                    croak("loop run error (%i): %s", RETVAL, uv_strerror(RETVAL));
+                }
+                DEBUG_PRINT("Loop run exited cleanly!\n");
+            }
+            DEBUG_PRINT("Loop about to close!\n");
             RETVAL = uv_loop_close(loop);
+            if (0 == RETVAL) {
+                DEBUG_PRINT("destroying the loop now!\n");
+                if (loop->data) {
+                    DEBUG_PRINT("It looks like we have loop data!\n");
+                    loop->data = NULL;
+                }
+                DEBUG_PRINT("detaching struct from object!\n");
+                res = xs_object_magic_detach_struct_rv(aTHX_ self, loop);
+                if (0 != res) {
+                    DEBUG_PRINT("detaching struct from object successful!\n");
+                }
+                if (0 == is_default) {
+                    DEBUG_PRINT("freeing non-default loop's memory!\n");
+                    Safefree(loop);
+                }
+            }
         }
     OUTPUT:
     RETVAL
@@ -428,6 +435,7 @@ void p5uv_loop__create(SV *self, int want_default)
         uv_loop_t *loop;
         int ret;
     CODE:
+        DEBUG_PRINT("Requesting a default loop? %i\n", want_default);
         if(!xs_object_magic_has_struct_rv(aTHX_ self)) {
             if (want_default == 0) {
                 Newx(loop, 1, uv_loop_t);
@@ -441,27 +449,18 @@ void p5uv_loop__create(SV *self, int want_default)
                 }
             }
             else {
+                DEBUG_PRINT("Getting the default loop!\n");
                 loop = uv_default_loop();
                 if (!loop) {
+                    DEBUG_PRINT("Loop error when getting default loop!\n");
                     croak("Error getting a new default loop");
                 }
             }
+            DEBUG_PRINT("Attaching loop to object's magic!\n");
             xs_object_magic_attach_struct(aTHX_ SvRV(self), loop);
+            DEBUG_PRINT("Saving a reference to the object in loop->data!\n");
             loop->data = SvREFCNT_inc(ST(0));
         }
-
-void p5uv_loop__destruct(SV *self, int is_default=0)
-    PREINIT:
-        uv_loop_t *loop;
-    CODE:
-        loop = (uv_loop_t *)xs_object_magic_get_struct_rv_pretty(aTHX_ self, "uv_loop_t in _destroy");
-        if (is_default && !PL_dirty) return;
-        if (0 != uv_loop_alive(loop)) {
-            uv_walk(loop, loop_walk_close_cb, NULL);
-            uv_run(loop, UV_RUN_DEFAULT);
-            uv_loop_close(loop);
-        }
-        if (NULL != loop && 0==is_default) p5uv_destroy_loop(aTHX_ loop);
 
 void p5uv_loop__has_struct(SV *self)
     PPCODE:

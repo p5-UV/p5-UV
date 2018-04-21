@@ -1,7 +1,15 @@
 Revision history for Perl extension {{$dist->name}}
 
 {{$NEXT}} (TRIAL)
-    - 
+    - Fixed typo in test suite
+    - Added in Test::CleanNamespaces
+    - Consolidate down to one BOOT block
+    - Fix a bug when removing structs from objects
+    - Add some debug statements when built with PERL_UV_DEBUG environment var
+      set
+    - Loop destructor should just call ->close()
+    - Simplify the loop singleton
+    
 
 1.000006  2018-04-16 (TRIAL)
     - Removed is_closing()

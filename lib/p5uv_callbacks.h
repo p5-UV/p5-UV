@@ -112,12 +112,10 @@ void handle_close_cb(uv_handle_t* handle)
     ENTER;
     SAVETMPS;
 
-    if (self) {
-        PUSHMARK(SP);
-        EXTEND(SP, 1);
-        PUSHs(SvREFCNT_inc(self)); /* invocant */
-        PUTBACK;
-    }
+    PUSHMARK(SP);
+    EXTEND(SP, 1);
+    PUSHs(SvREFCNT_inc(self)); /* invocant */
+    PUTBACK;
 
     call_sv(*callback, G_DISCARD|G_VOID);
 
@@ -330,9 +328,13 @@ void loop_walk_cb(uv_handle_t* handle, void* arg)
 
 void loop_walk_close_cb(uv_handle_t* handle, void* arg)
 {
+    SV *self;
     dTHX;
     /* don't attempt to close an already closing handle */
     if (!handle || uv_is_closing(handle)) return;
+    if (!handle->data) return;
+    self = (SV *)(handle->data);
+    if (!self) return;
 
     uv_close(handle, handle_close_destroy_cb);
 }

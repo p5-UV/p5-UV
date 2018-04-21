@@ -11,7 +11,10 @@ use Exporter qw(import);
 use Scalar::Util ();
 use UV ();
 
+use constant DEBUG => $ENV{PERL_UV_DEBUG};
+
 our @EXPORT_OK = (@UV::Loop::EXPORT_XS,);
+my $default_loop;
 
 # simple function to ensure we've been given a UV::Loop
 # this is useful in new Handle construction
@@ -24,65 +27,86 @@ sub _is_a_loop {
 }
 
 sub new {
+    print STDERR "UV::Loop->new() called\n" if DEBUG;
     my $self = bless {}, shift;
     my $args = UV::_parse_args(@_);
     $self->on('walk', $args->{on_walk});
+    print STDERR "UV::Loop->new() walk callback added\n" if DEBUG;
 
     $self->{data} = $args->{data};
     $self->{_default} = (exists($args->{_default}) && $args->{_default})? 1: 0;
+    print STDERR "UV::Loop->new() wants a default? $self->{_default}\n" if DEBUG;
     my $err = do { #catch
         local $@;
-        eval { $self->_create($self->{_default}); 1; }; #try
+        eval {
+            $self->_create($self->{_default});
+            1;
+        }; #try
         $@;
     };
     Carp::croak($err) if $err; # throw
+    print STDERR "UV::Loop->new() done\n" if DEBUG;
     return $self;
 }
 
 sub DESTROY {
     my $self = shift;
-    my $class = Scalar::Util::blessed($self);
-    my $def = $self->is_default();
-
-    if ($self->_has_struct()) {
-        my $err = do { # catch
-            local $@;
-            eval { $self->_destruct($self->is_default()); 1; }; # try
-            $@;
-        };
-        warn $err if $err;
-    }
-    if (Devel::GlobalDestruction::in_global_destruction() && $def && $class) {
-        no strict 'refs';
-        undef(${"$class\::_default_loop"});
-    }
+    $self->close();
 }
 
+# closing a loop releases all data associated with it and the uv_loop_t *
+# should be freed!
+# However, if it's the default loop, we never actually free() the memory for
+# that structure!!!
 sub close {
     my $self = shift;
-    return UV::UV_ENOSYS unless $self->_has_struct();
     my $res = UV::UV_ENOSYS;
+    print STDERR "loop close()\n" if DEBUG;
+
+    if ($self->{_closing}) {
+        print STDERR "loop close() We are already in a close process. exiting\n" if DEBUG;
+        return 0;
+    }
+    unless ($self->_has_struct()) {
+        print STDERR "loop close() object has no struct. ENOSYS\n" if DEBUG;
+        return UV::UV_ENOSYS;
+    }
+
+    print STDERR "loop close() set closing flag and attempt to close\n" if DEBUG;
+    $self->{_closing} = 1;
     my $err = do { # catch
         local $@;
-        eval { $res = $self->_close(); 1; }; # try
+        eval {
+            $res = $self->_close($self->{_default});
+            1;
+        }; # try
         $@;
     };
     warn $err if $err;
+    print STDERR "loop close() close attempt complete. unset flag\n" if DEBUG;
+    $self->{_closing} = undef;
+
+    if (0 == $res) {
+        print STDERR "loop close() close success.\n" if DEBUG;
+    }
+    else {
+        print STDERR "loop close() close failed\n" if DEBUG;
+    }
     return $res;
 }
 
 # Return the singleton uv_default_loop
 sub default {
+    print STDERR "loop default() singleton called\n" if DEBUG;
     my $class = shift;
-    my $default_loop;
-    {
-        no strict 'refs';
-        $default_loop = \${"$class\::_default_loop"};
+    if (defined($default_loop) && $default_loop->_has_struct) {
+        print STDERR "loop default() returning already stored default loop\n" if DEBUG;
+        return $default_loop;
     }
-    unless (defined($$default_loop) && ${$default_loop}->_has_struct) {
-        $$default_loop = $class->new(@_, _default => 1);
-    }
-    return $$default_loop;
+    print STDERR "loop default() We don't have a default. Let's create one!\n" if DEBUG;
+    $default_loop = $class->new(@_, _default => 1);
+    print STDERR "loop default() returning newly created and stored default loop\n" if DEBUG;
+    return $default_loop;
 }
 
 sub default_loop { return shift->default(); }

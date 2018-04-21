@@ -37,7 +37,7 @@ sub _cleanup_loop {
 {
     my $handle = UV::check();
     isa_ok($handle, 'UV::Check', 'got back a Check handle');
-    isa_ok($handle, 'UV::Handle', 'it derrives from UV::Handle');
+    isa_ok($handle, 'UV::Handle', 'it derives from UV::Handle');
     is($handle->loop()->is_default(), 1, 'Handle uses the default loop');
     _cleanup_loop(UV::Loop->default());
 }
@@ -45,25 +45,25 @@ sub _cleanup_loop {
 {
     my $handle = UV::idle();
     isa_ok($handle, 'UV::Idle', 'got back an Idle handle');
-    isa_ok($handle, 'UV::Handle', 'it derrives from UV::Handle');
+    isa_ok($handle, 'UV::Handle', 'it derives from UV::Handle');
     is($handle->loop()->is_default(), 1, 'Handle uses the default loop');
     _cleanup_loop(UV::Loop->default());
 }
 
-# {
-#     # use a socket since windows can't poll on file descriptors
-#     my $sock = IO::Socket::INET->new(Type => SOCK_STREAM);
-#     my $handle = UV::poll(fd => $sock->fileno());
-#     isa_ok($handle, 'UV::Poll', 'got back an Poll handle');
-#     isa_ok($handle, 'UV::Handle', 'it derrives from UV::Handle');
-#     is($handle->loop()->is_default(), 1, 'Handle uses the default loop');
-#     _cleanup_loop(UV::Loop->default());
-# }
+{
+    # use a socket since windows can't poll on file descriptors
+    my $sock = IO::Socket::INET->new(Type => SOCK_STREAM);
+    my $handle = UV::poll(fd => $sock->fileno());
+    isa_ok($handle, 'UV::Poll', 'got back an Poll handle');
+    isa_ok($handle, 'UV::Handle', 'it derives from UV::Handle');
+    is($handle->loop()->is_default(), 1, 'Handle uses the default loop');
+    _cleanup_loop(UV::Loop->default());
+}
 
 {
     my $handle = UV::prepare();
     isa_ok($handle, 'UV::Prepare', 'got back an Prepare handle');
-    isa_ok($handle, 'UV::Handle', 'it derrives from UV::Handle');
+    isa_ok($handle, 'UV::Handle', 'it derives from UV::Handle');
     is($handle->loop()->is_default(), 1, 'Handle uses the default loop');
     _cleanup_loop(UV::Loop->default());
 }
@@ -71,7 +71,7 @@ sub _cleanup_loop {
 {
     my $handle = UV::timer();
     isa_ok($handle, 'UV::Timer', 'got back an Timer handle');
-    isa_ok($handle, 'UV::Handle', 'it derrives from UV::Handle');
+    isa_ok($handle, 'UV::Handle', 'it derives from UV::Handle');
     is($handle->loop()->is_default(), 1, 'Handle uses the default loop');
     _cleanup_loop(UV::Loop->default());
 }

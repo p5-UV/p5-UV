@@ -9,7 +9,6 @@
 #include <uv.h>
 
 extern void p5uv_destroy_handle(pTHX_ uv_handle_t* handle);
-extern void p5uv_destroy_loop(pTHX_ uv_loop_t* handle);
 
 void p5uv_destroy_handle(pTHX_ uv_handle_t * handle)
 {
@@ -19,7 +18,7 @@ void p5uv_destroy_handle(pTHX_ uv_handle_t * handle)
     if (handle->data) {
         self = (SV *)(handle->data);
         if (self && SvROK(self)) {
-            xs_object_magic_detach_struct(aTHX_ self, handle);
+            xs_object_magic_detach_struct_rv(aTHX_ self, handle);
             self = NULL;
             SvREFCNT_dec((SV *)(handle->data));
         }
@@ -27,23 +26,6 @@ void p5uv_destroy_handle(pTHX_ uv_handle_t * handle)
     }
     uv_unref(handle);
     Safefree(handle);
-}
-
-void p5uv_destroy_loop(pTHX_ uv_loop_t * loop)
-{
-    SV *self;
-    if (!loop) return;
-    /* attempt to remove the two-way circular reference */
-    if (loop->data) {
-        self = (SV *)(loop->data);
-        if (self && SvROK(self)) {
-            xs_object_magic_detach_struct(aTHX_ self, loop);
-            self = NULL;
-            SvREFCNT_dec((SV *)(loop->data));
-        }
-        loop->data = NULL;
-    }
-    Safefree(loop);
 }
 
 #endif
