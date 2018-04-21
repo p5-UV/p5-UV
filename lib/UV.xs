@@ -138,7 +138,7 @@ void p5uv_check__init(SV *self, uv_loop_t *loop)
         int ret;
     CODE:
         if(!xs_object_magic_has_struct_rv(aTHX_ self)) {
-            handle = Newx(handle, 1, uv_check_t);
+            Newx(handle, 1, uv_check_t);
             if (!handle) {
                 croak("Unable to allocate space for a handle");
             }
@@ -183,7 +183,7 @@ void p5uv_idle__init(SV *self, uv_loop_t *loop)
         int ret;
     CODE:
         if(!xs_object_magic_has_struct_rv(aTHX_ self)) {
-            handle = Newx(handle, 1, uv_idle_t);
+            Newx(handle, 1, uv_idle_t);
             if (!handle) {
                 croak("Unable to allocate space for an idle");
             }
@@ -229,7 +229,7 @@ void p5uv_poll__init(SV *self, int fd, uv_loop_t *loop)
         uv_os_sock_t sock;
     CODE:
         if (xs_object_magic_has_struct_rv(aTHX_ self)) croak("Can't re-initialie Poll");
-        handle = Newx(handle, 1, uv_poll_t);
+        Newx(handle, 1, uv_poll_t);
         if (!handle) croak("Unable to allocate space for a poll");
 
         if (NULL == loop) loop = uv_default_loop();
@@ -273,7 +273,7 @@ void p5uv_prepare__init(SV *self, uv_loop_t *loop)
         int ret;
     CODE:
         if(!xs_object_magic_has_struct_rv(aTHX_ self)) {
-            handle = Newx(handle, 1, uv_prepare_t);
+            Newx(handle, 1, uv_prepare_t);
             if (!handle) {
                 croak("Unable to allocate space for a prepare");
             }
@@ -319,7 +319,7 @@ void p5uv_timer__init(SV *self, uv_loop_t *loop)
         int ret;
     CODE:
         if(!xs_object_magic_has_struct_rv(aTHX_ self)) {
-            handle = Newx(handle, 1, uv_timer_t);
+            Newx(handle, 1, uv_timer_t);
             if (!handle) {
                 croak("Unable to allocate space for a timer");
             }
