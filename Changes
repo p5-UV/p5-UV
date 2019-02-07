@@ -1,6 +1,7 @@
 Revision history for Perl extension {{$dist->name}}
 
 {{$NEXT}}
+    -
 
 1.000009  2019-02-07
     - Improve the way we create constants. (xenu: pr/27)
