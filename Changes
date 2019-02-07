@@ -1,6 +1,8 @@
 Revision history for Perl extension {{$dist->name}}
 
 {{$NEXT}}
+
+1.000009  2019-02-07
     - Improve the way we create constants. (xenu: pr/27)
     - Update the build to use @Starter v3
     - Automate version numbers using DZil rather than incrementing by hand
