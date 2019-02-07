@@ -1,6 +1,10 @@
 Revision history for Perl extension {{$dist->name}}
 
 {{$NEXT}}
+    - Improve the way we create constants. (xenu: pr/27)
+    - Update the build to use @Starter v3
+    - Automate version numbers using DZil rather than incrementing by hand
+    - Generate GitHub Flavored Markdown for the README now
 
 1.000008  2018-04-21
     - Fix bug in call to Newx(). (Jim Keenan: issues/24)

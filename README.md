@@ -4,29 +4,31 @@ UV - Perl interface to libuv
 
 # SYNOPSIS
 
-    #!/usr/bin/env perl
-    use strict;
-    use warnings;
+```perl
+#!/usr/bin/env perl
+use strict;
+use warnings;
 
-    use UV;
-    use UV::Loop;
+use UV;
+use UV::Loop;
 
-    # hi-resolution time
-    my $hi_res_time = UV::hrtime();
+# hi-resolution time
+my $hi_res_time = UV::hrtime();
 
-    # A new loop
-    my $loop = UV::Loop->new();
+# A new loop
+my $loop = UV::Loop->new();
 
-    # default loop
-    my $loop = UV::Loop->default_loop(); # convenience singleton constructor
-    my $loop = UV::Loop->default(); # convenience singleton constructor
+# default loop
+my $loop = UV::Loop->default_loop(); # convenience singleton constructor
+my $loop = UV::Loop->default(); # convenience singleton constructor
 
-    # run a loop with one of three options:
-    # UV_RUN_DEFAULT, UV_RUN_ONCE, UV_RUN_NOWAIT
-    $loop->run(); # runs with UV_RUN_DEFAULT
-    $loop->run(UV::Loop::UV_RUN_DEFAULT); # explicitly state UV_RUN_DEFAULT
-    $loop->run(UV::Loop::UV_RUN_ONCE);
-    $loop->run(UV::Loop::UV_RUN_NOWAIT);
+# run a loop with one of three options:
+# UV_RUN_DEFAULT, UV_RUN_ONCE, UV_RUN_NOWAIT
+$loop->run(); # runs with UV_RUN_DEFAULT
+$loop->run(UV::Loop::UV_RUN_DEFAULT); # explicitly state UV_RUN_DEFAULT
+$loop->run(UV::Loop::UV_RUN_ONCE);
+$loop->run(UV::Loop::UV_RUN_NOWAIT);
+```
 
 # DESCRIPTION
 
@@ -361,28 +363,34 @@ The following functions are available:
 
 ## check
 
-    my $handle = UV::check(); # uses the default loop
-    my $handle = UV::check(loop => $some_other_loop); # non-default loop
+```perl
+my $handle = UV::check(); # uses the default loop
+my $handle = UV::check(loop => $some_other_loop); # non-default loop
+```
 
 Returns a new [UV::Check](https://metacpan.org/pod/UV::Check) Handle object.
 
 ## default\_loop
 
-    my $loop = UV::default_loop();
-    # You can also get it with the UV::Loop methods below:
-    my $loop = UV::Loop->default_loop();
-    my $loop = UV::Loop->default();
-    # Passing a true value as the first arg to the UV::Loop constructor
-    # will also return the default loop
-    my $loop = UV::Loop->new(1);
+```perl
+my $loop = UV::default_loop();
+# You can also get it with the UV::Loop methods below:
+my $loop = UV::Loop->default_loop();
+my $loop = UV::Loop->default();
+# Passing a true value as the first arg to the UV::Loop constructor
+# will also return the default loop
+my $loop = UV::Loop->new(1);
+```
 
 Returns the default loop (which is a singleton object). This module already
 creates the default loop and you get access to it with this method.
 
 ## err\_name
 
-    my $error_name = UV::err_name(UV::UV_EAI_BADFLAGS);
-    say $error_name; # EAI_BADFLAGS
+```perl
+my $error_name = UV::err_name(UV::UV_EAI_BADFLAGS);
+say $error_name; # EAI_BADFLAGS
+```
 
 The [err\_name](http://docs.libuv.org/en/v1.x/errors.html#c.uv_err_name)
 function returns the error name for the given error code. Leaks a few bytes of
@@ -397,45 +405,57 @@ never be called.
 
 ## hrtime
 
-    my $uint64_t = UV::hrtime();
+```perl
+my $uint64_t = UV::hrtime();
+```
 
 Get the current Hi-Res time (`uint64_t`).
 
 ## idle
 
-    my $handle = UV::idle(); # uses the default loop
-    my $handle = UV::idle(loop => $some_other_loop); # non-default loop
+```perl
+my $handle = UV::idle(); # uses the default loop
+my $handle = UV::idle(loop => $some_other_loop); # non-default loop
+```
 
 Returns a new [UV::Idle](https://metacpan.org/pod/UV::Idle) Handle object.
 
 ## loop
 
-    my $loop = UV::loop();
-    # You can also get it with the UV::Loop methods below:
-    my $loop = UV::Loop->default_loop();
-    my $loop = UV::Loop->default();
+```perl
+my $loop = UV::loop();
+# You can also get it with the UV::Loop methods below:
+my $loop = UV::Loop->default_loop();
+my $loop = UV::Loop->default();
+```
 
 Returns the default loop (which is a singleton object). This module already
 creates the default loop and you get access to it with this method.
 
 ## poll
 
-    my $handle = UV::poll(); # uses the default loop
-    my $handle = UV::poll(loop => $some_other_loop); # non-default loop
+```perl
+my $handle = UV::poll(); # uses the default loop
+my $handle = UV::poll(loop => $some_other_loop); # non-default loop
+```
 
 Returns a new [UV::Poll](https://metacpan.org/pod/UV::Poll) Handle object.
 
 ## prepare
 
-    my $handle = UV::prepare(); # uses the default loop
-    my $handle = UV::prepare(loop => $some_other_loop); # non-default loop
+```perl
+my $handle = UV::prepare(); # uses the default loop
+my $handle = UV::prepare(loop => $some_other_loop); # non-default loop
+```
 
 Returns a new [UV::Prepare](https://metacpan.org/pod/UV::Prepare) Handle object.
 
 ## strerror
 
-    my $error = UV::strerror(UV::UV_EAI_BADFLAGS);
-    say $error; # bad ai_flags value
+```perl
+my $error = UV::strerror(UV::UV_EAI_BADFLAGS);
+say $error; # bad ai_flags value
+```
 
 The [strerror](http://docs.libuv.org/en/v1.x/errors.html#c.uv_strerror)
 function returns the error message for the given error code. Leaks a few bytes
@@ -450,14 +470,18 @@ never be called.
 
 ## timer
 
-    my $timer = UV::timer(); # uses the default loop
-    my $timer = UV::timer(loop => $some_other_loop); # non-default loop
+```perl
+my $timer = UV::timer(); # uses the default loop
+my $timer = UV::timer(loop => $some_other_loop); # non-default loop
+```
 
 Returns a new [UV::Timer](https://metacpan.org/pod/UV::Timer) object.
 
 ## version
 
-    my $int = UV::version();
+```perl
+my $int = UV::version();
+```
 
 The [version](http://docs.libuv.org/en/v1.x/version.html#c.uv_version) function
 returns `UV::UV_VERSION_HEX`, the libuv version packed into a single integer.
@@ -466,8 +490,10 @@ significant bits. E.g. for libuv 1.2.3 this would be `0x010203`.
 
 ## version\_string
 
-    say UV::version_string();
-    # 1.13.1
+```
+say UV::version_string();
+# 1.13.1
+```
 
 The [version\_string](http://docs.libuv.org/en/v1.x/version.html#c.uv_version_string)
 function returns the libuv version number as a string. For non-release versions
