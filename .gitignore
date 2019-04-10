@@ -8,6 +8,8 @@ Makefile.old
 SSL
 blib
 blib/
+.vscode/
+_vscode/
 .build/
 _build/
 cover_db/
