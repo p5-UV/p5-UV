@@ -4,6 +4,7 @@
 #include "perl.h"
 #include "XSUB.h"
 
+#define NEED_newCONSTSUB
 #include "ppport.h"
 
 #define MATH_INT64_NATIVE_IF_AVAILABLE
@@ -21,7 +22,9 @@
  #define DEBUG_PRINT(fmt, args...) /* Don't do anything in release builds */
 #endif
 
-#include "p5uv_constants.h"
+#include "perl-backcompat.h"
+#include "uv-backcompat.h"
+
 #include "p5uv_callbacks.h"
 #include "p5uv_helpers.h"
 

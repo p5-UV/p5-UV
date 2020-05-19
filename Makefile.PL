@@ -23,6 +23,9 @@ my %xsbuild = Alien::Base::Wrapper->new('Alien::libuv')->mm_args2(
 # Our cpanfile contains the proper configure requires already
 delete $xsbuild{CONFIGURE_REQUIRES};
 
+# Append our hax/ directory
+$xsbuild{INC} .= " -Ihax";
+
 my %WriteMakefileArgs = (
   "ABSTRACT" => "Perl interface to libuv",
   "AUTHOR" => "Chase Whitener <capoeirab\@cpan.org>, Daisuke Murase <typester\@cpan.org>",
