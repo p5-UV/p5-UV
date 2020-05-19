@@ -90,9 +90,4 @@
     newCONSTSUB_flags(stash, #c, strlen(#c), 0, newSVpvn(c, strlen(c))); \
     av_push(export, newSVpvs(#c));
 
-extern void constants_export_uv(pTHX);
-extern void constants_export_uv_handle(pTHX);
-extern void constants_export_uv_loop(pTHX);
-extern void constants_export_uv_poll(pTHX);
-
 #endif
