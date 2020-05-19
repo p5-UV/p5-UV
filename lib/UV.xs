@@ -42,6 +42,12 @@ BOOT:
     AV *export;
 
     PERL_MATH_INT64_LOAD_OR_CROAK;
+#define DO_CONST_IV(c) \
+    newCONSTSUB_flags(stash, #c, strlen(#c), 0, newSViv(c)); \
+    av_push(export, newSVpvs(#c));
+#define DO_CONST_PV(c) \
+    newCONSTSUB_flags(stash, #c, strlen(#c), 0, newSVpvn(c, strlen(c))); \
+    av_push(export, newSVpvs(#c));
 
     /* constants under UV */
     {

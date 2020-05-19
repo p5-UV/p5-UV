@@ -83,11 +83,4 @@
 #define newCONSTSUB_flags(stash, name, len, flags, sv) newCONSTSUB((stash), (name), (sv))
 #endif
 
-#define DO_CONST_IV(c) \
-    newCONSTSUB_flags(stash, #c, strlen(#c), 0, newSViv(c)); \
-    av_push(export, newSVpvs(#c));
-#define DO_CONST_PV(c) \
-    newCONSTSUB_flags(stash, #c, strlen(#c), 0, newSVpvn(c, strlen(c))); \
-    av_push(export, newSVpvs(#c));
-
 #endif
