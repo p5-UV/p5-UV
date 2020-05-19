@@ -14,7 +14,7 @@ my %xsbuild = Alien::Base::Wrapper->new('Alien::libuv')->mm_args2(
     XSBUILD => {
         xs => {
             'lib/UV' => {
-              OBJECT => 'lib/UV$(OBJ_EXT) lib/perl_math_int64$(OBJ_EXT) lib/p5uv_constants$(OBJ_EXT)',
+              OBJECT => 'lib/UV$(OBJ_EXT) lib/perl_math_int64$(OBJ_EXT)',
             },
         },
     },
