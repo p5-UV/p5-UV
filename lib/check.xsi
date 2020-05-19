@@ -1,0 +1,44 @@
+MODULE = UV             PACKAGE = UV::Check      PREFIX = p5uv_check_
+
+PROTOTYPES: ENABLE
+
+void p5uv_check__init(SV *self, uv_loop_t *loop)
+    INIT:
+        uv_check_t *handle;
+        int ret;
+    CODE:
+        if(!xs_object_magic_has_struct_rv(aTHX_ self)) {
+            Newx(handle, 1, uv_check_t);
+            if (!handle) {
+                croak("Unable to allocate space for a handle");
+            }
+            if (NULL == loop) {
+                loop = uv_default_loop();
+            }
+            ret = uv_check_init(loop, handle);
+            if (0 != ret) {
+                Safefree(handle);
+                croak("Couldn't initialize handle (%i): %s", ret, uv_strerror(ret));
+            }
+            xs_object_magic_attach_struct(aTHX_ SvRV(self), handle);
+            handle->data = SvREFCNT_inc(ST(0));
+            return;
+        }
+
+int p5uv_check__start(SV *self)
+    INIT:
+        uv_check_t *handle;
+    CODE:
+        handle = (uv_check_t *)xs_object_magic_get_struct_rv_pretty(aTHX_ self, "uv_check_t in _start");
+        RETVAL = uv_check_start(handle, handle_check_cb);
+    OUTPUT:
+    RETVAL
+
+int p5uv_check_stop(SV *self)
+    INIT:
+        uv_check_t *handle;
+    CODE:
+        handle = (uv_check_t *)xs_object_magic_get_struct_rv_pretty(aTHX_ self, "uv_check_t in stop");
+        RETVAL = uv_check_stop(handle);
+    OUTPUT:
+    RETVAL

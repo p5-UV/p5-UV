@@ -368,7 +368,7 @@ my $handle = UV::check(); # uses the default loop
 my $handle = UV::check(loop => $some_other_loop); # non-default loop
 ```
 
-Returns a new [UV::Check](https://metacpan.org/pod/UV::Check) Handle object.
+Returns a new [UV::Check](https://metacpan.org/pod/UV%3A%3ACheck) Handle object.
 
 ## default\_loop
 
@@ -418,7 +418,7 @@ my $handle = UV::idle(); # uses the default loop
 my $handle = UV::idle(loop => $some_other_loop); # non-default loop
 ```
 
-Returns a new [UV::Idle](https://metacpan.org/pod/UV::Idle) Handle object.
+Returns a new [UV::Idle](https://metacpan.org/pod/UV%3A%3AIdle) Handle object.
 
 ## loop
 
@@ -439,7 +439,7 @@ my $handle = UV::poll(); # uses the default loop
 my $handle = UV::poll(loop => $some_other_loop); # non-default loop
 ```
 
-Returns a new [UV::Poll](https://metacpan.org/pod/UV::Poll) Handle object.
+Returns a new [UV::Poll](https://metacpan.org/pod/UV%3A%3APoll) Handle object.
 
 ## prepare
 
@@ -448,7 +448,7 @@ my $handle = UV::prepare(); # uses the default loop
 my $handle = UV::prepare(loop => $some_other_loop); # non-default loop
 ```
 
-Returns a new [UV::Prepare](https://metacpan.org/pod/UV::Prepare) Handle object.
+Returns a new [UV::Prepare](https://metacpan.org/pod/UV%3A%3APrepare) Handle object.
 
 ## strerror
 
@@ -475,7 +475,7 @@ my $timer = UV::timer(); # uses the default loop
 my $timer = UV::timer(loop => $some_other_loop); # non-default loop
 ```
 
-Returns a new [UV::Timer](https://metacpan.org/pod/UV::Timer) object.
+Returns a new [UV::Timer](https://metacpan.org/pod/UV%3A%3ATimer) object.
 
 ## version
 
