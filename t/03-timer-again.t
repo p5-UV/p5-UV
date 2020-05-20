@@ -68,7 +68,7 @@ sub repeat_2_cb {
     $dummy = UV::Timer->new();
     isa_ok($dummy, 'UV::Timer', 'Got a new timer');
     is(UV::UV_EINVAL, $dummy->again(), '->again erred as expected');
-    $dummy->unref();
+    undef $dummy;
 
     # Start timer repeat_1
     $repeat_1 = UV::Timer->new();

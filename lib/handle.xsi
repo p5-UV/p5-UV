@@ -47,26 +47,3 @@ int p5uv_handle_closing(SV *self)
         RETVAL = uv_is_closing(handle);
     OUTPUT:
     RETVAL
-
-int p5uv_handle_has_ref(SV *self)
-    PREINIT:
-        uv_handle_t *handle;
-    CODE:
-        handle = (uv_handle_t *)xs_object_magic_get_struct_rv_pretty(aTHX_ self, "uv_handle_t in has_ref");
-        RETVAL = uv_has_ref(handle);
-    OUTPUT:
-    RETVAL
-
-void p5uv_handle_ref(SV *self)
-    PREINIT:
-        uv_handle_t *handle;
-    CODE:
-        handle = (uv_handle_t *)xs_object_magic_get_struct_rv_pretty(aTHX_ self, "uv_handle_t in ref");
-        uv_ref(handle);
-
-void p5uv_handle_unref(SV *self)
-    PREINIT:
-        uv_handle_t *handle;
-    CODE:
-        handle = (uv_handle_t *)xs_object_magic_get_struct_rv_pretty(aTHX_ self, "uv_handle_t in unref");
-        uv_unref(handle);

@@ -91,7 +91,7 @@ sub never_cb {
     isa_ok($never, 'UV::Timer', "Got a never timer");
     is(0, $never->start(100, 100, \&never_cb), 'never timer started');
     is(0, $never->stop(), 'never timer stopped');
-    $never->unref();
+    $never->close(undef);
 
     UV::Loop->default()->run();
 
@@ -100,7 +100,6 @@ sub never_cb {
     is($repeat_cb_called, 5, 'repeat_cb called 5 times');
     is($repeat_close_cb_called, 1, 'repeat_close_cb called once');
     ok(500 <= UV::Loop->default()->now() - $start_time, 'finished in < 500 ms');
-    $never->close(undef);
 }
 
 # timer start twice
