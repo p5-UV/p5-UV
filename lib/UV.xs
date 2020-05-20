@@ -373,7 +373,6 @@ static void loop_walk_close_cb(uv_handle_t* handle, void* arg)
 typedef struct UV__Loop {
     uv_loop_t _loop;
     uv_loop_t *loop; /* may point to _loop */
-    bool is_default;
     SV *on_walk;     /* TODO as yet unused and probably not correct */
 } *UV__Loop;
 
@@ -571,7 +570,6 @@ _new(char *class, int want_default)
 
         if(want_default) {
             self->loop = uv_default_loop();
-            self->is_default = true;
         }
         else {
             ret = uv_loop_init(&self->_loop);
@@ -580,7 +578,6 @@ _new(char *class, int want_default)
                 croak("Error initialising loop (%d): %s", ret, uv_strerror(ret));
             }
             self->loop = &self->_loop;
-            self->is_default = false;
         }
 
         RETVAL = newSV(0);
@@ -627,7 +624,7 @@ void
 DESTROY(UV::Loop self)
     CODE:
         /* Don't allow closing the default loop */
-        if(!self->is_default)
+        if(self->loop != uv_default_loop())
             uv_loop_close(self->loop);
 
 int
@@ -640,7 +637,7 @@ configure(UV::Loop self, int option, int value)
 int
 is_default(UV::Loop self)
     CODE:
-        RETVAL = self->is_default;
+        RETVAL = (self->loop == uv_default_loop());
     OUTPUT:
         RETVAL
 
