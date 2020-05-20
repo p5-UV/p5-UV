@@ -297,15 +297,6 @@ method returns non-zero if the handle is closing or closed, zero otherwise.
 B<* Note:> This function should only be used between the initialization of the
 handle and the arrival of the C<close> callback.
 
-=head2 has_ref
-
-    my $int = $handle->has_ref();
-
-The L<has_ref|http://docs.libuv.org/en/v1.x/handle.html#c.uv_has_ref>
-method returns non-zero if the handle is referenced, zero otherwise.
-
-See L<Reference Counting|http://docs.libuv.org/en/v1.x/handle.html#refcount>.
-
 =head2 on
 
     # set a close event callback to print the handle's data attribute
@@ -321,28 +312,6 @@ See L<Reference Counting|http://docs.libuv.org/en/v1.x/handle.html#refcount>.
 
 The C<on> method allows you to subscribe to L<UV::Handle/"EVENTS"> emitted by
 any UV::Handle or subclass.
-
-=head2 ref
-
-    $handle->ref();
-
-The L<ref|http://docs.libuv.org/en/v1.x/handle.html#c.uv_ref>
-method references the given handle. References are idempotent, that is, if a
-handle is already referenced, then calling this function again will have no
-effect.
-
-See L<Reference Counting|http://docs.libuv.org/en/v1.x/handle.html#refcount>.
-
-=head2 unref
-
-    $handle->unref();
-
-The L<unref|http://docs.libuv.org/en/v1.x/handle.html#c.uv_unref>
-method un-references the given handle. References are idempotent, that is, if a
-handle is not referenced, then calling this function again will have no
-effect.
-
-See L<Reference Counting|http://docs.libuv.org/en/v1.x/handle.html#refcount>.
 
 
 =head1 AUTHOR
