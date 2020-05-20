@@ -9,30 +9,20 @@ use Exporter qw(import);
 use UV ();
 use UV::Loop ();
 
-sub _add_event {
-    my ($self, $event, $cb) = @_;
-    return unless $self && $event && !CORE::ref($event);
-    push @{$self->{_events}}, $event;
-    $self->on($event, $cb);
+sub _new_args {
+    my ($class, $args) = @ _;
+    my $loop = delete $args->{loop} // UV::Loop->default;
+    return ($loop);
 }
 
 sub new {
-    my $self = bless {}, shift;
-    my $args = UV::_parse_args(@_);
-    $self->{_closed} = 0;
-    $self->{_events} = [qw(alloc close)];
-    $self->on('alloc', $args->{on_alloc});
-    $self->on('close', $args->{on_close});
-    $self->{data} = $args->{data};
+    my $class = shift;
+    my %args = @_;
 
-    my $loop = $args->{loop} || $args->{single_arg};
-    unless ($loop && UV::Loop::_is_a_loop($loop)) {
-        $loop = UV::Loop->default();
-    }
-    $self->{_loop} = $loop;
-    if ($self->can('_after_new')) {
-        $self->_after_new($args);
-    }
+    my $self = $class->_new($class->_new_args(\%args));
+    $self->on(($_ =~ m/^on_(.*)/)[0] => delete $args{$_}) for grep { m/^on_/ } keys %args;
+    die "TODO: more args @{[ keys %args ]}" if %args;
+
     return $self;
 }
 
@@ -49,56 +39,19 @@ sub DESTROY {
     warn $err if $err;
 }
 
-sub active {
+sub on {
     my $self = shift;
-    return 0 unless $self->_has_struct();
-    return 0 if $self->closed() || $self->closing();
-    my $val = 0;
-    my $err = do { # catch
-        local $@;
-        eval { $val = $self->_active(); 1; }; # try
-        $@;
-    };
-    Carp::croak($err) if $err;
-    return $val;
+    my $method = "_on_" . shift;
+    return $self->$method( @_ );
 }
 
 sub close {
     my $self = shift;
-    $self->on('close', @_) if @_; # set the callback ahead of time if exists
-    return unless $self->_has_struct();
+    $self->on('close', @_) if @_;
 
-    return if $self->closed() || $self->closing();
-    $self->stop() if $self->can('stop');
-    my $err = do { # catch
-        local $@;
-        eval { $self->_close(); 1; }; # try
-        $@;
-    };
-    Carp::croak($err) if $err;
-}
-
-sub closed { return (shift->{_closed})? 1: 0; }
-
-sub data {
-    my $self = shift;
-    return $self->{data} unless @_;
-    $self->{data} = shift;
-    return $self;
-}
-
-sub loop { return shift->{_loop}; }
-
-sub on {
-    my $self = shift;
-    my $event = lc(shift || '');
-    return $self->{"_on_$event"} unless @_;
-
-    if ($event && grep {$event eq $_} @{$self->{_events}}) {
-        my $cb = ($_[0] && CORE::ref($_[0]) eq 'CODE')? shift: undef;
-        $self->{"_on_$event"} = $cb;
-    }
-    return $self;
+    return if $self->closed || $self->closing;
+    $self->stop if $self->can('stop');
+    $self->_close;
 }
 
 1;

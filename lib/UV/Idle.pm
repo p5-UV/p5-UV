@@ -9,20 +9,6 @@ use parent 'UV::Handle';
 
 use Carp ();
 
-sub _after_new {
-    my ($self, $args) = @_;
-    # add to the default set of events for a Handle object
-    $self->_add_event('idle', $args->{on_idle});
-
-    my $err = do { #catch
-        local $@;
-        eval { $self->_init($self->{_loop}); 1; }; #try
-        $@;
-    };
-    Carp::croak($err) if $err; # throw
-    return $self;
-}
-
 sub start {
     my $self = shift;
     if (@_) {

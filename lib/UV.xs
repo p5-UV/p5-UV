@@ -86,69 +86,7 @@ static void handle_alloc_cb(uv_handle_t* handle, size_t suggested_size, uv_buf_t
     LEAVE;
 }
 
-static void handle_check_cb(uv_check_t* handle)
-{
-    SV *self;
-    SV **callback;
-
-    dTHX;
-
-    if (!handle || !handle->data) return;
-    self = (SV *)(handle->data);
-    if (!self || !SvROK(self)) return;
-
-    /* nothing else to do if we don't have a callback to call */
-    callback = hv_fetchs((HV*)SvRV(self), "_on_check", FALSE);
-    if (!callback || !SvOK(*callback)) return;
-
-    /* provide info to the caller: invocant */
-    dSP;
-    ENTER;
-    SAVETMPS;
-
-    PUSHMARK(SP);
-    EXTEND(SP, 1);
-    PUSHs(SvREFCNT_inc(self)); /* invocant */
-    PUTBACK;
-
-    call_sv(*callback, G_DISCARD|G_VOID);
-
-    FREETMPS;
-    LEAVE;
-}
-
-static void handle_close_cb(uv_handle_t* handle)
-{
-    SV *self;
-    SV **callback;
-
-    dTHX;
-
-    if (!handle || !handle->data) return;
-
-    self = (SV *)(handle->data);
-    if (!self || !SvROK(self)) return;
-    hv_stores((HV *)SvRV(self), "_closed", newSViv(1));
-
-    /* nothing else to do if we don't have a callback to call */
-    callback = hv_fetchs((HV*)SvRV(self), "_on_close", FALSE);
-    if (!callback || !SvOK(*callback)) return;
-
-    /* provide info to the caller: invocant */
-    dSP;
-    ENTER;
-    SAVETMPS;
-
-    PUSHMARK(SP);
-    EXTEND(SP, 1);
-    PUSHs(SvREFCNT_inc(self)); /* invocant */
-    PUTBACK;
-
-    call_sv(*callback, G_DISCARD|G_VOID);
-
-    FREETMPS;
-    LEAVE;
-}
+static void handle_close_cb(uv_handle_t* handle) {}
 
 static void handle_close_destroy_cb(uv_handle_t* handle)
 {
@@ -195,133 +133,6 @@ static void handle_close_destroy_cb(uv_handle_t* handle)
     p5uv_destroy_handle(aTHX_ handle);
 }
 
-static void handle_idle_cb(uv_idle_t* handle)
-{
-    SV *self;
-    SV **callback;
-
-    dTHX;
-
-    if (!handle || !handle->data) return;
-    self = (SV *)(handle->data);
-    if (!self || !SvROK(self)) return;
-
-    /* nothing else to do if we don't have a callback to call */
-    callback = hv_fetchs((HV*)SvRV(self), "_on_idle", FALSE);
-    if (!callback || !SvOK(*callback)) return;
-
-    /* provide info to the caller: invocant */
-    dSP;
-    ENTER;
-    SAVETMPS;
-
-    PUSHMARK(SP);
-    EXTEND(SP, 1);
-    PUSHs(SvREFCNT_inc(self)); /* invocant */
-    PUTBACK;
-
-    call_sv(*callback, G_DISCARD|G_VOID);
-
-    FREETMPS;
-    LEAVE;
-}
-
-static void handle_poll_cb(uv_poll_t* handle, int status, int events)
-{
-    SV *self;
-    SV **callback;
-
-    dTHX;
-
-    if (!handle || !handle->data) return;
-    self = (SV *)(handle->data);
-    if (!self || !SvROK(self)) return;
-
-    /* nothing else to do if we don't have a callback to call */
-    callback = hv_fetchs((HV*)SvRV(self), "_on_poll", FALSE);
-    if (!callback || !SvOK(*callback)) return;
-
-    /* provide info to the caller: invocant, status, events */
-    dSP;
-    ENTER;
-    SAVETMPS;
-
-    PUSHMARK(SP);
-    EXTEND(SP, 3);
-    PUSHs(SvREFCNT_inc(self)); /* invocant */
-    mPUSHi(status);
-    mPUSHi(events);
-
-    PUTBACK;
-    call_sv(*callback, G_DISCARD|G_VOID);
-    SPAGAIN;
-
-    FREETMPS;
-    LEAVE;
-}
-
-static void handle_prepare_cb(uv_prepare_t* handle)
-{
-    SV *self;
-    SV **callback;
-
-    dTHX;
-
-    if (!handle || !handle->data) return;
-    self = (SV *)(handle->data);
-    if (!self || !SvROK(self)) return;
-
-    /* nothing else to do if we don't have a callback to call */
-    callback = hv_fetchs((HV*)SvRV(self), "_on_prepare", FALSE);
-    if (!callback || !SvOK(*callback)) return;
-
-    /* provide info to the caller: invocant */
-    dSP;
-    ENTER;
-    SAVETMPS;
-
-    PUSHMARK(SP);
-    EXTEND(SP, 1);
-    PUSHs(SvREFCNT_inc(self)); /* invocant */
-    PUTBACK;
-
-    call_sv(*callback, G_DISCARD|G_VOID);
-
-    FREETMPS;
-    LEAVE;
-}
-
-static void handle_timer_cb(uv_timer_t* handle)
-{
-    SV *self;
-    SV **callback;
-
-    dTHX;
-
-    if (!handle || !handle->data) return;
-    self = (SV *)(handle->data);
-    if (!self || !SvROK(self)) return;
-
-    /* nothing else to do if we don't have a callback to call */
-    callback = hv_fetchs((HV*)SvRV(self), "_on_timer", FALSE);
-    if (!callback || !SvOK(*callback)) return;
-
-    /* provide info to the caller: invocant */
-    dSP;
-    ENTER;
-    SAVETMPS;
-
-    PUSHMARK(SP);
-    EXTEND(SP, 1);
-    PUSHs(SvREFCNT_inc(self)); /* invocant */
-    PUTBACK;
-
-    call_sv(*callback, G_DISCARD|G_VOID);
-
-    FREETMPS;
-    LEAVE;
-}
-
 static void loop_walk_cb(uv_handle_t* handle, void* arg)
 {
     SV *self;
@@ -364,6 +175,259 @@ static void loop_walk_close_cb(uv_handle_t* handle, void* arg)
     if (!self) return;
 
     uv_close(handle, handle_close_destroy_cb);
+}
+
+#define do_callback_accessor(var, cb) MY_do_callback_accessor(aTHX_ var, cb)
+static SV *MY_do_callback_accessor(pTHX_ SV **var, SV *cb)
+{
+    if(cb && SvOK(cb)) {
+        if(*var)
+            SvREFCNT_dec(*var);
+
+        *var = newSVsv(cb);
+    }
+
+    if(*var && SvOK(*var))
+        return SvREFCNT_inc(*var);
+    else
+        return &PL_sv_undef;
+}
+
+/**************
+ * UV::Handle *
+ **************/
+
+struct UV__Handle_base {
+    SV *selfrv; /* The underlying blessed RV itself */
+    SV *data;   /* The arbitrary ->data value */
+    SV *on_close;
+};
+typedef struct UV__Handle {
+    struct UV__Handle_base base;
+    uv_handle_t  handle;
+} *UV__Handle;
+
+#define INIT_UV_HANDLE_BASE(h)  { \
+  (h).base.data     = NULL;       \
+  (h).base.on_close = NULL;       \
+}
+
+static void on_close_cb(uv_handle_t *handle)
+{
+    UV__Handle  self;
+    SV         *cb;
+
+    dTHX;
+    if(!handle || !handle->data) return;
+
+    self = handle->data;
+    if(!(cb = self->base.on_close) || !SvOK(cb)) return;
+
+    dSP;
+    ENTER;
+    SAVETMPS;
+
+    PUSHMARK(SP);
+    EXTEND(SP, 1);
+    mPUSHs(newRV_inc(self->base.selfrv));
+    PUTBACK;
+
+    call_sv(cb, G_DISCARD|G_VOID);
+
+    FREETMPS;
+    LEAVE;
+}
+
+/*************
+ * UV::Check *
+ *************/
+
+/* See also http://docs.libuv.org/en/v1.x/check.html */
+
+typedef struct UV__Check {
+    struct UV__Handle_base base;
+    uv_check_t  check;
+    SV         *on_check;
+} *UV__Check;
+
+static void on_check_cb(uv_check_t *check)
+{
+    UV__Check  self;
+    SV        *cb;
+
+    dTHX;
+    if(!check || !check->data) return;
+
+    self = check->data;
+    if(!(cb = self->on_check) || !SvOK(cb)) return;
+
+    dSP;
+    ENTER;
+    SAVETMPS;
+
+    PUSHMARK(SP);
+    EXTEND(SP, 1);
+    mPUSHs(newRV_inc(self->base.selfrv));
+    PUTBACK;
+
+    call_sv(cb, G_DISCARD|G_VOID);
+
+    FREETMPS;
+    LEAVE;
+}
+
+/************
+ * UV::Idle *
+ ************/
+
+/* See also http://docs.libuv.org/en/v1.x/idle.html */
+
+typedef struct UV__Idle {
+    struct UV__Handle_base base;
+    uv_idle_t  idle;
+    SV        *on_idle;
+} *UV__Idle;
+
+static void on_idle_cb(uv_idle_t *idle)
+{
+    UV__Idle self;
+    SV       *cb;
+
+    dTHX;
+    if(!idle || !idle->data) return;
+
+    self = idle->data;
+    if(!(cb = self->on_idle) || !SvOK(cb)) return;
+
+    dSP;
+    ENTER;
+    SAVETMPS;
+
+    PUSHMARK(SP);
+    EXTEND(SP, 1);
+    mPUSHs(newRV_inc(self->base.selfrv));
+    PUTBACK;
+
+    call_sv(cb, G_DISCARD|G_VOID);
+
+    FREETMPS;
+    LEAVE;
+}
+
+/************
+ * UV::Poll *
+ ************/
+
+/* See also http://docs.libuv.org/en/v1.x/poll.html */
+
+typedef struct UV__Poll {
+    struct UV__Handle_base base;
+    uv_poll_t  poll;
+    SV        *on_poll;
+} *UV__Poll;
+
+static void on_poll_cb(uv_poll_t *poll, int status, int events)
+{
+    UV__Poll self;
+    SV       *cb;
+
+    dTHX;
+    if(!poll || !poll->data) return;
+
+    self = poll->data;
+    if(!(cb = self->on_poll) || !SvOK(cb)) return;
+
+    dSP;
+    ENTER;
+    SAVETMPS;
+
+    PUSHMARK(SP);
+    EXTEND(SP, 3);
+    mPUSHs(newRV_inc(self->base.selfrv));
+    mPUSHi(status);
+    mPUSHi(events);
+    PUTBACK;
+
+    call_sv(cb, G_DISCARD|G_VOID);
+
+    FREETMPS;
+    LEAVE;
+}
+
+/***************
+ * UV::Prepare *
+ ***************/
+
+/* See also http://docs.libuv.org/en/v1.x/prepare.html */
+
+typedef struct UV__Prepare {
+    struct UV__Handle_base base;
+    uv_prepare_t  prepare;
+    SV           *on_prepare;
+} *UV__Prepare;
+
+static void on_prepare_cb(uv_prepare_t *prepare)
+{
+    UV__Prepare  self;
+    SV          *cb;
+
+    dTHX;
+    if(!prepare || !prepare->data) return;
+
+    self = prepare->data;
+    if(!(cb = self->on_prepare) || !SvOK(cb)) return;
+
+    dSP;
+    ENTER;
+    SAVETMPS;
+
+    PUSHMARK(SP);
+    EXTEND(SP, 1);
+    mPUSHs(newRV_inc(self->base.selfrv));
+    PUTBACK;
+
+    call_sv(cb, G_DISCARD|G_VOID);
+
+    FREETMPS;
+    LEAVE;
+}
+
+/*************
+ * UV::Timer *
+ *************/
+
+/* See also http://docs.libuv.org/en/v1.x/timer.html */
+
+typedef struct UV__Timer {
+    struct UV__Handle_base base;
+    uv_timer_t  timer;
+    SV         *on_timer;
+} *UV__Timer;
+
+static void on_timer_cb(uv_timer_t *timer)
+{
+    UV__Timer  self;
+    SV        *cb;
+
+    dTHX;
+    if(!timer || !timer->data) return;
+
+    self = timer->data;
+    if(!(cb = self->on_timer) || !SvOK(cb)) return;
+
+    dSP;
+    ENTER;
+    SAVETMPS;
+
+    PUSHMARK(SP);
+    EXTEND(SP, 1);
+    mPUSHs(newRV_inc(self->base.selfrv));
+    PUTBACK;
+
+    call_sv(cb, G_DISCARD|G_VOID);
+
+    FREETMPS;
+    LEAVE;
 }
 
 /************
@@ -543,17 +607,315 @@ unsigned int uv_version()
 
 const char* uv_version_string()
 
-INCLUDE: handle.xsi
+MODULE = UV             PACKAGE = UV::Handle
 
-INCLUDE: check.xsi
+bool
+closed(UV::Handle self)
+    CODE:
+        RETVAL = 0;
+    OUTPUT:
+        RETVAL
 
-INCLUDE: idle.xsi
+bool
+closing(UV::Handle self)
+    CODE:
+        RETVAL = uv_is_closing(&self->handle);
+    OUTPUT:
+        RETVAL
 
-INCLUDE: poll.xsi
+int
+active(UV::Handle self)
+    CODE:
+        RETVAL = uv_is_active(&self->handle);
+    OUTPUT:
+        RETVAL
 
-INCLUDE: prepare.xsi
+SV *
+loop(UV::Handle self)
+    INIT:
+        UV__Loop loop;
+    CODE:
+        Newx(loop, 1, struct UV__Loop);
+        loop->loop = self->handle.loop;
+        loop->on_walk = NULL; /* this is a mess */
 
-INCLUDE: timer.xsi
+        RETVAL = newSV(0);
+        sv_setref_pv(RETVAL, "UV::Loop", loop);
+    OUTPUT:
+        RETVAL
+
+SV *
+data(UV::Handle self, SV *data = NULL)
+    CODE:
+        if(items > 1) {
+            if(self->base.data)
+                SvREFCNT_dec(self->base.data);
+            self->base.data = newSVsv(data);
+        }
+        RETVAL = self->base.data ? newSVsv(self->base.data) : &PL_sv_undef;
+    OUTPUT:
+        RETVAL
+
+void
+_close(UV::Handle self)
+    CODE:
+        uv_close(&self->handle, on_close_cb);
+
+SV *
+_on_close(UV::Handle self, SV *cb = NULL)
+    CODE:
+        RETVAL = do_callback_accessor(&self->base.on_close, cb);
+    OUTPUT:
+        RETVAL
+
+MODULE = UV             PACKAGE = UV::Check
+
+SV *
+_new(char *class, UV::Loop loop)
+    INIT:
+        UV__Check self;
+        int ret;
+    CODE:
+        Newx(self, 1, struct UV__Check);
+        ret = uv_check_init(loop->loop, &self->check);
+        if (ret != 0) {
+            Safefree(self);
+            croak("Couldn't initialize check handle (%d): %s", ret, uv_strerror(ret));
+        }
+        self->check.data = self;
+
+        INIT_UV_HANDLE_BASE(*self);
+        self->on_check = NULL;
+
+        RETVAL = newSV(0);
+        sv_setref_pv(RETVAL, "UV::Check", self);
+        self->base.selfrv = SvRV(RETVAL); /* no inc */
+    OUTPUT:
+        RETVAL
+
+SV *
+_on_check(UV::Check self, SV *cb = NULL)
+    CODE:
+        RETVAL = do_callback_accessor(&self->on_check, cb);
+    OUTPUT:
+        RETVAL
+
+int
+_start(UV::Check self)
+    CODE:
+        RETVAL = uv_check_start(&self->check, on_check_cb);
+    OUTPUT:
+        RETVAL
+
+int
+stop(UV::Check self)
+    CODE:
+        RETVAL = uv_check_stop(&self->check);
+    OUTPUT:
+        RETVAL
+
+MODULE = UV             PACKAGE = UV::Idle
+
+SV *
+_new(char *class, UV::Loop loop)
+    INIT:
+        UV__Idle self;
+        int ret;
+    CODE:
+        Newx(self, 1, struct UV__Idle);
+        ret = uv_idle_init(loop->loop, &self->idle);
+        if (ret != 0) {
+            Safefree(self);
+            croak("Couldn't initialize idle handle (%d): %s", ret, uv_strerror(ret));
+        }
+        self->idle.data = self;
+
+        INIT_UV_HANDLE_BASE(*self);
+        self->on_idle = NULL;
+
+        RETVAL = newSV(0);
+        sv_setref_pv(RETVAL, "UV::Idle", self);
+        self->base.selfrv = SvRV(RETVAL); /* no inc */
+    OUTPUT:
+        RETVAL
+
+SV *
+_on_idle(UV::Idle self, SV *cb = NULL)
+    CODE:
+        RETVAL = do_callback_accessor(&self->on_idle, cb);
+    OUTPUT:
+        RETVAL
+
+int
+_start(UV::Idle self)
+    CODE:
+        RETVAL = uv_idle_start(&self->idle, on_idle_cb);
+    OUTPUT:
+        RETVAL
+
+int
+stop(UV::Idle self)
+    CODE:
+        RETVAL = uv_idle_stop(&self->idle);
+    OUTPUT:
+        RETVAL
+
+MODULE = UV             PACKAGE = UV::Prepare
+
+SV *
+_new(char *class, UV::Loop loop)
+    INIT:
+        UV__Prepare self;
+        int ret;
+    CODE:
+        Newx(self, 1, struct UV__Prepare);
+        ret = uv_prepare_init(loop->loop, &self->prepare);
+        if (ret != 0) {
+            Safefree(self);
+            croak("Couldn't initialize prepare handle (%d): %s", ret, uv_strerror(ret));
+        }
+        self->prepare.data = self;
+
+        INIT_UV_HANDLE_BASE(*self);
+        self->on_prepare = NULL;
+
+        RETVAL = newSV(0);
+        sv_setref_pv(RETVAL, "UV::Prepare", self);
+        self->base.selfrv = SvRV(RETVAL); /* no inc */
+    OUTPUT:
+        RETVAL
+
+SV *
+_on_prepare(UV::Prepare self, SV *cb = NULL)
+    CODE:
+        RETVAL = do_callback_accessor(&self->on_prepare, cb);
+    OUTPUT:
+        RETVAL
+
+int
+_start(UV::Prepare self)
+    CODE:
+        RETVAL = uv_prepare_start(&self->prepare, on_prepare_cb);
+    OUTPUT:
+        RETVAL
+
+int
+stop(UV::Prepare self)
+    CODE:
+        RETVAL = uv_prepare_stop(&self->prepare);
+    OUTPUT:
+        RETVAL
+
+MODULE = UV             PACKAGE = UV::Poll
+
+SV *
+_new(char *class, UV::Loop loop, int fd)
+    INIT:
+        UV__Poll self;
+        int ret;
+    CODE:
+        Newx(self, 1, struct UV__Poll);
+        ret = uv_poll_init(loop->loop, &self->poll, fd);
+        if (ret != 0) {
+            Safefree(self);
+            croak("Couldn't initialize poll handle (%d): %s", ret, uv_strerror(ret));
+        }
+        self->poll.data = self;
+
+        INIT_UV_HANDLE_BASE(*self);
+        self->on_poll = NULL;
+
+        RETVAL = newSV(0);
+        sv_setref_pv(RETVAL, "UV::Poll", self);
+        self->base.selfrv = SvRV(RETVAL); /* no inc */
+    OUTPUT:
+        RETVAL
+
+SV *
+_on_poll(UV::Poll self, SV *cb = NULL)
+    CODE:
+        RETVAL = do_callback_accessor(&self->on_poll, cb);
+    OUTPUT:
+        RETVAL
+
+int
+_start(UV::Poll self, int events = UV_READABLE)
+    CODE:
+        RETVAL = uv_poll_start(&self->poll, events, on_poll_cb);
+    OUTPUT:
+        RETVAL
+
+int
+stop(UV::Poll self)
+    CODE:
+        RETVAL = uv_poll_stop(&self->poll);
+    OUTPUT:
+        RETVAL
+
+MODULE = UV             PACKAGE = UV::Timer
+
+SV *
+_new(char *class, UV::Loop loop)
+    INIT:
+        UV__Timer self;
+        int ret;
+    CODE:
+        Newx(self, 1, struct UV__Timer);
+        ret = uv_timer_init(loop->loop, &self->timer);
+        if (ret != 0) {
+            Safefree(self);
+            croak("Couldn't initialize timer handle (%d): %s", ret, uv_strerror(ret));
+        }
+        self->timer.data = self;
+
+        INIT_UV_HANDLE_BASE(*self);
+        self->on_timer = NULL;
+
+        RETVAL = newSV(0);
+        sv_setref_pv(RETVAL, "UV::Timer", self);
+        self->base.selfrv = SvRV(RETVAL); /* no inc */
+    OUTPUT:
+        RETVAL
+
+SV *
+_on_timer(UV::Timer self, SV *cb = NULL)
+    CODE:
+        RETVAL = do_callback_accessor(&self->on_timer, cb);
+    OUTPUT:
+        RETVAL
+
+int
+_start(UV::Timer self, UV timeout, UV repeat)
+    CODE:
+        RETVAL = uv_timer_start(&self->timer, on_timer_cb, timeout, repeat);
+    OUTPUT:
+        RETVAL
+
+UV
+_get_repeat(UV::Timer self)
+    CODE:
+        RETVAL = uv_timer_get_repeat(&self->timer);
+    OUTPUT:
+        RETVAL
+
+void
+_set_repeat(UV::Timer self, UV repeat)
+    CODE:
+        uv_timer_set_repeat(&self->timer, repeat);
+
+int
+again(UV::Timer self)
+    CODE:
+        RETVAL = uv_timer_again(&self->timer);
+    OUTPUT:
+        RETVAL
+
+int
+stop(UV::Timer self)
+    CODE:
+        RETVAL = uv_timer_stop(&self->timer);
+    OUTPUT:
+        RETVAL
 
 INCLUDE: loop.xsi
 

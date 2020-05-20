@@ -1,5 +1,14 @@
 UV::Loop            T_PTROBJ
 
+UV::Handle          T_PTROBJ
+
+UV::Check           T_PTROBJ
+UV::Idle            T_PTROBJ
+UV::Poll            T_PTROBJ
+UV::Prepare         T_PTROBJ
+UV::Timer           T_PTROBJ
+
+
 int64_t             T_INT64
 uint64_t            T_UINT64
 

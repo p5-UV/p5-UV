@@ -10,19 +10,6 @@ use parent 'UV::Handle';
 
 our @EXPORT_OK = (@UV::Timer::EXPORT_XS,);
 
-sub _after_new {
-    my ($self, $args) = @_;
-    $self->_add_event('timer', $args->{on_timer});
-
-    my $err = do { #catch
-        local $@;
-        eval { $self->_init($self->{_loop}); 1; }; #try
-        $@;
-    };
-    Carp::croak($err) if $err; # throw
-    return $self;
-}
-
 sub repeat {
     my $self = shift;
     return $self->_get_repeat() unless (@_);

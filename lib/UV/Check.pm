@@ -8,18 +8,6 @@ use Carp ();
 use Exporter qw(import);
 use parent 'UV::Handle';
 
-sub _after_new {
-    my ($self, $args) = @_;
-    $self->_add_event('check', $args->{on_check});
-    my $err = do { #catch
-        local $@;
-        eval { $self->_init($self->{_loop}); 1; }; #try
-        $@;
-    };
-    Carp::croak($err) if $err; # throw
-    return $self;
-}
-
 sub start {
     my $self = shift;
     if (@_) {

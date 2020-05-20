@@ -10,14 +10,11 @@ use parent 'UV::Handle';
 
 our @EXPORT_OK = (@UV::Poll::EXPORT_XS,);
 
-sub _after_new {
-    my ($self, $args) = @_;
-    $self->_add_event('poll', $args->{on_poll});
-    my $socket = (exists($args->{socket}) && defined($args->{socket})) ? 1 : 0;
-
+sub _new_args {
+    my ($class, $args) = @_;
     my $fd;
     for my $key (qw(fd fh socket single_arg)) {
-        if (defined($fd = $args->{$key})) {
+        if (defined($fd = delete $args->{$key})) {
             if (CORE::ref($fd) eq 'GLOB' || CORE::ref($fd) =~ /^IO::Socket/) {
                 $fd = fileno($fd);
                 last;
@@ -33,14 +30,7 @@ sub _after_new {
     unless (defined($fd)) {
         Carp::croak("No file or socket descriptor provided");
     }
-
-    my $err = do { #catch
-        local $@;
-        eval { $self->_init($fd, $self->{_loop}); 1; }; #try
-        $@;
-    };
-    Carp::croak($err) if $err; # throw
-    return $self;
+    return ($class->SUPER::_new_args($args), $fd);
 }
 
 sub start {
