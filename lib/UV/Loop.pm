@@ -39,11 +39,6 @@ sub new {
     return $self;
 }
 
-sub DESTROY {
-    my $self = shift;
-    $self->close();
-}
-
 # Return the singleton uv_default_loop
 sub default {
     print STDERR "loop default() singleton called\n" if DEBUG;
@@ -203,41 +198,6 @@ The L<backend_timeout|http://docs.libuv.org/en/v1.x/loop.html#c.uv_backend_timeo
 method returns the poll timeout. The return value is in milliseconds, or C<-1>
 for no timeout.
 
-=head2 close
-
-    my $loop = UV::Loop->default();
-    $loop->close();
-    # $loop is no longer a valid handle to the default loop.
-    # we must grab another default loop to continue after a close call.
-    $loop = UV::Loop->default();
-    # with a non-default loop, we render that loop useless.
-    $loop = UV::Loop->new();
-    $loop->close();
-    $loop->run(); # BOOM. error. the loop no longer exists here.
-
-The L<close|http://docs.libuv.org/en/v1.x/loop.html#c.uv_loop_close> method
-releases all internal loop resources. Call this method only when the loop has
-finished executing and all open handles and requests have been closed, or it
-will return C<UV::UV_EBUSY>.
-
-Calling C<close> on a loop will effectively destroy that loop. You will not be
-able to continue using the loop after calling C<close>.
-
-C<close> is essentially a wrapper around:
-
-    $loop->walk(sub {
-        my $handle = shift;
-        $handle->stop() if $handle->can('stop');
-        $handle->close() unless $handle->closing();
-        $handle->unref();
-    });
-    if (0 == $loop->run(UV::Loop::UV_RUN_DEFAULT)) {
-        # all loop memory is freed here.
-        if (0 == $loop->close()) {
-            $loop = undef;
-        }
-    }
-
 =head2 configure
 
     my $int = $loop->configure();
@@ -391,7 +351,6 @@ subjective but probably on the order of a millisecond or more.
         $handle->stop() if $handle->can('stop');
         $handle->close() unless $handle->closing();
         $loop->run(UV::Loop::UV_RUN_DEFAULT);
-        $loop->close();
     });
 
 The L<walk|http://docs.libuv.org/en/v1.x/loop.html#c.uv_walk> method will

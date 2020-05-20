@@ -44,7 +44,6 @@ sub timer_cb {
     is(0, $timer->start(10, 0, \&timer_cb), 'Timer started');
 
     is(0, $loop->run(UV_RUN_DEFAULT), 'Loop started');
-    is(0, $loop->close(), 'Loop closed');
 }
 
 done_testing();

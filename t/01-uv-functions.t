@@ -10,7 +10,6 @@ sub _cleanup_loop {
     my $loop = shift;
     $loop->walk(sub {shift->close()});
     $loop->run(UV::Loop::UV_RUN_DEFAULT);
-    $loop->close();
 }
 
 {

@@ -623,16 +623,12 @@ backend_timeout(UV::Loop self)
     OUTPUT:
         RETVAL
 
-int
-close(UV::Loop self)
+void
+DESTROY(UV::Loop self)
     CODE:
         /* Don't allow closing the default loop */
-        if(self->is_default)
-            RETVAL = 0;
-        else
-            RETVAL = uv_loop_close(self->loop);
-    OUTPUT:
-        RETVAL
+        if(!self->is_default)
+            uv_loop_close(self->loop);
 
 int
 configure(UV::Loop self, int option, int value)
