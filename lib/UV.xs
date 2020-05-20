@@ -635,7 +635,7 @@ close(UV::Loop self)
         RETVAL
 
 int
-configure(UV::Loop self, uv_loop_option option, int value)
+configure(UV::Loop self, int option, int value)
     CODE:
         RETVAL = uv_loop_configure(self->loop, option, value);
     OUTPUT:
@@ -656,7 +656,7 @@ now(UV::Loop self)
         RETVAL
 
 int
-run(UV::Loop self, uv_run_mode mode = UV_RUN_DEFAULT)
+run(UV::Loop self, int mode = UV_RUN_DEFAULT)
     CODE:
         RETVAL = uv_run(self->loop, mode);
     OUTPUT:
