@@ -2,7 +2,7 @@ MODULE = UV             PACKAGE = UV::Poll      PREFIX = p5uv_poll_
 
 PROTOTYPES: ENABLE
 
-void p5uv_poll__init(SV *self, int fd, uv_loop_t *loop)
+void p5uv_poll__init(SV *self, int fd, UV::Loop loop)
     INIT:
         uv_poll_t *handle;
         int ret;
@@ -12,10 +12,9 @@ void p5uv_poll__init(SV *self, int fd, uv_loop_t *loop)
         Newx(handle, 1, uv_poll_t);
         if (!handle) croak("Unable to allocate space for a poll");
 
-        if (NULL == loop) loop = uv_default_loop();
         _MAKE_SOCK(sock, fd);
 
-        ret = uv_poll_init_socket(loop, handle, sock);
+        ret = uv_poll_init_socket(loop->loop, handle, sock);
 
         if (0 != ret) {
             Safefree(handle);

@@ -366,6 +366,17 @@ static void loop_walk_close_cb(uv_handle_t* handle, void* arg)
     uv_close(handle, handle_close_destroy_cb);
 }
 
+/************
+ * UV::Loop *
+ ************/
+
+typedef struct UV__Loop {
+    uv_loop_t _loop;
+    uv_loop_t *loop; /* may point to _loop */
+    bool is_default;
+    SV *on_walk;     /* TODO as yet unused and probably not correct */
+} *UV__Loop;
+
 MODULE = UV             PACKAGE = UV            PREFIX = uv_
 
 PROTOTYPES: ENABLE
@@ -546,3 +557,117 @@ INCLUDE: prepare.xsi
 INCLUDE: timer.xsi
 
 INCLUDE: loop.xsi
+
+MODULE = UV             PACKAGE = UV::Loop
+
+SV *
+_new(char *class, int want_default)
+    INIT:
+        UV__Loop self;
+        int ret;
+    CODE:
+        Newx(self, 1, struct UV__Loop);
+        self->on_walk = NULL;
+
+        if(want_default) {
+            self->loop = uv_default_loop();
+            self->is_default = true;
+        }
+        else {
+            ret = uv_loop_init(&self->_loop);
+            if(ret != 0) {
+                Safefree(self);
+                croak("Error initialising loop (%d): %s", ret, uv_strerror(ret));
+            }
+            self->loop = &self->_loop;
+            self->is_default = false;
+        }
+
+        RETVAL = newSV(0);
+        sv_setref_pv(RETVAL, "UV::Loop", self);
+    OUTPUT:
+        RETVAL
+
+SV *
+_on_walk(UV::Loop self, SV *cb = NULL)
+    CODE:
+        if(cb && SvOK(cb)) {
+            if(self->on_walk)
+                SvREFCNT_dec(self->on_walk);
+
+            self->on_walk = newSVsv(cb);
+        }
+
+        RETVAL = newSVsv(self->on_walk);
+    OUTPUT:
+        RETVAL
+
+int
+alive(UV::Loop self)
+    CODE:
+        RETVAL = uv_loop_alive(self->loop);
+    OUTPUT:
+        RETVAL
+
+int
+backend_fd(UV::Loop self)
+    CODE:
+        RETVAL = uv_backend_fd(self->loop);
+    OUTPUT:
+        RETVAL
+
+int
+backend_timeout(UV::Loop self)
+    CODE:
+        RETVAL = uv_backend_timeout(self->loop);
+    OUTPUT:
+        RETVAL
+
+int
+close(UV::Loop self)
+    CODE:
+        /* Don't allow closing the default loop */
+        if(self->is_default)
+            RETVAL = 0;
+        else
+            RETVAL = uv_loop_close(self->loop);
+    OUTPUT:
+        RETVAL
+
+int
+configure(UV::Loop self, uv_loop_option option, int value)
+    CODE:
+        RETVAL = uv_loop_configure(self->loop, option, value);
+    OUTPUT:
+        RETVAL
+
+int
+is_default(UV::Loop self)
+    CODE:
+        RETVAL = self->is_default;
+    OUTPUT:
+        RETVAL
+
+UV
+now(UV::Loop self)
+    CODE:
+        RETVAL = uv_now(self->loop);
+    OUTPUT:
+        RETVAL
+
+int
+run(UV::Loop self, uv_run_mode mode = UV_RUN_DEFAULT)
+    CODE:
+        RETVAL = uv_run(self->loop, mode);
+    OUTPUT:
+        RETVAL
+
+void
+stop(UV::Loop self)
+    CODE:
+        uv_stop(self->loop);
+
+void
+update_time(UV::Loop self)
+    CODE:
+        uv_update_time(self->loop);

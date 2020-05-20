@@ -26,24 +26,15 @@ sub _is_a_loop {
 }
 
 sub new {
+    my $class = shift;
     print STDERR "UV::Loop->new() called\n" if DEBUG;
-    my $self = bless {}, shift;
     my $args = UV::_parse_args(@_);
+
+    my $self = $class->_new($args->{_default} // 0);
+
     $self->on('walk', $args->{on_walk});
     print STDERR "UV::Loop->new() walk callback added\n" if DEBUG;
 
-    $self->{data} = $args->{data};
-    $self->{_default} = (exists($args->{_default}) && $args->{_default})? 1: 0;
-    print STDERR "UV::Loop->new() wants a default? $self->{_default}\n" if DEBUG;
-    my $err = do { #catch
-        local $@;
-        eval {
-            $self->_create($self->{_default});
-            1;
-        }; #try
-        $@;
-    };
-    Carp::croak($err) if $err; # throw
     print STDERR "UV::Loop->new() done\n" if DEBUG;
     return $self;
 }
@@ -53,52 +44,11 @@ sub DESTROY {
     $self->close();
 }
 
-# closing a loop releases all data associated with it and the uv_loop_t *
-# should be freed!
-# However, if it's the default loop, we never actually free() the memory for
-# that structure!!!
-sub close {
-    my $self = shift;
-    my $res = UV::UV_ENOSYS;
-    print STDERR "loop close()\n" if DEBUG;
-
-    if ($self->{_closing}) {
-        print STDERR "loop close() We are already in a close process. exiting\n" if DEBUG;
-        return 0;
-    }
-    unless ($self->_has_struct()) {
-        print STDERR "loop close() object has no struct. ENOSYS\n" if DEBUG;
-        return UV::UV_ENOSYS;
-    }
-
-    print STDERR "loop close() set closing flag and attempt to close\n" if DEBUG;
-    $self->{_closing} = 1;
-    my $err = do { # catch
-        local $@;
-        eval {
-            $res = $self->_close($self->{_default});
-            1;
-        }; # try
-        $@;
-    };
-    warn $err if $err;
-    print STDERR "loop close() close attempt complete. unset flag\n" if DEBUG;
-    $self->{_closing} = undef;
-
-    if (0 == $res) {
-        print STDERR "loop close() close success.\n" if DEBUG;
-    }
-    else {
-        print STDERR "loop close() close failed\n" if DEBUG;
-    }
-    return $res;
-}
-
 # Return the singleton uv_default_loop
 sub default {
     print STDERR "loop default() singleton called\n" if DEBUG;
     my $class = shift;
-    if (defined($default_loop) && $default_loop->_has_struct) {
+    if (defined($default_loop)) {
         print STDERR "loop default() returning already stored default loop\n" if DEBUG;
         return $default_loop;
     }
@@ -110,20 +60,10 @@ sub default {
 
 sub default_loop { return shift->default(); }
 
-sub is_default {
-    my $self = shift;
-    return 1 if $self->{_default};
-    return 0;
-}
-
 sub on {
     my $self = shift;
-    my $event = lc(shift || '');
-    return $self unless $event && $event eq 'walk';
-    return $self->{"_on_$event"} unless @_;
-    my $cb = ($_[-1] && ref($_[-1]) eq 'CODE')? pop: undef;
-    $self->{"_on_$event"} = $cb;
-    return $self;
+    my $method = "_on_" . shift;
+    return $self->$method( @_ );
 }
 
 sub walk {

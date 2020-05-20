@@ -2,7 +2,7 @@ MODULE = UV             PACKAGE = UV::Prepare      PREFIX = p5uv_prepare_
 
 PROTOTYPES: ENABLE
 
-void p5uv_prepare__init(SV *self, uv_loop_t *loop)
+void p5uv_prepare__init(SV *self, UV::Loop loop)
     INIT:
         uv_prepare_t *handle;
         int ret;
@@ -12,10 +12,7 @@ void p5uv_prepare__init(SV *self, uv_loop_t *loop)
             if (!handle) {
                 croak("Unable to allocate space for a prepare");
             }
-            if (NULL == loop) {
-                loop = uv_default_loop();
-            }
-            ret = uv_prepare_init(loop, handle);
+            ret = uv_prepare_init(loop->loop, handle);
             if (0 != ret) {
                 Safefree(handle);
                 croak("Couldn't initialize handle (%i): %s", ret, uv_strerror(ret));

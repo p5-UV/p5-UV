@@ -1,10 +1,11 @@
+UV::Loop            T_PTROBJ
+
 uv_run_mode         T_RUN_UV
 uv_loop_option      T_RUN_UV
 
 int64_t             T_INT64
 uint64_t            T_UINT64
 
-uv_loop_t *         T_PTROBJ_MG
 uv_handle_t *       T_PTROBJ_MG
 
 INPUT
