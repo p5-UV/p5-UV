@@ -473,6 +473,11 @@ typedef struct UV__Loop {
     SV *on_walk;     /* TODO as yet unused and probably not correct */
 } *UV__Loop;
 
+static void on_loop_walk(uv_handle_t* handle, void* arg)
+{
+    fprintf(stderr, "TODO: on_loop_walk\n");
+}
+
 MODULE = UV             PACKAGE = UV            PREFIX = uv_
 
 BOOT:
@@ -1005,6 +1010,11 @@ _on_walk(UV::Loop self, SV *cb = NULL)
         RETVAL = newSVsv(self->on_walk);
     OUTPUT:
         RETVAL
+
+void
+_walk(UV::Loop self)
+    CODE:
+        uv_walk(self->loop, on_loop_walk, self->on_walk);
 
 int
 alive(UV::Loop self)
