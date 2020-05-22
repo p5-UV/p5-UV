@@ -442,8 +442,6 @@ typedef struct UV__Loop {
 
 MODULE = UV             PACKAGE = UV            PREFIX = uv_
 
-PROTOTYPES: ENABLE
-
 BOOT:
 {
     HV *stash;
