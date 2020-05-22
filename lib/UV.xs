@@ -50,42 +50,6 @@ static void p5uv_destroy_handle(pTHX_ uv_handle_t * handle)
     Safefree(handle);
 }
 
-/* HANDLE callbacks */
-static void handle_alloc_cb(uv_handle_t* handle, size_t suggested_size, uv_buf_t* buf)
-{
-    SV *self;
-    SV **callback;
-
-    dTHX;
-
-    buf->base = malloc(suggested_size);
-    buf->len = suggested_size;
-    if (!handle || !handle->data) return;
-
-    self = (SV *)(handle->data);
-    if (!self || !SvROK(self)) return;
-
-    /* nothing else to do if we don't have a callback to call */
-    callback = hv_fetchs((HV*)SvRV(self), "_on_alloc", FALSE);
-    if (!callback || !SvOK(*callback)) return;
-
-    /* provide info to the caller: invocant, suggested_size */
-    dSP;
-    ENTER;
-    SAVETMPS;
-
-    PUSHMARK(SP);
-    EXTEND(SP, 2);
-    PUSHs(sv_2mortal(SvREFCNT_inc(self))); /* invocant */
-    mPUSHi(suggested_size);
-    PUTBACK;
-
-    call_sv(*callback, G_DISCARD|G_VOID);
-
-    FREETMPS;
-    LEAVE;
-}
-
 static void handle_close_cb(uv_handle_t* handle) {}
 
 static void handle_close_destroy_cb(uv_handle_t* handle)
