@@ -52,7 +52,7 @@ sub _cleanup_loop {
 {
     # use a socket since windows can't poll on file descriptors
     my $sock = IO::Socket::INET->new(Type => SOCK_STREAM);
-    my $handle = UV::poll(fd => $sock->fileno());
+    my $handle = UV::poll(socket => $sock);
     isa_ok($handle, 'UV::Poll', 'got back an Poll handle');
     isa_ok($handle, 'UV::Handle', 'it derives from UV::Handle');
     is($handle->loop()->is_default(), 1, 'Handle uses the default loop');
