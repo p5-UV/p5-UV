@@ -28,15 +28,8 @@ sub new {
 
 sub DESTROY {
     my $self = shift;
-    return unless $self->_has_struct();
     $self->stop() if ($self->can('stop') && !$self->closing() && !$self->closed());
-
-    my $err = do { # catch
-        local $@;
-        eval { $self->_destruct($self->closed()); 1; }; # try
-        $@;
-    };
-    warn $err if $err;
+    $self->_destruct;
 }
 
 sub on {

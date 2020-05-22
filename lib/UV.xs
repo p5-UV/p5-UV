@@ -50,8 +50,6 @@ static void p5uv_destroy_handle(pTHX_ uv_handle_t * handle)
     Safefree(handle);
 }
 
-static void handle_close_cb(uv_handle_t* handle) {}
-
 static void handle_close_destroy_cb(uv_handle_t* handle)
 {
     SV *self;
@@ -176,6 +174,11 @@ typedef struct UV__Handle {
   (h).base.on_close = NULL;       \
 }
 
+static void destroy_handle(UV__Handle self)
+{
+    // TODO: destroy handle here
+}
+
 static void on_close_cb(uv_handle_t *handle)
 {
     UV__Handle  self;
@@ -200,6 +203,12 @@ static void on_close_cb(uv_handle_t *handle)
 
     FREETMPS;
     LEAVE;
+}
+
+static void on_close_then_destroy(uv_handle_t *handle)
+{
+    on_close_cb(handle);
+    destroy_handle(handle->data);
 }
 
 /*************
@@ -570,6 +579,14 @@ unsigned int uv_version()
 const char* uv_version_string()
 
 MODULE = UV             PACKAGE = UV::Handle
+
+void
+_destruct(UV::Handle self)
+    CODE:
+        if(!uv_is_closing(&self->handle))
+            uv_close(&self->handle, on_close_then_destroy);
+        else
+            destroy_handle(self);
 
 bool
 closed(UV::Handle self)
