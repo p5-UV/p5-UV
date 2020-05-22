@@ -7,8 +7,6 @@
 #define NEED_newCONSTSUB
 #include "ppport.h"
 
-#define MATH_INT64_NATIVE_IF_AVAILABLE
-#include "perl_math_int64.h"
 #include <assert.h>
 #include <stdlib.h>
 #include "xs_object_magic.h"
@@ -484,8 +482,6 @@ BOOT:
 {
     HV *stash;
     AV *export;
-
-    PERL_MATH_INT64_LOAD_OR_CROAK;
 #define DO_CONST_IV(c) \
     newCONSTSUB_flags(stash, #c, strlen(#c), 0, newSViv(c)); \
     av_push(export, newSVpvs(#c));

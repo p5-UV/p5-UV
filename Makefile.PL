@@ -14,7 +14,7 @@ my %xsbuild = Alien::Base::Wrapper->new('Alien::libuv')->mm_args2(
     XSBUILD => {
         xs => {
             'lib/UV' => {
-              OBJECT => 'lib/UV$(OBJ_EXT) lib/perl_math_int64$(OBJ_EXT)',
+              OBJECT => 'lib/UV$(OBJ_EXT)'
             },
         },
     },
@@ -34,7 +34,6 @@ my %WriteMakefileArgs = (
     "Alien::libuv" => "1.000",
     "Config" => 0,
     "ExtUtils::MakeMaker" => "7.12",
-    "Math::Int64" => 0
   },
   "CONFIGURE_REQUIRES" => {
     "Alien::Base::Wrapper" => 0,
@@ -48,7 +47,6 @@ my %WriteMakefileArgs = (
     "Alien::libuv" => "1.000",
     "Carp" => 0,
     "Exporter" => "5.57",
-    "Math::Int64" => 0,
     "Scalar::Util" => 0,
     "XS::Object::Magic" => 0,
     "XSLoader" => "0.14",
@@ -92,7 +90,6 @@ my %FallbackPrereqs = (
   "FindBin" => 0,
   "IO::Handle" => 0,
   "IO::Socket::INET" => 0,
-  "Math::Int64" => 0,
   "POSIX" => 0,
   "Scalar::Util" => 0,
   "Socket" => 0,
