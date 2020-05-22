@@ -26,12 +26,6 @@ sub new {
     return $self;
 }
 
-sub DESTROY {
-    my $self = shift;
-    $self->stop() if ($self->can('stop') && !$self->closing() && !$self->closed());
-    $self->_destruct;
-}
-
 sub on {
     my $self = shift;
     my $method = "_on_" . shift;

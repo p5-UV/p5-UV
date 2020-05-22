@@ -174,9 +174,19 @@ typedef struct UV__Handle {
   (h).base.on_close = NULL;       \
 }
 
-static void destroy_handle(UV__Handle self)
+static void destroy_handle(UV__Handle self);
+static void destroy_handle_base(pTHX_ UV__Handle self)
 {
-    // TODO: destroy handle here
+    if(self->base.data)
+        SvREFCNT_dec(self->base.data);
+    if(self->base.on_close)
+        SvREFCNT_dec(self->base.on_close);
+
+    /* No need to destroy self->base.selfrv because Perl is already destroying
+     * it, being the reason we are invoked in the first place
+     */
+
+    Safefree(self);
 }
 
 static void on_close_cb(uv_handle_t *handle)
@@ -223,6 +233,12 @@ typedef struct UV__Check {
     SV         *on_check;
 } *UV__Check;
 
+static void destroy_check(pTHX_ UV__Check self)
+{
+    if(self->on_check)
+        SvREFCNT_dec(self->on_check);
+}
+
 static void on_check_cb(uv_check_t *check)
 {
     UV__Check  self;
@@ -261,6 +277,12 @@ typedef struct UV__Idle {
     SV        *on_idle;
 } *UV__Idle;
 
+static void destroy_idle(pTHX_ UV__Idle self)
+{
+    if(self->on_idle)
+        SvREFCNT_dec(self->on_idle);
+}
+
 static void on_idle_cb(uv_idle_t *idle)
 {
     UV__Idle self;
@@ -298,6 +320,12 @@ typedef struct UV__Poll {
     uv_poll_t  poll;
     SV        *on_poll;
 } *UV__Poll;
+
+static void destroy_poll(pTHX_ UV__Poll self)
+{
+    if(self->on_poll)
+        SvREFCNT_dec(self->on_poll);
+}
 
 static void on_poll_cb(uv_poll_t *poll, int status, int events)
 {
@@ -339,6 +367,12 @@ typedef struct UV__Prepare {
     SV           *on_prepare;
 } *UV__Prepare;
 
+static void destroy_prepare(pTHX_ UV__Prepare self)
+{
+    if(self->on_prepare)
+        SvREFCNT_dec(self->on_prepare);
+}
+
 static void on_prepare_cb(uv_prepare_t *prepare)
 {
     UV__Prepare  self;
@@ -377,6 +411,12 @@ typedef struct UV__Timer {
     SV         *on_timer;
 } *UV__Timer;
 
+static void destroy_timer(pTHX_ UV__Timer self)
+{
+    if(self->on_timer)
+        SvREFCNT_dec(self->on_timer);
+}
+
 static void on_timer_cb(uv_timer_t *timer)
 {
     UV__Timer  self;
@@ -401,6 +441,26 @@ static void on_timer_cb(uv_timer_t *timer)
 
     FREETMPS;
     LEAVE;
+}
+
+/* Handle destructor has to be able to see the type-specific destroy_
+ * functions above, so must be last
+ */
+
+static void destroy_handle(UV__Handle self)
+{
+    dTHX;
+
+    uv_handle_t *handle = &self->handle;
+    switch(handle->type) {
+        case UV_CHECK:   destroy_check  (aTHX_ (UV__Check)  self); break;
+        case UV_IDLE:    destroy_idle   (aTHX_ (UV__Idle)   self); break;
+        case UV_POLL:    destroy_poll   (aTHX_ (UV__Poll)   self); break;
+        case UV_PREPARE: destroy_prepare(aTHX_ (UV__Prepare)self); break;
+        case UV_TIMER:   destroy_timer  (aTHX_ (UV__Timer)  self); break;
+    }
+
+    destroy_handle_base(aTHX_ self);
 }
 
 /************
@@ -581,8 +641,11 @@ const char* uv_version_string()
 MODULE = UV             PACKAGE = UV::Handle
 
 void
-_destruct(UV::Handle self)
+DESTROY(UV::Handle self)
     CODE:
+        /* TODO:
+            $self->stop() if ($self->can('stop') && !$self->closing() && !$self->closed());
+         */
         if(!uv_is_closing(&self->handle))
             uv_close(&self->handle, on_close_then_destroy);
         else
