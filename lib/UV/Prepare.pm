@@ -5,7 +5,6 @@ our $VERSION = '1.000010';
 use strict;
 use warnings;
 use Carp ();
-use Exporter qw(import);
 use parent 'UV::Handle';
 
 sub start {
