@@ -397,6 +397,52 @@ static void on_prepare_cb(uv_prepare_t *prepare)
     LEAVE;
 }
 
+/**************
+ * UV::Signal *
+ **************/
+
+/* See also http://docs.libuv.org/en/v1.x/signal.html */
+
+typedef struct UV__Signal {
+    struct UV__Handle_base base;
+    uv_signal_t  signal;
+    int          signum;
+    SV          *on_signal;
+} *UV__Signal;
+
+static void destroy_signal(pTHX_ UV__Signal self)
+{
+    if(self->on_signal)
+        SvREFCNT_dec(self->on_signal);
+}
+
+static void on_signal_cb(uv_signal_t *signal, int signum)
+{
+    UV__Signal self;
+    SV         *cb;
+
+    dTHX;
+    if(!signal || !signal->data) return;
+
+    self = signal->data;
+    if(!(cb = self->on_signal) || !SvOK(cb)) return;
+
+    dSP;
+    ENTER;
+    SAVETMPS;
+
+    PUSHMARK(SP);
+    EXTEND(SP, 2);
+    mPUSHs(newRV_inc(self->base.selfrv));
+    mPUSHi(signum);
+    PUTBACK;
+
+    call_sv(cb, G_DISCARD|G_VOID);
+
+    FREETMPS;
+    LEAVE;
+}
+
 /*************
  * UV::Timer *
  *************/
@@ -455,6 +501,7 @@ static void destroy_handle(UV__Handle self)
         case UV_IDLE:    destroy_idle   (aTHX_ (UV__Idle)   self); break;
         case UV_POLL:    destroy_poll   (aTHX_ (UV__Poll)   self); break;
         case UV_PREPARE: destroy_prepare(aTHX_ (UV__Prepare)self); break;
+        case UV_SIGNAL:  destroy_signal (aTHX_ (UV__Signal) self); break;
         case UV_TIMER:   destroy_timer  (aTHX_ (UV__Timer)  self); break;
     }
 
@@ -901,6 +948,51 @@ stop(UV::Poll self)
         RETVAL = uv_poll_stop(&self->poll);
     OUTPUT:
         RETVAL
+
+MODULE = UV             PACKAGE = UV::Signal
+
+SV *
+_new(char *class, UV::Loop loop, int signum)
+    INIT:
+        UV__Signal self;
+        int ret;
+    CODE:
+        Newx(self, 1, struct UV__Signal);
+        ret = uv_signal_init(loop->loop, &self->signal);
+        if (ret != 0) {
+            Safefree(self);
+            croak("Couldn't initialise signal handle (%d): %s", ret, uv_strerror(ret));
+        }
+        self->signal.data = self;
+        self->signum = signum; /* need to remember this until start() time */
+
+        INIT_UV_HANDLE_BASE(*self);
+        self->on_signal = NULL;
+
+        RETVAL = newSV(0);
+        sv_setref_pv(RETVAL, "UV::Signal", self);
+        self->base.selfrv = SvRV(RETVAL); /* no inc */
+    OUTPUT:
+        RETVAL
+
+SV *
+_on_signal(UV::Signal self, SV *cb = NULL)
+    CODE:
+        RETVAL = do_callback_accessor(&self->on_signal, cb);
+    OUTPUT:
+        RETVAL
+
+int
+_start(UV::Signal self)
+    CODE:
+        RETVAL = uv_signal_start(&self->signal, on_signal_cb, self->signum);
+    OUTPUT:
+        RETVAL
+
+int
+stop(UV::Signal self)
+    CODE:
+        RETVAL = uv_signal_stop(&self->signal);
 
 MODULE = UV             PACKAGE = UV::Timer
 

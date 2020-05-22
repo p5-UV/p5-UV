@@ -2,6 +2,7 @@ use strict;
 use warnings;
 
 use IO::Socket::INET;
+use POSIX qw(SIGHUP);
 use Test::More;
 use UV ();
 use UV::Loop ();
@@ -64,6 +65,14 @@ sub _cleanup_loop {
     isa_ok($handle, 'UV::Prepare', 'got back an Prepare handle');
     isa_ok($handle, 'UV::Handle', 'it derives from UV::Handle');
     is($handle->loop()->is_default(), 1, 'Handle uses the default loop');
+    _cleanup_loop(UV::Loop->default());
+}
+
+{
+    my $handle = UV::signal(signal => SIGHUP);
+    isa_ok($handle, 'UV::Signal', 'got back a Signal handle');
+    isa_ok($handle, 'UV::Handle', 'it derives from UV::Handle');
+    is($handle->loop()->is_default(), 1, 'Signal uses the default loop');
     _cleanup_loop(UV::Loop->default());
 }
 

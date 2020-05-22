@@ -68,6 +68,11 @@ sub prepare {
     return UV::Prepare->new(@_);
 }
 
+sub signal {
+    require UV::Signal;
+    return UV::Signal->new(@_);
+}
+
 sub timer {
     require UV::Timer;
     return UV::Timer->new(@_);
@@ -514,6 +519,15 @@ Returns a new L<UV::Poll> Handle object.
     my $handle = UV::prepare(loop => $some_other_loop); # non-default loop
 
 Returns a new L<UV::Prepare> Handle object.
+
+=head2 signal
+
+    my $handle = UV::signal(POSIX::SIGHUP); # uses the default loop
+
+    my $handle = UV::signal(loop => $some_other_loop, signal => POSIX::SIGHUP);
+        # non-default loop
+
+Returns a new L<UV::Signal> Handle object.
 
 =head2 strerror
 

@@ -6,6 +6,7 @@ UV::Check           T_PTROBJ
 UV::Idle            T_PTROBJ
 UV::Poll            T_PTROBJ
 UV::Prepare         T_PTROBJ
+UV::Signal          T_PTROBJ
 UV::Timer           T_PTROBJ
 
 
