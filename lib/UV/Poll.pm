@@ -12,25 +12,26 @@ our @EXPORT_OK = (@UV::Poll::EXPORT_XS,);
 
 sub _new_args {
     my ($class, $args) = @_;
-    my $fd;
+    my ($fd, $is_socket);
     for my $key (qw(fd fh socket single_arg)) {
-        if (defined($fd = delete $args->{$key})) {
-            if (CORE::ref($fd) eq 'GLOB' || CORE::ref($fd) =~ /^IO::Socket/) {
-                $fd = fileno($fd);
-                last;
-            }
-            elsif (!CORE::ref($fd) && $fd =~ /\A[0-9]+\z/) {
-                last;
-            }
-            else {
-                $fd = undef;
-            }
+        next if !defined($fd = delete $args->{$key});
+
+        $is_socket = $key eq "socket";
+        if (CORE::ref($fd) eq 'GLOB' || CORE::ref($fd) =~ /^IO::Socket/) {
+            $fd = fileno($fd);
+            last;
+        }
+        elsif (!CORE::ref($fd) && $fd =~ /\A[0-9]+\z/) {
+            last;
+        }
+        else {
+            $fd = undef;
         }
     }
     unless (defined($fd)) {
         Carp::croak("No file or socket descriptor provided");
     }
-    return ($class->SUPER::_new_args($args), $fd);
+    return ($class->SUPER::_new_args($args), $fd, $is_socket);
 }
 
 sub start {
@@ -198,11 +199,10 @@ following extra methods available.
 
     my $socket = IO::Socket::INET->new(Type => SOCK_STREAM);
 
-    my $poll = UV::Poll->new(socket => 1, fd => fileno($socket));
+    my $poll = UV::Poll->new(socket => $socket);
     # or another loop
     my $poll = UV::Poll->new(
-        socket => 1.
-        fd => fileno($socket),
+        socket => $socket,
         loop => $some_loop,
         on_alloc => sub {say "alloc!"},
         on_close => sub {say "close!"},
@@ -218,6 +218,11 @@ L<default loop|UV::Loop/"default">.
 Then initialization happens with
 L<init|http://docs.libuv.org/en/v1.x/poll.html#c.uv_poll_init> or
 L<init_socket|http://docs.libuv.org/en/v1.x/poll.html#c.uv_poll_init_socket>.
+
+A handle specified by the C<socket> argument is initialised via
+C<uv_poll_init_socket>, a distinction which matters to F<MSWin32>. Code which
+wishes to be portable should remember to use this form so it will work
+correctly on that OS, even if the code works fine on others without it.
 
 B<* Note:> As of libuv v1.2.2: the file descriptor is set to non-blocking mode.
 

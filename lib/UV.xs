@@ -27,9 +27,9 @@
 
 #if defined(__MINGW32__) || defined(WIN32)
 #include <io.h> /* we need _get_osfhandle() on windows */
-#define _MAKE_SOCK(s, f) s = _get_osfhandle(f)
+#  define _MAKE_SOCK(f) (_get_osfhandle(f))
 #else
-#define _MAKE_SOCK(s,f) s = f
+#  define _MAKE_SOCK(f) (f)
 #endif
 
 static void p5uv_destroy_handle(pTHX_ uv_handle_t * handle)
@@ -851,13 +851,16 @@ stop(UV::Prepare self)
 MODULE = UV             PACKAGE = UV::Poll
 
 SV *
-_new(char *class, UV::Loop loop, int fd)
+_new(char *class, UV::Loop loop, int fd, bool is_socket)
     INIT:
         UV__Poll self;
         int ret;
     CODE:
         Newx(self, 1, struct UV__Poll);
-        ret = uv_poll_init(loop->loop, &self->poll, fd);
+        if(is_socket)
+            ret = uv_poll_init_socket(loop->loop, &self->poll, _MAKE_SOCK(fd));
+        else
+            ret = uv_poll_init(loop->loop, &self->poll, fd);
         if (ret != 0) {
             Safefree(self);
             croak("Couldn't initialize poll handle (%d): %s", ret, uv_strerror(ret));
