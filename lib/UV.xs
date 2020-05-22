@@ -967,8 +967,6 @@ stop(UV::Timer self)
     OUTPUT:
         RETVAL
 
-INCLUDE: loop.xsi
-
 MODULE = UV             PACKAGE = UV::Loop
 
 SV *
