@@ -635,7 +635,11 @@ BOOT:
 
 const char* uv_err_name(int err)
 
-uint64_t uv_hrtime()
+UV uv_hrtime()
+    CODE:
+        RETVAL = uv_hrtime();
+    OUTPUT:
+        RETVAL
 
 const char* uv_strerror(int err)
 
