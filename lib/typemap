@@ -8,11 +8,3 @@ UV::Poll            T_PTROBJ
 UV::Prepare         T_PTROBJ
 UV::Signal          T_PTROBJ
 UV::Timer           T_PTROBJ
-
-
-uv_handle_t *       T_PTROBJ_MG
-
-INPUT
-
-T_PTROBJ_MG
-    $var = ($type)xs_object_magic_get_struct_rv_pretty(aTHX_ $arg, \"$var\");
