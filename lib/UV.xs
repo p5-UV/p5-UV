@@ -159,6 +159,9 @@ static SV *MY_do_callback_accessor(pTHX_ SV **var, SV *cb)
 
 struct UV__Handle_base {
     SV *selfrv; /* The underlying blessed RV itself */
+#ifdef MULTIPLICITY
+    tTHX perl;
+#endif
     SV *data;   /* The arbitrary ->data value */
     SV *on_close;
 };
@@ -167,7 +170,14 @@ typedef struct UV__Handle {
     uv_handle_t  handle;
 } *UV__Handle;
 
+#ifdef MULTIPLICITY
+#  define storeTHX(var)  (var) = aTHX
+#else
+#  define storeTHX(var)  dNOOP
+#endif
+
 #define INIT_UV_HANDLE_BASE(h)  { \
+  storeTHX((h).base.perl);        \
   (h).base.data     = NULL;       \
   (h).base.on_close = NULL;       \
 }
@@ -192,12 +202,12 @@ static void on_close_cb(uv_handle_t *handle)
     UV__Handle  self;
     SV         *cb;
 
-    dTHX;
     if(!handle || !handle->data) return;
 
     self = handle->data;
     if(!(cb = self->base.on_close) || !SvOK(cb)) return;
 
+    dTHXa(self->base.perl);
     dSP;
     ENTER;
     SAVETMPS;
@@ -242,12 +252,12 @@ static void on_check_cb(uv_check_t *check)
     UV__Check  self;
     SV        *cb;
 
-    dTHX;
     if(!check || !check->data) return;
 
     self = check->data;
     if(!(cb = self->on_check) || !SvOK(cb)) return;
 
+    dTHXa(self->base.perl);
     dSP;
     ENTER;
     SAVETMPS;
@@ -286,12 +296,12 @@ static void on_idle_cb(uv_idle_t *idle)
     UV__Idle self;
     SV       *cb;
 
-    dTHX;
     if(!idle || !idle->data) return;
 
     self = idle->data;
     if(!(cb = self->on_idle) || !SvOK(cb)) return;
 
+    dTHXa(self->base.perl);
     dSP;
     ENTER;
     SAVETMPS;
@@ -330,12 +340,12 @@ static void on_poll_cb(uv_poll_t *poll, int status, int events)
     UV__Poll self;
     SV       *cb;
 
-    dTHX;
     if(!poll || !poll->data) return;
 
     self = poll->data;
     if(!(cb = self->on_poll) || !SvOK(cb)) return;
 
+    dTHXa(self->base.perl);
     dSP;
     ENTER;
     SAVETMPS;
@@ -376,12 +386,12 @@ static void on_prepare_cb(uv_prepare_t *prepare)
     UV__Prepare  self;
     SV          *cb;
 
-    dTHX;
     if(!prepare || !prepare->data) return;
 
     self = prepare->data;
     if(!(cb = self->on_prepare) || !SvOK(cb)) return;
 
+    dTHXa(self->base.perl);
     dSP;
     ENTER;
     SAVETMPS;
@@ -421,12 +431,12 @@ static void on_signal_cb(uv_signal_t *signal, int signum)
     UV__Signal self;
     SV         *cb;
 
-    dTHX;
     if(!signal || !signal->data) return;
 
     self = signal->data;
     if(!(cb = self->on_signal) || !SvOK(cb)) return;
 
+    dTHXa(self->base.perl);
     dSP;
     ENTER;
     SAVETMPS;
@@ -466,12 +476,12 @@ static void on_timer_cb(uv_timer_t *timer)
     UV__Timer  self;
     SV        *cb;
 
-    dTHX;
     if(!timer || !timer->data) return;
 
     self = timer->data;
     if(!(cb = self->on_timer) || !SvOK(cb)) return;
 
+    dTHXa(self->base.perl);
     dSP;
     ENTER;
     SAVETMPS;
@@ -493,7 +503,7 @@ static void on_timer_cb(uv_timer_t *timer)
 
 static void destroy_handle(UV__Handle self)
 {
-    dTHX;
+    dTHXa(self->base.perl);
 
     uv_handle_t *handle = &self->handle;
     switch(handle->type) {
