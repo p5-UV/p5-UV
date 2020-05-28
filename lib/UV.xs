@@ -926,6 +926,8 @@ int
 stop(UV::Signal self)
     CODE:
         RETVAL = uv_signal_stop(&self->signal);
+    OUTPUT:
+        RETVAL
 
 MODULE = UV             PACKAGE = UV::Timer
 
