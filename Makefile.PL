@@ -9,19 +9,13 @@ use ExtUtils::MakeMaker;
 
 use Alien::Base::Wrapper ();
 
-my %xsbuild = Alien::Base::Wrapper->new('Alien::libuv')->mm_args2(
-    XSMULTI => 1,
-    XSBUILD => {
-        xs => {
-            'lib/UV' => {
-              OBJECT => 'lib/UV$(OBJ_EXT)'
-            },
-        },
-    },
-    OBJECT  => '$(O_FILES)',
-);
+my %xsbuild = Alien::Base::Wrapper->new('Alien::libuv')->mm_args2;
+
 # Our cpanfile contains the proper configure requires already
 delete $xsbuild{CONFIGURE_REQUIRES};
+
+# We keep our XS file in the right place in lib/
+$xsbuild{XSMULTI} = 1;
 
 # Append our hax/ directory
 $xsbuild{INC} .= " -Ihax";
