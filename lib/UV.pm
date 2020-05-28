@@ -7,7 +7,6 @@ use strict;
 use warnings;
 use Carp ();
 use Exporter qw(import);
-use XS::Object::Magic ();
 require XSLoader;
 XSLoader::load('UV', $XS_VERSION);
 

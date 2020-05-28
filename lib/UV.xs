@@ -9,7 +9,6 @@
 
 #include <assert.h>
 #include <stdlib.h>
-#include "xs_object_magic.h"
 
 #include <uv.h>
 
