@@ -30,69 +30,6 @@
 #  define _MAKE_SOCK(f) (f)
 #endif
 
-static void p5uv_destroy_handle(pTHX_ uv_handle_t * handle)
-{
-    SV *self;
-    if (!handle) return;
-    /* attempt to remove the two-way circular reference */
-    if (handle->data) {
-        self = (SV *)(handle->data);
-        if (self && SvROK(self)) {
-            xs_object_magic_detach_struct_rv(aTHX_ self, handle);
-            self = NULL;
-            SvREFCNT_dec((SV *)(handle->data));
-        }
-        handle->data = NULL;
-    }
-    uv_unref(handle);
-    Safefree(handle);
-}
-
-static void handle_close_destroy_cb(uv_handle_t* handle)
-{
-    SV *self;
-    SV **callback;
-
-    dTHX;
-
-    if (!handle) return;
-
-    if (!handle->data) {
-        p5uv_destroy_handle(aTHX_ handle);
-        return;
-    }
-
-    self = (SV *)(handle->data);
-    if (!self || !SvROK(self)) {
-        p5uv_destroy_handle(aTHX_ handle);
-        return;
-    }
-    hv_stores((HV *)SvRV(self), "_closed", newSViv(1));
-
-    /* nothing else to do if we don't have a callback to call */
-    callback = hv_fetchs((HV*)SvRV(self), "_on_close", FALSE);
-    if (!callback || !SvOK(*callback)) {
-        p5uv_destroy_handle(aTHX_ handle);
-        return;
-    }
-
-    /* provide info to the caller: invocant */
-    dSP;
-    ENTER;
-    SAVETMPS;
-
-    PUSHMARK(SP);
-    EXTEND(SP, 1);
-    PUSHs(SvREFCNT_inc(self)); /* invocant */
-    PUTBACK;
-
-    call_sv(*callback, G_DISCARD|G_VOID);
-
-    FREETMPS;
-    LEAVE;
-    p5uv_destroy_handle(aTHX_ handle);
-}
-
 static void loop_walk_cb(uv_handle_t* handle, void* arg)
 {
     SV *self;
@@ -122,19 +59,6 @@ static void loop_walk_cb(uv_handle_t* handle, void* arg)
 
     FREETMPS;
     LEAVE;
-}
-
-static void loop_walk_close_cb(uv_handle_t* handle, void* arg)
-{
-    SV *self;
-    dTHX;
-    /* don't attempt to close an already closing handle */
-    if (!handle || uv_is_closing(handle)) return;
-    if (!handle->data) return;
-    self = (SV *)(handle->data);
-    if (!self) return;
-
-    uv_close(handle, handle_close_destroy_cb);
 }
 
 #define do_callback_accessor(var, cb) MY_do_callback_accessor(aTHX_ var, cb)
