@@ -76,6 +76,17 @@ static SV *MY_do_callback_accessor(pTHX_ SV **var, SV *cb)
         return &PL_sv_undef;
 }
 
+#define newSV_error(err)  MY_newSV_error(aTHX_ err)
+static SV *MY_newSV_error(pTHX_ int err)
+{
+    SV *sv = newSVpv(err ? uv_strerror(err) : "", 0);
+    sv_upgrade(sv, SVt_PVIV);
+    SvIV_set(sv, err);
+    SvIOK_on(sv);
+
+    return sv;
+}
+
 /**************
  * UV::Handle *
  **************/
@@ -439,6 +450,120 @@ static void destroy_handle(UV__Handle self)
     }
 
     destroy_handle_base(aTHX_ self);
+}
+
+/***********
+ * UV::Req *
+ ***********/
+
+struct UV__Req_base {
+    SV *selfrv; /* The underlying blessed RV itself */
+#ifdef MULTIPLICITY
+    tTHX perl;
+#endif
+};
+typedef struct UV__Req {
+    struct UV__Req_base base;
+    uv_req_t req;
+} *UV__Req;
+
+#define INIT_UV_REQ_BASE(r)  { \
+  storeTHX((r).base.perl);     \
+}
+
+/* See also http://docs.libuv.org/en/v1.x/dns.html#c.uv_getaddrinfo */
+
+typedef struct UV__Req_Getaddrinfo {
+    struct UV__Req_base base;
+    uv_getaddrinfo_t getaddrinfo;
+    SV               *cb;
+} *UV__Req_Getaddrinfo;
+
+typedef struct UV__getaddrinfo_result {
+    int              family;
+    int              socktype;
+    int              protocol;
+    socklen_t        addrlen;
+    struct sockaddr *addr;
+    char            *canonname;
+} *UV__getaddrinfo_result;
+
+static void on_getaddrinfo_cb(uv_getaddrinfo_t *_req, int status, struct addrinfo *res)
+{
+    UV__Req_Getaddrinfo req = _req->data;
+    dTHXa(req->base.perl);
+
+    struct addrinfo *addrp;
+
+    dSP;
+    ENTER;
+    SAVETMPS;
+
+    PUSHMARK(SP);
+    EXTEND(SP, 1);
+    mPUSHs(newSV_error(status));
+    for(addrp = res; addrp; addrp = addrp->ai_next) {
+        UV__getaddrinfo_result result;
+        STRLEN canonnamelen = addrp->ai_canonname ? strlen(addrp->ai_canonname) + 1 : 0;
+        Newxc(result, sizeof(*result) + addrp->ai_addrlen + canonnamelen, char, struct UV__getaddrinfo_result);
+
+        result->family   = addrp->ai_family;
+        result->socktype = addrp->ai_socktype;
+        result->protocol = addrp->ai_protocol;
+        result->addrlen  = addrp->ai_addrlen;
+        result->addr     = (struct sockaddr *)((char *)result + sizeof(*result));
+        Copy(addrp->ai_addr, result->addr, addrp->ai_addrlen, char);
+        if(canonnamelen) {
+            result->canonname = (char *)result->addr + addrp->ai_addrlen;
+            Copy(addrp->ai_canonname, result->canonname, canonnamelen, char);
+        }
+        else {
+            result->canonname = NULL;
+        }
+
+        EXTEND(SP, 1);
+        PUSHmortal;
+        sv_setref_pv(TOPs, "UV::getaddrinfo_result", result);
+    }
+    PUTBACK;
+
+    call_sv(req->cb, G_DISCARD|G_VOID);
+
+    FREETMPS;
+    LEAVE;
+
+    uv_freeaddrinfo(res);
+    SvREFCNT_dec(req->base.selfrv);
+}
+
+typedef struct UV__Req_Getnameinfo {
+    struct UV__Req_base base;
+    uv_getnameinfo_t getnameinfo;
+    SV               *cb;
+} *UV__Req_Getnameinfo;
+
+static void on_getnameinfo_cb(uv_getnameinfo_t *_req, int status, const char *hostname, const char *service)
+{
+    UV__Req_Getnameinfo req = _req->data;
+    dTHXa(req->base.perl);
+
+    dSP;
+    ENTER;
+    SAVETMPS;
+
+    PUSHMARK(SP);
+    EXTEND(SP, 3);
+    mPUSHs(newSV_error(status));
+    mPUSHp(hostname, strlen(hostname));
+    mPUSHp(service, strlen(service));
+    PUTBACK;
+
+    call_sv(req->cb, G_DISCARD|G_VOID);
+
+    FREETMPS;
+    LEAVE;
+
+    SvREFCNT_dec(req->base.selfrv);
 }
 
 /************
@@ -1106,3 +1231,121 @@ void
 update_time(UV::Loop self)
     CODE:
         uv_update_time(self->loop);
+
+SV *
+_getaddrinfo(UV::Loop self, char *node, char *service, SV *flags, SV *family, SV *socktype, SV *protocol, SV *cb)
+    INIT:
+        UV__Req_Getaddrinfo req;
+        SV **svp;
+        struct addrinfo hints = { 0 };
+        int ret;
+    CODE:
+        Newx(req, 1, struct UV__Req_Getaddrinfo);
+        req->getaddrinfo.data = req;
+
+        INIT_UV_REQ_BASE(*req);
+
+        hints.ai_flags    = SvOK(flags)    ? SvIV(flags)    : (AI_V4MAPPED|AI_ADDRCONFIG);
+        hints.ai_family   = SvOK(family)   ? SvIV(family)   : AF_UNSPEC;
+        hints.ai_socktype = SvOK(socktype) ? SvIV(socktype) : 0;
+        hints.ai_protocol = SvOK(protocol) ? SvIV(protocol) : 0;
+
+        ret = uv_getaddrinfo(self->loop, &req->getaddrinfo, on_getaddrinfo_cb,
+            node, service, &hints);
+        if (ret != 0) {
+            Safefree(req);
+            croak("Couldn't getaddrinfo (%d): %s", ret, uv_strerror(ret));
+        }
+
+        req->cb = newSVsv(cb);
+
+        RETVAL = newSV(0);
+        sv_setref_pv(RETVAL, "UV::Req", req);
+        req->base.selfrv = SvREFCNT_inc(SvRV(RETVAL));
+    OUTPUT:
+        RETVAL
+
+SV *
+getnameinfo(UV::Loop self, SV *addr, int flags, SV *cb)
+    INIT:
+        UV__Req_Getnameinfo req;
+        int ret;
+    CODE:
+        Newx(req, 1, struct UV__Req_Getnameinfo);
+        req->getnameinfo.data = req;
+
+        INIT_UV_REQ_BASE(*req);
+
+        ret = uv_getnameinfo(self->loop, &req->getnameinfo, on_getnameinfo_cb,
+            (struct sockaddr *)SvPV_nolen(addr), flags);
+        if (ret != 0) {
+            Safefree(req);
+            croak("Couldn't getnameinfo (%d): %s", ret, uv_strerror(ret));
+        }
+
+        req->cb = newSVsv(cb);
+
+        RETVAL = newSV(0);
+        sv_setref_pv(RETVAL, "UV::Req", req);
+        req->base.selfrv = SvREFCNT_inc(SvRV(RETVAL));
+    OUTPUT:
+        RETVAL
+
+MODULE = UV             PACKAGE = UV::Req
+
+void
+DESTROY(UV::Req req)
+    CODE:
+        switch(req->req.type) {
+            case UV_GETADDRINFO:
+                SvREFCNT_dec(((UV__Req_Getaddrinfo)req)->cb);
+                break;
+
+            case UV_GETNAMEINFO:
+                SvREFCNT_dec(((UV__Req_Getnameinfo)req)->cb);
+                break;
+        }
+
+        Safefree(req);
+
+int
+cancel(UV::Req req)
+    CODE:
+        RETVAL = uv_cancel(&req->req);
+    OUTPUT:
+        RETVAL
+
+MODULE = UV             PACKAGE = UV::getaddrinfo_result
+
+void
+DESTROY(UV::getaddrinfo_result self)
+    CODE:
+        Safefree(self);
+
+int
+family(UV::getaddrinfo_result self)
+    ALIAS:
+        family   = 0
+        socktype = 1
+        protocol = 2
+    CODE:
+        switch(ix) {
+            case 0: RETVAL = self->family;   break;
+            case 1: RETVAL = self->socktype; break;
+            case 2: RETVAL = self->protocol; break;
+        }
+    OUTPUT:
+        RETVAL
+
+SV *
+addr(UV::getaddrinfo_result self)
+    ALIAS:
+        addr      = 0
+        canonname = 1
+    CODE:
+        switch(ix) {
+            case 0: RETVAL = newSVpvn((char *)self->addr, self->addrlen); break;
+            case 1: RETVAL = self->canonname ? newSVpv(self->canonname, 0) : &PL_sv_undef; break;
+        }
+    OUTPUT:
+        RETVAL

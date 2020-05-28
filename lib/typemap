@@ -8,3 +8,7 @@ UV::Poll            T_PTROBJ
 UV::Prepare         T_PTROBJ
 UV::Signal          T_PTROBJ
 UV::Timer           T_PTROBJ
+
+UV::Req             T_PTROBJ
+
+UV::getaddrinfo_result T_PTROBJ

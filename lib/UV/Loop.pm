@@ -68,6 +68,16 @@ sub walk {
     $self->_walk();
 }
 
+sub getaddrinfo {
+    my $self = shift;
+    my $cb; $cb = pop if @_ % 2;
+    my %args = @_;
+
+    $cb //= delete $args{cb};
+
+    $self->_getaddrinfo(@args{qw( node service flags family socktype protocol )}, $cb);
+}
+
 1;
 
 __END__
@@ -357,6 +367,56 @@ The L<walk|http://docs.libuv.org/en/v1.x/loop.html#c.uv_walk> method will
 C<walk> the list of handles and fire off the callback supplied.
 
 This is an excellent way to ensure your loop is completely cleaned up.
+
+=head2 getaddrinfo
+
+    $req = $loop->getaddrinfo(%args, $callback);
+
+        $callback->($status, @results)
+
+The L<getaddrinfo|http://docs.libuv.org/en/v1.x/dns.html#c.uv_getaddrinfo>
+method performs an asynchronous name lookup, turning a hostname and/or service
+name into a set of socket addresses suitable for C<connect()> or C<bind()>.
+
+The named arguments must include at least one of C<node> and C<service>,
+giving names of the entity to be looked up. Optional numerical parameters
+C<flags>, C<family>, C<socktype> and C<protocol> will be passed as hints if
+given.
+
+The method returns a L<UV::Req> instance representing the pending request. The
+caller does not need to hold a reference to it, but it may be used to cancel
+the request if so.
+
+When complete, the callback will be invoked with a status code indicating
+success or failure, and a list of result objects. Each value in the result
+list will have methods C<family>, C<socktype> and C<protocol> returning
+integers, and C<addr> and C<canonname> returning a string.
+
+    $result->family
+    $result->socktype
+    $result->protocol
+    $result->addr
+    $result->canonname
+
+The C<canonname> field will only be set on the first result, and only if the
+C<AI_CANONNAME> flag was included in the request.
+
+=head2 getnameinfo
+
+    $req = $loop->getnameinfo($addr, $flags)
+
+        $callback->($status, $hostname, $service)
+
+The L<getnameinfo|http://docs.libuv.org/en/v1.x/dns.html#c.uv_getnameinfo>
+method performs an asynchronous reverse name lookup, turning a socket address
+into a human-readable host and service name.
+
+The method returns a L<UV::Req> instance representing the pending request. The
+caller does not need to hold a reference to it, but it may be used to cancel
+the request if so.
+
+When complete, the callback will be invoked with a status code indicating
+success or failure, and the resolved host and service names.
 
 
 =head1 AUTHOR
