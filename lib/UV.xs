@@ -571,8 +571,7 @@ static void on_getnameinfo_cb(uv_getnameinfo_t *_req, int status, const char *ho
  ************/
 
 typedef struct UV__Loop {
-    uv_loop_t _loop;
-    uv_loop_t *loop; /* may point to _loop */
+    uv_loop_t *loop; /* may point to uv_default_loop() or past this struct */
     SV *on_walk;     /* TODO as yet unused and probably not correct */
 } *UV__Loop;
 
@@ -1127,19 +1126,20 @@ _new(char *class, int want_default)
         UV__Loop self;
         int ret;
     CODE:
-        Newx(self, 1, struct UV__Loop);
+        Newxc(self, sizeof(struct UV__Loop) + (!want_default * sizeof(uv_loop_t)),
+            char, struct UV__Loop);
         self->on_walk = NULL;
 
         if(want_default) {
             self->loop = uv_default_loop();
         }
         else {
-            ret = uv_loop_init(&self->_loop);
+            self->loop = (uv_loop_t *)((char *)self + sizeof(struct UV__Loop));
+            ret = uv_loop_init(self->loop);
             if(ret != 0) {
                 Safefree(self);
                 croak("Error initialising loop (%d): %s", ret, uv_strerror(ret));
             }
-            self->loop = &self->_loop;
         }
 
         RETVAL = newSV(0);
