@@ -13,11 +13,11 @@ my $loop = UV::Loop->default;
     my $cb_called;
 
     # All-numerical lookup so should be nicely portable
-    my $req = $loop->getaddrinfo(
-        node     => "12.34.56.78",
-        service  => "1234",
-        socktype => SOCK_STREAM,
-
+    my $req = $loop->getaddrinfo( {
+            node     => "12.34.56.78",
+            service  => "1234",
+            socktype => SOCK_STREAM,
+        },
         sub {
             my ($status, @results) = @_;
             $cb_called++;
@@ -43,10 +43,10 @@ my $loop = UV::Loop->default;
 {
     my $cb_called;
 
-    my $req = $loop->getaddrinfo(
-        node    => "1.2.3.4",
-        service => "567",
-
+    my $req = $loop->getaddrinfo( {
+            node    => "1.2.3.4",
+            service => "567",
+        },
         sub {
             my ($status) = @_;
             $cb_called++;

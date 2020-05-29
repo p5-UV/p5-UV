@@ -70,12 +70,9 @@ sub walk {
 
 sub getaddrinfo {
     my $self = shift;
-    my $cb; $cb = pop if @_ % 2;
-    my %args = @_;
+    my ($args, $cb) = @_;
 
-    $cb //= delete $args{cb};
-
-    $self->_getaddrinfo(@args{qw( node service flags family socktype protocol )}, $cb);
+    $self->_getaddrinfo(@{$args}{qw( node service flags family socktype protocol )}, $cb);
 }
 
 1;
@@ -370,7 +367,7 @@ This is an excellent way to ensure your loop is completely cleaned up.
 
 =head2 getaddrinfo
 
-    $req = $loop->getaddrinfo(%args, $callback);
+    $req = $loop->getaddrinfo($args, $callback);
 
         $callback->($status, @results)
 
@@ -378,10 +375,10 @@ The L<getaddrinfo|http://docs.libuv.org/en/v1.x/dns.html#c.uv_getaddrinfo>
 method performs an asynchronous name lookup, turning a hostname and/or service
 name into a set of socket addresses suitable for C<connect()> or C<bind()>.
 
-The named arguments must include at least one of C<node> and C<service>,
-giving names of the entity to be looked up. Optional numerical parameters
-C<flags>, C<family>, C<socktype> and C<protocol> will be passed as hints if
-given.
+The arguments passed by hash reference must include at least one of C<node>
+and C<service>, giving names of the entity to be looked up. Optional numerical
+parameters C<flags>, C<family>, C<socktype> and C<protocol> will be passed as
+hints if given.
 
 The method returns a L<UV::Req> instance representing the pending request. The
 caller does not need to hold a reference to it, but it may be used to cancel
