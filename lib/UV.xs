@@ -99,34 +99,37 @@ static SV *MY_newSV_error(pTHX_ int err)
  * UV::Handle *
  **************/
 
-struct UV__Handle_base {
-    SV *selfrv; /* The underlying blessed RV itself */
-#ifdef MULTIPLICITY
-    tTHX perl;
-#endif
-    SV *data;   /* The arbitrary ->data value */
+#define FIELDS_UV__Handle \
+    SV *selfrv;           \
+    dTHXfield(perl)       \
+    SV *data;             \
     SV *on_close;
-};
+
 typedef struct UV__Handle {
-    struct UV__Handle_base base;
-    uv_handle_t  handle;
+    uv_handle_t *h;
+    FIELDS_UV__Handle
 } *UV__Handle;
 
-#define INIT_UV_HANDLE_BASE(h)  { \
-  storeTHX((h).base.perl);        \
-  (h).base.data     = NULL;       \
-  (h).base.on_close = NULL;       \
+#define NEW_UV__Handle(var, type) \
+    Newxc(var, sizeof(*var) + sizeof(type), char, void); \
+    var->h = (type *)((char *)var + sizeof(*var));
+
+#define INIT_UV__Handle(handle)  { \
+  handle->h->data = handle;        \
+  storeTHX(handle->perl);          \
+  handle->data     = NULL;         \
+  handle->on_close = NULL;         \
 }
 
 static void destroy_handle(UV__Handle self);
 static void destroy_handle_base(pTHX_ UV__Handle self)
 {
-    if(self->base.data)
-        SvREFCNT_dec(self->base.data);
-    if(self->base.on_close)
-        SvREFCNT_dec(self->base.on_close);
+    if(self->data)
+        SvREFCNT_dec(self->data);
+    if(self->on_close)
+        SvREFCNT_dec(self->on_close);
 
-    /* No need to destroy self->base.selfrv because Perl is already destroying
+    /* No need to destroy self->selfrv because Perl is already destroying
      * it, being the reason we are invoked in the first place
      */
 
@@ -141,16 +144,16 @@ static void on_close_cb(uv_handle_t *handle)
     if(!handle || !handle->data) return;
 
     self = handle->data;
-    if(!(cb = self->base.on_close) || !SvOK(cb)) return;
+    if(!(cb = self->on_close) || !SvOK(cb)) return;
 
-    dTHXa(self->base.perl);
+    dTHXa(self->perl);
     dSP;
     ENTER;
     SAVETMPS;
 
     PUSHMARK(SP);
     EXTEND(SP, 1);
-    mPUSHs(newRV_inc(self->base.selfrv));
+    mPUSHs(newRV_inc(self->selfrv));
     PUTBACK;
 
     call_sv(cb, G_DISCARD|G_VOID);
@@ -172,8 +175,8 @@ static void on_close_then_destroy(uv_handle_t *handle)
 /* See also http://docs.libuv.org/en/v1.x/check.html */
 
 typedef struct UV__Check {
-    struct UV__Handle_base base;
-    uv_check_t  check;
+    uv_check_t *h;
+    FIELDS_UV__Handle
     SV         *on_check;
 } *UV__Check;
 
@@ -193,14 +196,14 @@ static void on_check_cb(uv_check_t *check)
     self = check->data;
     if(!(cb = self->on_check) || !SvOK(cb)) return;
 
-    dTHXa(self->base.perl);
+    dTHXa(self->perl);
     dSP;
     ENTER;
     SAVETMPS;
 
     PUSHMARK(SP);
     EXTEND(SP, 1);
-    mPUSHs(newRV_inc(self->base.selfrv));
+    mPUSHs(newRV_inc(self->selfrv));
     PUTBACK;
 
     call_sv(cb, G_DISCARD|G_VOID);
@@ -216,8 +219,8 @@ static void on_check_cb(uv_check_t *check)
 /* See also http://docs.libuv.org/en/v1.x/idle.html */
 
 typedef struct UV__Idle {
-    struct UV__Handle_base base;
-    uv_idle_t  idle;
+    uv_idle_t *h;
+    FIELDS_UV__Handle
     SV        *on_idle;
 } *UV__Idle;
 
@@ -237,14 +240,14 @@ static void on_idle_cb(uv_idle_t *idle)
     self = idle->data;
     if(!(cb = self->on_idle) || !SvOK(cb)) return;
 
-    dTHXa(self->base.perl);
+    dTHXa(self->perl);
     dSP;
     ENTER;
     SAVETMPS;
 
     PUSHMARK(SP);
     EXTEND(SP, 1);
-    mPUSHs(newRV_inc(self->base.selfrv));
+    mPUSHs(newRV_inc(self->selfrv));
     PUTBACK;
 
     call_sv(cb, G_DISCARD|G_VOID);
@@ -260,8 +263,8 @@ static void on_idle_cb(uv_idle_t *idle)
 /* See also http://docs.libuv.org/en/v1.x/poll.html */
 
 typedef struct UV__Poll {
-    struct UV__Handle_base base;
-    uv_poll_t  poll;
+    uv_poll_t *h;
+    FIELDS_UV__Handle
     SV        *on_poll;
 } *UV__Poll;
 
@@ -281,14 +284,14 @@ static void on_poll_cb(uv_poll_t *poll, int status, int events)
     self = poll->data;
     if(!(cb = self->on_poll) || !SvOK(cb)) return;
 
-    dTHXa(self->base.perl);
+    dTHXa(self->perl);
     dSP;
     ENTER;
     SAVETMPS;
 
     PUSHMARK(SP);
     EXTEND(SP, 3);
-    mPUSHs(newRV_inc(self->base.selfrv));
+    mPUSHs(newRV_inc(self->selfrv));
     mPUSHi(status);
     mPUSHi(events);
     PUTBACK;
@@ -306,8 +309,8 @@ static void on_poll_cb(uv_poll_t *poll, int status, int events)
 /* See also http://docs.libuv.org/en/v1.x/prepare.html */
 
 typedef struct UV__Prepare {
-    struct UV__Handle_base base;
-    uv_prepare_t  prepare;
+    uv_prepare_t *h;
+    FIELDS_UV__Handle
     SV           *on_prepare;
 } *UV__Prepare;
 
@@ -327,14 +330,14 @@ static void on_prepare_cb(uv_prepare_t *prepare)
     self = prepare->data;
     if(!(cb = self->on_prepare) || !SvOK(cb)) return;
 
-    dTHXa(self->base.perl);
+    dTHXa(self->perl);
     dSP;
     ENTER;
     SAVETMPS;
 
     PUSHMARK(SP);
     EXTEND(SP, 1);
-    mPUSHs(newRV_inc(self->base.selfrv));
+    mPUSHs(newRV_inc(self->selfrv));
     PUTBACK;
 
     call_sv(cb, G_DISCARD|G_VOID);
@@ -350,8 +353,8 @@ static void on_prepare_cb(uv_prepare_t *prepare)
 /* See also http://docs.libuv.org/en/v1.x/signal.html */
 
 typedef struct UV__Signal {
-    struct UV__Handle_base base;
-    uv_signal_t  signal;
+    uv_signal_t *h;
+    FIELDS_UV__Handle
     int          signum;
     SV          *on_signal;
 } *UV__Signal;
@@ -372,14 +375,14 @@ static void on_signal_cb(uv_signal_t *signal, int signum)
     self = signal->data;
     if(!(cb = self->on_signal) || !SvOK(cb)) return;
 
-    dTHXa(self->base.perl);
+    dTHXa(self->perl);
     dSP;
     ENTER;
     SAVETMPS;
 
     PUSHMARK(SP);
     EXTEND(SP, 2);
-    mPUSHs(newRV_inc(self->base.selfrv));
+    mPUSHs(newRV_inc(self->selfrv));
     mPUSHi(signum);
     PUTBACK;
 
@@ -396,8 +399,8 @@ static void on_signal_cb(uv_signal_t *signal, int signum)
 /* See also http://docs.libuv.org/en/v1.x/timer.html */
 
 typedef struct UV__Timer {
-    struct UV__Handle_base base;
-    uv_timer_t  timer;
+    uv_timer_t *h;
+    FIELDS_UV__Handle
     SV         *on_timer;
 } *UV__Timer;
 
@@ -417,14 +420,14 @@ static void on_timer_cb(uv_timer_t *timer)
     self = timer->data;
     if(!(cb = self->on_timer) || !SvOK(cb)) return;
 
-    dTHXa(self->base.perl);
+    dTHXa(self->perl);
     dSP;
     ENTER;
     SAVETMPS;
 
     PUSHMARK(SP);
     EXTEND(SP, 1);
-    mPUSHs(newRV_inc(self->base.selfrv));
+    mPUSHs(newRV_inc(self->selfrv));
     PUTBACK;
 
     call_sv(cb, G_DISCARD|G_VOID);
@@ -439,9 +442,9 @@ static void on_timer_cb(uv_timer_t *timer)
 
 static void destroy_handle(UV__Handle self)
 {
-    dTHXa(self->base.perl);
+    dTHXa(self->perl);
 
-    uv_handle_t *handle = &self->handle;
+    uv_handle_t *handle = self->h;
     switch(handle->type) {
         case UV_CHECK:   destroy_check  (aTHX_ (UV__Check)  self); break;
         case UV_IDLE:    destroy_idle   (aTHX_ (UV__Idle)   self); break;
@@ -760,8 +763,8 @@ DESTROY(UV::Handle self)
         /* TODO:
             $self->stop() if ($self->can('stop') && !$self->closing() && !$self->closed());
          */
-        if(!uv_is_closing(&self->handle))
-            uv_close(&self->handle, on_close_then_destroy);
+        if(!uv_is_closing(self->h))
+            uv_close(self->h, on_close_then_destroy);
         else
             destroy_handle(self);
 
@@ -775,14 +778,14 @@ closed(UV::Handle self)
 bool
 closing(UV::Handle self)
     CODE:
-        RETVAL = uv_is_closing(&self->handle);
+        RETVAL = uv_is_closing(self->h);
     OUTPUT:
         RETVAL
 
 int
 active(UV::Handle self)
     CODE:
-        RETVAL = uv_is_active(&self->handle);
+        RETVAL = uv_is_active(self->h);
     OUTPUT:
         RETVAL
 
@@ -792,7 +795,7 @@ loop(UV::Handle self)
         UV__Loop loop;
     CODE:
         Newx(loop, 1, struct UV__Loop);
-        loop->loop = self->handle.loop;
+        loop->loop = self->h->loop;
         loop->on_walk = NULL; /* this is a mess */
 
         RETVAL = newSV(0);
@@ -804,23 +807,23 @@ SV *
 data(UV::Handle self, SV *data = NULL)
     CODE:
         if(items > 1) {
-            if(self->base.data)
-                SvREFCNT_dec(self->base.data);
-            self->base.data = newSVsv(data);
+            if(self->data)
+                SvREFCNT_dec(self->data);
+            self->data = newSVsv(data);
         }
-        RETVAL = self->base.data ? newSVsv(self->base.data) : &PL_sv_undef;
+        RETVAL = self->data ? newSVsv(self->data) : &PL_sv_undef;
     OUTPUT:
         RETVAL
 
 void
 _close(UV::Handle self)
     CODE:
-        uv_close(&self->handle, on_close_cb);
+        uv_close(self->h, on_close_cb);
 
 SV *
 _on_close(UV::Handle self, SV *cb = NULL)
     CODE:
-        RETVAL = do_callback_accessor(&self->base.on_close, cb);
+        RETVAL = do_callback_accessor(&self->on_close, cb);
     OUTPUT:
         RETVAL
 
@@ -832,20 +835,20 @@ _new(char *class, UV::Loop loop)
         UV__Check self;
         int ret;
     CODE:
-        Newx(self, 1, struct UV__Check);
-        ret = uv_check_init(loop->loop, &self->check);
+        NEW_UV__Handle(self, uv_check_t);
+
+        ret = uv_check_init(loop->loop, self->h);
         if (ret != 0) {
             Safefree(self);
             croak("Couldn't initialize check handle (%d): %s", ret, uv_strerror(ret));
         }
-        self->check.data = self;
 
-        INIT_UV_HANDLE_BASE(*self);
+        INIT_UV__Handle(self);
         self->on_check = NULL;
 
         RETVAL = newSV(0);
         sv_setref_pv(RETVAL, "UV::Check", self);
-        self->base.selfrv = SvRV(RETVAL); /* no inc */
+        self->selfrv = SvRV(RETVAL); /* no inc */
     OUTPUT:
         RETVAL
 
@@ -859,14 +862,14 @@ _on_check(UV::Check self, SV *cb = NULL)
 int
 _start(UV::Check self)
     CODE:
-        RETVAL = uv_check_start(&self->check, on_check_cb);
+        RETVAL = uv_check_start(self->h, on_check_cb);
     OUTPUT:
         RETVAL
 
 int
 stop(UV::Check self)
     CODE:
-        RETVAL = uv_check_stop(&self->check);
+        RETVAL = uv_check_stop(self->h);
     OUTPUT:
         RETVAL
 
@@ -878,20 +881,20 @@ _new(char *class, UV::Loop loop)
         UV__Idle self;
         int ret;
     CODE:
-        Newx(self, 1, struct UV__Idle);
-        ret = uv_idle_init(loop->loop, &self->idle);
+        NEW_UV__Handle(self, uv_idle_t);
+
+        ret = uv_idle_init(loop->loop, self->h);
         if (ret != 0) {
             Safefree(self);
             croak("Couldn't initialize idle handle (%d): %s", ret, uv_strerror(ret));
         }
-        self->idle.data = self;
 
-        INIT_UV_HANDLE_BASE(*self);
+        INIT_UV__Handle(self);
         self->on_idle = NULL;
 
         RETVAL = newSV(0);
         sv_setref_pv(RETVAL, "UV::Idle", self);
-        self->base.selfrv = SvRV(RETVAL); /* no inc */
+        self->selfrv = SvRV(RETVAL); /* no inc */
     OUTPUT:
         RETVAL
 
@@ -905,14 +908,14 @@ _on_idle(UV::Idle self, SV *cb = NULL)
 int
 _start(UV::Idle self)
     CODE:
-        RETVAL = uv_idle_start(&self->idle, on_idle_cb);
+        RETVAL = uv_idle_start(self->h, on_idle_cb);
     OUTPUT:
         RETVAL
 
 int
 stop(UV::Idle self)
     CODE:
-        RETVAL = uv_idle_stop(&self->idle);
+        RETVAL = uv_idle_stop(self->h);
     OUTPUT:
         RETVAL
 
@@ -924,20 +927,20 @@ _new(char *class, UV::Loop loop)
         UV__Prepare self;
         int ret;
     CODE:
-        Newx(self, 1, struct UV__Prepare);
-        ret = uv_prepare_init(loop->loop, &self->prepare);
+        NEW_UV__Handle(self, uv_prepare_t);
+
+        ret = uv_prepare_init(loop->loop, self->h);
         if (ret != 0) {
             Safefree(self);
             croak("Couldn't initialize prepare handle (%d): %s", ret, uv_strerror(ret));
         }
-        self->prepare.data = self;
 
-        INIT_UV_HANDLE_BASE(*self);
+        INIT_UV__Handle(self);
         self->on_prepare = NULL;
 
         RETVAL = newSV(0);
         sv_setref_pv(RETVAL, "UV::Prepare", self);
-        self->base.selfrv = SvRV(RETVAL); /* no inc */
+        self->selfrv = SvRV(RETVAL); /* no inc */
     OUTPUT:
         RETVAL
 
@@ -951,14 +954,14 @@ _on_prepare(UV::Prepare self, SV *cb = NULL)
 int
 _start(UV::Prepare self)
     CODE:
-        RETVAL = uv_prepare_start(&self->prepare, on_prepare_cb);
+        RETVAL = uv_prepare_start(self->h, on_prepare_cb);
     OUTPUT:
         RETVAL
 
 int
 stop(UV::Prepare self)
     CODE:
-        RETVAL = uv_prepare_stop(&self->prepare);
+        RETVAL = uv_prepare_stop(self->h);
     OUTPUT:
         RETVAL
 
@@ -970,23 +973,23 @@ _new(char *class, UV::Loop loop, int fd, bool is_socket)
         UV__Poll self;
         int ret;
     CODE:
-        Newx(self, 1, struct UV__Poll);
+        NEW_UV__Handle(self, uv_poll_t);
+
         if(is_socket)
-            ret = uv_poll_init_socket(loop->loop, &self->poll, _MAKE_SOCK(fd));
+            ret = uv_poll_init_socket(loop->loop, self->h, _MAKE_SOCK(fd));
         else
-            ret = uv_poll_init(loop->loop, &self->poll, fd);
+            ret = uv_poll_init(loop->loop, self->h, fd);
         if (ret != 0) {
             Safefree(self);
             croak("Couldn't initialize poll handle (%d): %s", ret, uv_strerror(ret));
         }
-        self->poll.data = self;
 
-        INIT_UV_HANDLE_BASE(*self);
+        INIT_UV__Handle(self);
         self->on_poll = NULL;
 
         RETVAL = newSV(0);
         sv_setref_pv(RETVAL, "UV::Poll", self);
-        self->base.selfrv = SvRV(RETVAL); /* no inc */
+        self->selfrv = SvRV(RETVAL); /* no inc */
     OUTPUT:
         RETVAL
 
@@ -1000,14 +1003,14 @@ _on_poll(UV::Poll self, SV *cb = NULL)
 int
 _start(UV::Poll self, int events = UV_READABLE)
     CODE:
-        RETVAL = uv_poll_start(&self->poll, events, on_poll_cb);
+        RETVAL = uv_poll_start(self->h, events, on_poll_cb);
     OUTPUT:
         RETVAL
 
 int
 stop(UV::Poll self)
     CODE:
-        RETVAL = uv_poll_stop(&self->poll);
+        RETVAL = uv_poll_stop(self->h);
     OUTPUT:
         RETVAL
 
@@ -1019,21 +1022,21 @@ _new(char *class, UV::Loop loop, int signum)
         UV__Signal self;
         int ret;
     CODE:
-        Newx(self, 1, struct UV__Signal);
-        ret = uv_signal_init(loop->loop, &self->signal);
+        NEW_UV__Handle(self, uv_signal_t);
+
+        ret = uv_signal_init(loop->loop, self->h);
         if (ret != 0) {
             Safefree(self);
             croak("Couldn't initialise signal handle (%d): %s", ret, uv_strerror(ret));
         }
-        self->signal.data = self;
-        self->signum = signum; /* need to remember this until start() time */
 
-        INIT_UV_HANDLE_BASE(*self);
+        INIT_UV__Handle(self);
+        self->signum = signum; /* need to remember this until start() time */
         self->on_signal = NULL;
 
         RETVAL = newSV(0);
         sv_setref_pv(RETVAL, "UV::Signal", self);
-        self->base.selfrv = SvRV(RETVAL); /* no inc */
+        self->selfrv = SvRV(RETVAL); /* no inc */
     OUTPUT:
         RETVAL
 
@@ -1047,14 +1050,14 @@ _on_signal(UV::Signal self, SV *cb = NULL)
 int
 _start(UV::Signal self)
     CODE:
-        RETVAL = uv_signal_start(&self->signal, on_signal_cb, self->signum);
+        RETVAL = uv_signal_start(self->h, on_signal_cb, self->signum);
     OUTPUT:
         RETVAL
 
 int
 stop(UV::Signal self)
     CODE:
-        RETVAL = uv_signal_stop(&self->signal);
+        RETVAL = uv_signal_stop(self->h);
     OUTPUT:
         RETVAL
 
@@ -1066,20 +1069,20 @@ _new(char *class, UV::Loop loop)
         UV__Timer self;
         int ret;
     CODE:
-        Newx(self, 1, struct UV__Timer);
-        ret = uv_timer_init(loop->loop, &self->timer);
+        NEW_UV__Handle(self, uv_timer_t);
+
+        ret = uv_timer_init(loop->loop, self->h);
         if (ret != 0) {
             Safefree(self);
             croak("Couldn't initialize timer handle (%d): %s", ret, uv_strerror(ret));
         }
-        self->timer.data = self;
 
-        INIT_UV_HANDLE_BASE(*self);
+        INIT_UV__Handle(self);
         self->on_timer = NULL;
 
         RETVAL = newSV(0);
         sv_setref_pv(RETVAL, "UV::Timer", self);
-        self->base.selfrv = SvRV(RETVAL); /* no inc */
+        self->selfrv = SvRV(RETVAL); /* no inc */
     OUTPUT:
         RETVAL
 
@@ -1093,33 +1096,33 @@ _on_timer(UV::Timer self, SV *cb = NULL)
 int
 _start(UV::Timer self, UV timeout, UV repeat)
     CODE:
-        RETVAL = uv_timer_start(&self->timer, on_timer_cb, timeout, repeat);
+        RETVAL = uv_timer_start(self->h, on_timer_cb, timeout, repeat);
     OUTPUT:
         RETVAL
 
 UV
 _get_repeat(UV::Timer self)
     CODE:
-        RETVAL = uv_timer_get_repeat(&self->timer);
+        RETVAL = uv_timer_get_repeat(self->h);
     OUTPUT:
         RETVAL
 
 void
 _set_repeat(UV::Timer self, UV repeat)
     CODE:
-        uv_timer_set_repeat(&self->timer, repeat);
+        uv_timer_set_repeat(self->h, repeat);
 
 int
 again(UV::Timer self)
     CODE:
-        RETVAL = uv_timer_again(&self->timer);
+        RETVAL = uv_timer_again(self->h);
     OUTPUT:
         RETVAL
 
 int
 stop(UV::Timer self)
     CODE:
-        RETVAL = uv_timer_stop(&self->timer);
+        RETVAL = uv_timer_stop(self->h);
     OUTPUT:
         RETVAL
 
