@@ -22,6 +22,14 @@
 #include "perl-backcompat.h"
 #include "uv-backcompat.h"
 
+#ifdef MULTIPLICITY
+#  define storeTHX(var)  (var) = aTHX
+#  define dTHXfield(var) tTHX var;
+#else
+#  define storeTHX(var)  dNOOP
+#  define dTHXfield(var)
+#endif
+
 #if defined(__MINGW32__) || defined(WIN32)
 #include <io.h> /* we need _get_osfhandle() on windows */
 #  define _MAKE_SOCK(f) (_get_osfhandle(f))
@@ -103,12 +111,6 @@ typedef struct UV__Handle {
     struct UV__Handle_base base;
     uv_handle_t  handle;
 } *UV__Handle;
-
-#ifdef MULTIPLICITY
-#  define storeTHX(var)  (var) = aTHX
-#else
-#  define storeTHX(var)  dNOOP
-#endif
 
 #define INIT_UV_HANDLE_BASE(h)  { \
   storeTHX((h).base.perl);        \
@@ -456,26 +458,29 @@ static void destroy_handle(UV__Handle self)
  * UV::Req *
  ***********/
 
-struct UV__Req_base {
-    SV *selfrv; /* The underlying blessed RV itself */
-#ifdef MULTIPLICITY
-    tTHX perl;
-#endif
-};
+#define FIELDS_UV__Req \
+    SV *selfrv;        \
+    dTHXfield(perl)
+
 typedef struct UV__Req {
-    struct UV__Req_base base;
-    uv_req_t req;
+    uv_req_t *r;
+    FIELDS_UV__Req
 } *UV__Req;
 
-#define INIT_UV_REQ_BASE(r)  { \
-  storeTHX((r).base.perl);     \
+#define NEW_UV__Req(var, type) \
+    Newxc(var, sizeof(*var) + sizeof(type), char, void); \
+    var->r = (type *)((char *)var + sizeof(*var));
+
+#define INIT_UV__Req(req)  { \
+    req->r->data = req;      \
+    storeTHX(req->perl);     \
 }
 
 /* See also http://docs.libuv.org/en/v1.x/dns.html#c.uv_getaddrinfo */
 
 typedef struct UV__Req_Getaddrinfo {
-    struct UV__Req_base base;
-    uv_getaddrinfo_t getaddrinfo;
+    uv_getaddrinfo_t *r;
+    FIELDS_UV__Req
     SV               *cb;
 } *UV__Req_Getaddrinfo;
 
@@ -491,7 +496,7 @@ typedef struct UV__getaddrinfo_result {
 static void on_getaddrinfo_cb(uv_getaddrinfo_t *_req, int status, struct addrinfo *res)
 {
     UV__Req_Getaddrinfo req = _req->data;
-    dTHXa(req->base.perl);
+    dTHXa(req->perl);
 
     struct addrinfo *addrp;
 
@@ -533,19 +538,19 @@ static void on_getaddrinfo_cb(uv_getaddrinfo_t *_req, int status, struct addrinf
     LEAVE;
 
     uv_freeaddrinfo(res);
-    SvREFCNT_dec(req->base.selfrv);
+    SvREFCNT_dec(req->selfrv);
 }
 
 typedef struct UV__Req_Getnameinfo {
-    struct UV__Req_base base;
-    uv_getnameinfo_t getnameinfo;
+    uv_getnameinfo_t *r;
+    FIELDS_UV__Req
     SV               *cb;
 } *UV__Req_Getnameinfo;
 
 static void on_getnameinfo_cb(uv_getnameinfo_t *_req, int status, const char *hostname, const char *service)
 {
     UV__Req_Getnameinfo req = _req->data;
-    dTHXa(req->base.perl);
+    dTHXa(req->perl);
 
     dSP;
     ENTER;
@@ -563,7 +568,7 @@ static void on_getnameinfo_cb(uv_getnameinfo_t *_req, int status, const char *ho
     FREETMPS;
     LEAVE;
 
-    SvREFCNT_dec(req->base.selfrv);
+    SvREFCNT_dec(req->selfrv);
 }
 
 /************
@@ -1240,17 +1245,15 @@ _getaddrinfo(UV::Loop self, char *node, char *service, SV *flags, SV *family, SV
         struct addrinfo hints = { 0 };
         int ret;
     CODE:
-        Newx(req, 1, struct UV__Req_Getaddrinfo);
-        req->getaddrinfo.data = req;
-
-        INIT_UV_REQ_BASE(*req);
+        NEW_UV__Req(req, uv_getaddrinfo_t);
+        INIT_UV__Req(req);
 
         hints.ai_flags    = SvOK(flags)    ? SvIV(flags)    : (AI_V4MAPPED|AI_ADDRCONFIG);
         hints.ai_family   = SvOK(family)   ? SvIV(family)   : AF_UNSPEC;
         hints.ai_socktype = SvOK(socktype) ? SvIV(socktype) : 0;
         hints.ai_protocol = SvOK(protocol) ? SvIV(protocol) : 0;
 
-        ret = uv_getaddrinfo(self->loop, &req->getaddrinfo, on_getaddrinfo_cb,
+        ret = uv_getaddrinfo(self->loop, req->r, on_getaddrinfo_cb,
             node, service, &hints);
         if (ret != 0) {
             Safefree(req);
@@ -1261,7 +1264,7 @@ _getaddrinfo(UV::Loop self, char *node, char *service, SV *flags, SV *family, SV
 
         RETVAL = newSV(0);
         sv_setref_pv(RETVAL, "UV::Req", req);
-        req->base.selfrv = SvREFCNT_inc(SvRV(RETVAL));
+        req->selfrv = SvREFCNT_inc(SvRV(RETVAL));
     OUTPUT:
         RETVAL
 
@@ -1271,12 +1274,10 @@ getnameinfo(UV::Loop self, SV *addr, int flags, SV *cb)
         UV__Req_Getnameinfo req;
         int ret;
     CODE:
-        Newx(req, 1, struct UV__Req_Getnameinfo);
-        req->getnameinfo.data = req;
+        NEW_UV__Req(req, uv_getnameinfo_t);
+        INIT_UV__Req(req);
 
-        INIT_UV_REQ_BASE(*req);
-
-        ret = uv_getnameinfo(self->loop, &req->getnameinfo, on_getnameinfo_cb,
+        ret = uv_getnameinfo(self->loop, req->r, on_getnameinfo_cb,
             (struct sockaddr *)SvPV_nolen(addr), flags);
         if (ret != 0) {
             Safefree(req);
@@ -1287,7 +1288,7 @@ getnameinfo(UV::Loop self, SV *addr, int flags, SV *cb)
 
         RETVAL = newSV(0);
         sv_setref_pv(RETVAL, "UV::Req", req);
-        req->base.selfrv = SvREFCNT_inc(SvRV(RETVAL));
+        req->selfrv = SvREFCNT_inc(SvRV(RETVAL));
     OUTPUT:
         RETVAL
 
@@ -1296,7 +1297,7 @@ MODULE = UV             PACKAGE = UV::Req
 void
 DESTROY(UV::Req req)
     CODE:
-        switch(req->req.type) {
+        switch(req->r->type) {
             case UV_GETADDRINFO:
                 SvREFCNT_dec(((UV__Req_Getaddrinfo)req)->cb);
                 break;
@@ -1311,7 +1312,7 @@ DESTROY(UV::Req req)
 int
 cancel(UV::Req req)
     CODE:
-        RETVAL = uv_cancel(&req->req);
+        RETVAL = uv_cancel(req->r);
     OUTPUT:
         RETVAL
 
