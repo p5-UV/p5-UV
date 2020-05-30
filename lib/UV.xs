@@ -1244,7 +1244,6 @@ SV *
 _getaddrinfo(UV::Loop self, char *node, char *service, SV *flags, SV *family, SV *socktype, SV *protocol, SV *cb)
     INIT:
         UV__Req_getaddrinfo req;
-        SV **svp;
         struct addrinfo hints = { 0 };
         int ret;
     CODE:
