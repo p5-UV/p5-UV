@@ -481,11 +481,11 @@ typedef struct UV__Req {
 
 /* See also http://docs.libuv.org/en/v1.x/dns.html#c.uv_getaddrinfo */
 
-typedef struct UV__Req_Getaddrinfo {
+typedef struct UV__Req_getaddrinfo {
     uv_getaddrinfo_t *r;
     FIELDS_UV__Req
     SV               *cb;
-} *UV__Req_Getaddrinfo;
+} *UV__Req_getaddrinfo;
 
 typedef struct UV__getaddrinfo_result {
     int              family;
@@ -498,7 +498,7 @@ typedef struct UV__getaddrinfo_result {
 
 static void on_getaddrinfo_cb(uv_getaddrinfo_t *_req, int status, struct addrinfo *res)
 {
-    UV__Req_Getaddrinfo req = _req->data;
+    UV__Req_getaddrinfo req = _req->data;
     dTHXa(req->perl);
 
     struct addrinfo *addrp;
@@ -544,15 +544,15 @@ static void on_getaddrinfo_cb(uv_getaddrinfo_t *_req, int status, struct addrinf
     SvREFCNT_dec(req->selfrv);
 }
 
-typedef struct UV__Req_Getnameinfo {
+typedef struct UV__Req_getnameinfo {
     uv_getnameinfo_t *r;
     FIELDS_UV__Req
     SV               *cb;
-} *UV__Req_Getnameinfo;
+} *UV__Req_getnameinfo;
 
 static void on_getnameinfo_cb(uv_getnameinfo_t *_req, int status, const char *hostname, const char *service)
 {
-    UV__Req_Getnameinfo req = _req->data;
+    UV__Req_getnameinfo req = _req->data;
     dTHXa(req->perl);
 
     dSP;
@@ -1243,7 +1243,7 @@ update_time(UV::Loop self)
 SV *
 _getaddrinfo(UV::Loop self, char *node, char *service, SV *flags, SV *family, SV *socktype, SV *protocol, SV *cb)
     INIT:
-        UV__Req_Getaddrinfo req;
+        UV__Req_getaddrinfo req;
         SV **svp;
         struct addrinfo hints = { 0 };
         int ret;
@@ -1274,7 +1274,7 @@ _getaddrinfo(UV::Loop self, char *node, char *service, SV *flags, SV *family, SV
 SV *
 getnameinfo(UV::Loop self, SV *addr, int flags, SV *cb)
     INIT:
-        UV__Req_Getnameinfo req;
+        UV__Req_getnameinfo req;
         int ret;
     CODE:
         NEW_UV__Req(req, uv_getnameinfo_t);
@@ -1302,11 +1302,11 @@ DESTROY(UV::Req req)
     CODE:
         switch(req->r->type) {
             case UV_GETADDRINFO:
-                SvREFCNT_dec(((UV__Req_Getaddrinfo)req)->cb);
+                SvREFCNT_dec(((UV__Req_getaddrinfo)req)->cb);
                 break;
 
             case UV_GETNAMEINFO:
-                SvREFCNT_dec(((UV__Req_Getnameinfo)req)->cb);
+                SvREFCNT_dec(((UV__Req_getnameinfo)req)->cb);
                 break;
         }
 
