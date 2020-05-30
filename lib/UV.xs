@@ -463,7 +463,8 @@ static void destroy_handle(UV__Handle self)
 
 #define FIELDS_UV__Req \
     SV *selfrv;        \
-    dTHXfield(perl)
+    dTHXfield(perl)    \
+    SV *cb;
 
 typedef struct UV__Req {
     uv_req_t *r;
@@ -484,7 +485,6 @@ typedef struct UV__Req {
 typedef struct UV__Req_getaddrinfo {
     uv_getaddrinfo_t *r;
     FIELDS_UV__Req
-    SV               *cb;
 } *UV__Req_getaddrinfo;
 
 typedef struct UV__getaddrinfo_result {
@@ -547,7 +547,6 @@ static void on_getaddrinfo_cb(uv_getaddrinfo_t *_req, int status, struct addrinf
 typedef struct UV__Req_getnameinfo {
     uv_getnameinfo_t *r;
     FIELDS_UV__Req
-    SV               *cb;
 } *UV__Req_getnameinfo;
 
 static void on_getnameinfo_cb(uv_getnameinfo_t *_req, int status, const char *hostname, const char *service)
