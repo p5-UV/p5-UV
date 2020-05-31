@@ -832,14 +832,14 @@ SV *
 _new(char *class, UV::Loop loop)
     INIT:
         UV__Check self;
-        int ret;
+        int err;
     CODE:
         NEW_UV__Handle(self, uv_check_t);
 
-        ret = uv_check_init(loop->loop, self->h);
-        if (ret != 0) {
+        err = uv_check_init(loop->loop, self->h);
+        if (err != 0) {
             Safefree(self);
-            croak("Couldn't initialize check handle (%d): %s", ret, uv_strerror(ret));
+            croak("Couldn't initialize check handle (%d): %s", err, uv_strerror(err));
         }
 
         INIT_UV__Handle(self);
@@ -878,14 +878,14 @@ SV *
 _new(char *class, UV::Loop loop)
     INIT:
         UV__Idle self;
-        int ret;
+        int err;
     CODE:
         NEW_UV__Handle(self, uv_idle_t);
 
-        ret = uv_idle_init(loop->loop, self->h);
-        if (ret != 0) {
+        err = uv_idle_init(loop->loop, self->h);
+        if (err != 0) {
             Safefree(self);
-            croak("Couldn't initialize idle handle (%d): %s", ret, uv_strerror(ret));
+            croak("Couldn't initialize idle handle (%d): %s", err, uv_strerror(err));
         }
 
         INIT_UV__Handle(self);
@@ -924,14 +924,14 @@ SV *
 _new(char *class, UV::Loop loop)
     INIT:
         UV__Prepare self;
-        int ret;
+        int err;
     CODE:
         NEW_UV__Handle(self, uv_prepare_t);
 
-        ret = uv_prepare_init(loop->loop, self->h);
-        if (ret != 0) {
+        err = uv_prepare_init(loop->loop, self->h);
+        if (err != 0) {
             Safefree(self);
-            croak("Couldn't initialize prepare handle (%d): %s", ret, uv_strerror(ret));
+            croak("Couldn't initialize prepare handle (%d): %s", err, uv_strerror(err));
         }
 
         INIT_UV__Handle(self);
@@ -970,17 +970,17 @@ SV *
 _new(char *class, UV::Loop loop, int fd, bool is_socket)
     INIT:
         UV__Poll self;
-        int ret;
+        int err;
     CODE:
         NEW_UV__Handle(self, uv_poll_t);
 
         if(is_socket)
-            ret = uv_poll_init_socket(loop->loop, self->h, _MAKE_SOCK(fd));
+            err = uv_poll_init_socket(loop->loop, self->h, _MAKE_SOCK(fd));
         else
-            ret = uv_poll_init(loop->loop, self->h, fd);
-        if (ret != 0) {
+            err = uv_poll_init(loop->loop, self->h, fd);
+        if (err != 0) {
             Safefree(self);
-            croak("Couldn't initialize poll handle (%d): %s", ret, uv_strerror(ret));
+            croak("Couldn't initialize poll handle (%d): %s", err, uv_strerror(err));
         }
 
         INIT_UV__Handle(self);
@@ -1019,14 +1019,14 @@ SV *
 _new(char *class, UV::Loop loop, int signum)
     INIT:
         UV__Signal self;
-        int ret;
+        int err;
     CODE:
         NEW_UV__Handle(self, uv_signal_t);
 
-        ret = uv_signal_init(loop->loop, self->h);
-        if (ret != 0) {
+        err = uv_signal_init(loop->loop, self->h);
+        if (err != 0) {
             Safefree(self);
-            croak("Couldn't initialise signal handle (%d): %s", ret, uv_strerror(ret));
+            croak("Couldn't initialise signal handle (%d): %s", err, uv_strerror(err));
         }
 
         INIT_UV__Handle(self);
@@ -1066,14 +1066,14 @@ SV *
 _new(char *class, UV::Loop loop)
     INIT:
         UV__Timer self;
-        int ret;
+        int err;
     CODE:
         NEW_UV__Handle(self, uv_timer_t);
 
-        ret = uv_timer_init(loop->loop, self->h);
-        if (ret != 0) {
+        err = uv_timer_init(loop->loop, self->h);
+        if (err != 0) {
             Safefree(self);
-            croak("Couldn't initialize timer handle (%d): %s", ret, uv_strerror(ret));
+            croak("Couldn't initialize timer handle (%d): %s", err, uv_strerror(err));
         }
 
         INIT_UV__Handle(self);
@@ -1131,7 +1131,7 @@ SV *
 _new(char *class, int want_default)
     INIT:
         UV__Loop self;
-        int ret;
+        int err;
     CODE:
         Newxc(self, sizeof(struct UV__Loop) + (!want_default * sizeof(uv_loop_t)),
             char, struct UV__Loop);
@@ -1142,10 +1142,10 @@ _new(char *class, int want_default)
         }
         else {
             self->loop = (uv_loop_t *)((char *)self + sizeof(struct UV__Loop));
-            ret = uv_loop_init(self->loop);
-            if(ret != 0) {
+            err = uv_loop_init(self->loop);
+            if(err != 0) {
                 Safefree(self);
-                croak("Error initialising loop (%d): %s", ret, uv_strerror(ret));
+                croak("Error initialising loop (%d): %s", err, uv_strerror(err));
             }
         }
 
@@ -1244,7 +1244,7 @@ _getaddrinfo(UV::Loop self, char *node, char *service, SV *flags, SV *family, SV
     INIT:
         UV__Req_getaddrinfo req;
         struct addrinfo hints = { 0 };
-        int ret;
+        int err;
     CODE:
         NEW_UV__Req(req, uv_getaddrinfo_t);
         INIT_UV__Req(req);
@@ -1254,11 +1254,11 @@ _getaddrinfo(UV::Loop self, char *node, char *service, SV *flags, SV *family, SV
         hints.ai_socktype = SvOK(socktype) ? SvIV(socktype) : 0;
         hints.ai_protocol = SvOK(protocol) ? SvIV(protocol) : 0;
 
-        ret = uv_getaddrinfo(self->loop, req->r, on_getaddrinfo_cb,
+        err = uv_getaddrinfo(self->loop, req->r, on_getaddrinfo_cb,
             node, service, &hints);
-        if (ret != 0) {
+        if (err != 0) {
             Safefree(req);
-            croak("Couldn't getaddrinfo (%d): %s", ret, uv_strerror(ret));
+            croak("Couldn't getaddrinfo (%d): %s", err, uv_strerror(err));
         }
 
         req->cb = newSVsv(cb);
@@ -1273,16 +1273,16 @@ SV *
 getnameinfo(UV::Loop self, SV *addr, int flags, SV *cb)
     INIT:
         UV__Req_getnameinfo req;
-        int ret;
+        int err;
     CODE:
         NEW_UV__Req(req, uv_getnameinfo_t);
         INIT_UV__Req(req);
 
-        ret = uv_getnameinfo(self->loop, req->r, on_getnameinfo_cb,
+        err = uv_getnameinfo(self->loop, req->r, on_getnameinfo_cb,
             (struct sockaddr *)SvPV_nolen(addr), flags);
-        if (ret != 0) {
+        if (err != 0) {
             Safefree(req);
-            croak("Couldn't getnameinfo (%d): %s", ret, uv_strerror(ret));
+            croak("Couldn't getnameinfo (%d): %s", err, uv_strerror(err));
         }
 
         req->cb = newSVsv(cb);
