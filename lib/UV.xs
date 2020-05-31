@@ -176,6 +176,12 @@ static void destroy_handle_base(pTHX_ UV__Handle self)
     Safefree(self);
 }
 
+static void on_alloc_cb(uv_handle_t *handle, size_t suggested, uv_buf_t *buf)
+{
+    Newx(buf->base, suggested, char);
+    buf->len = suggested;
+}
+
 static void on_close_cb(uv_handle_t *handle)
 {
     UV__Handle  self;
@@ -206,6 +212,92 @@ static void on_close_then_destroy(uv_handle_t *handle)
 {
     on_close_cb(handle);
     destroy_handle(handle->data);
+}
+
+/**************
+ * UV::Stream *
+ **************/
+
+#define FIELDS_UV__Stream \
+    SV *on_read;          \
+    SV *on_connection;
+
+#define INIT_UV__Stream(stream)  { \
+    stream->on_read = NULL;        \
+    stream->on_connection = NULL;  \
+}
+
+typedef struct UV__Stream {
+    uv_stream_t *h;
+    FIELDS_UV__Handle
+    FIELDS_UV__Stream
+} *UV__Stream;
+
+static void destroy_stream(pTHX_ UV__Stream self)
+{
+    if(self->on_read)
+        SvREFCNT_dec(self->on_read);
+    if(self->on_connection)
+        SvREFCNT_dec(self->on_connection);
+}
+
+static void on_read_cb(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf)
+{
+    UV__Stream self;
+    SV         *cb;
+
+    if(!stream || !stream->data) return;
+
+    self = stream->data;
+    if((cb = self->on_read) && SvOK(cb)) {
+        dTHXa(self->perl);
+        dSP;
+        ENTER;
+        SAVETMPS;
+
+        PUSHMARK(SP);
+        EXTEND(SP, 3);
+        mPUSHs(newRV_inc(self->selfrv));
+        mPUSHs(nread < 0 ? newSV_error(nread) : &PL_sv_undef);
+        if(nread >= 0)
+            mPUSHp(buf->base, nread);
+        PUTBACK;
+
+        call_sv(cb, G_DISCARD|G_VOID);
+
+        FREETMPS;
+        LEAVE;
+    }
+
+    if(buf && buf->base)
+        Safefree(buf->base);
+}
+
+static void on_connection_cb(uv_stream_t *stream, int status)
+{
+    UV__Stream self;
+    SV         *cb;
+
+    if(!stream || !stream->data) return;
+
+    self = stream->data;
+    if(!(cb = self->on_connection) || !SvOK(cb)) return;
+
+    dTHXa(self->perl);
+    dSP;
+    ENTER;
+    SAVETMPS;
+
+    PUSHMARK(SP);
+    EXTEND(SP, 2);
+    mPUSHs(newRV_inc(self->selfrv));
+    mPUSHi(status);
+    PUTBACK;
+
+    call_sv(cb, G_DISCARD|G_VOID);
+
+    FREETMPS;
+    LEAVE;
 }
 
 /*************
@@ -294,6 +386,23 @@ static void on_idle_cb(uv_idle_t *idle)
 
     FREETMPS;
     LEAVE;
+}
+
+/************
+ * UV::Pipe *
+ ************/
+
+/* See also http://docs.libuv.org/en/v1.x/pipe.html */
+
+typedef struct UV__Pipe {
+    uv_pipe_t *h;
+    FIELDS_UV__Handle
+    FIELDS_UV__Stream
+} *UV__Pipe;
+
+static void destroy_pipe(pTHX_ UV__Pipe self)
+{
+    destroy_stream(aTHX_ (UV__Stream)self);
 }
 
 /************
@@ -488,6 +597,8 @@ static void destroy_handle(UV__Handle self)
     switch(handle->type) {
         case UV_CHECK:   destroy_check  (aTHX_ (UV__Check)  self); break;
         case UV_IDLE:    destroy_idle   (aTHX_ (UV__Idle)   self); break;
+        case UV_NAMED_PIPE:
+                         destroy_pipe   (aTHX_ (UV__Pipe)   self); break;
         case UV_POLL:    destroy_poll   (aTHX_ (UV__Poll)   self); break;
         case UV_PREPARE: destroy_prepare(aTHX_ (UV__Prepare)self); break;
         case UV_SIGNAL:  destroy_signal (aTHX_ (UV__Signal) self); break;
@@ -519,6 +630,46 @@ typedef struct UV__Req {
     req->r->data = req;      \
     storeTHX(req->perl);     \
 }
+
+static void on_req_cb(uv_req_t *_req, int status)
+{
+    UV__Req req = _req->data;
+    dTHXa(req->perl);
+
+    dSP;
+    ENTER;
+    SAVETMPS;
+
+    PUSHMARK(SP);
+    EXTEND(SP, 1);
+    mPUSHs(newSV_error(status));
+    PUTBACK;
+
+    call_sv(req->cb, G_DISCARD|G_VOID);
+
+    FREETMPS;
+    LEAVE;
+
+    SvREFCNT_dec(req->selfrv);
+}
+
+/* Simple UV::Req subtypes that just invoke a callback with status */
+
+typedef struct UV__Req_connect {
+    uv_connect_t *r;
+    FIELDS_UV__Req
+} *UV__Req_connect;
+
+typedef struct UV__Req_shutdown {
+    uv_shutdown_t *r;
+    FIELDS_UV__Req
+} *UV__Req_shutdown;
+
+typedef struct UV__Req_write {
+    uv_write_t *r;
+    FIELDS_UV__Req
+    char       *s;
+} *UV__Req_write;
 
 /* See also http://docs.libuv.org/en/v1.x/dns.html#c.uv_getaddrinfo */
 
@@ -1009,6 +1160,90 @@ stop(UV::Prepare self)
     CODE:
         CHECKCALL(uv_prepare_stop(self->h));
 
+MODULE = UV             PACKAGE = UV::Pipe
+
+SV *
+_new(char *class, UV::Loop loop)
+    INIT:
+        UV__Pipe self;
+        int err;
+    CODE:
+        NEW_UV__Handle(self, uv_pipe_t);
+
+        err = uv_pipe_init(loop->loop, self->h, 0);
+        if (err != 0) {
+            Safefree(self);
+            THROWERR("Couldn't initialse pipe handle", err);
+        }
+
+        INIT_UV__Handle(self);
+        INIT_UV__Stream(self);
+
+        RETVAL = newSV(0);
+        sv_setref_pv(RETVAL, "UV::Pipe", self);
+        self->selfrv = SvRV(RETVAL); /* no inc */
+    OUTPUT:
+        RETVAL
+
+void
+_open(UV::Pipe self, int fd)
+    CODE:
+        CHECKCALL(uv_pipe_open(self->h, fd));
+
+void
+bind(UV::Pipe self, char *name)
+    CODE:
+        CHECKCALL(uv_pipe_bind(self->h, name));
+
+SV *
+connect(UV::Pipe self, char *path, SV *cb)
+    INIT:
+        UV__Req_connect req;
+    CODE:
+        NEW_UV__Req(req, uv_connect_t);
+        INIT_UV__Req(req);
+
+        uv_pipe_connect(req->r, self->h, path, (uv_connect_cb)on_req_cb);
+
+        req->cb = newSVsv(cb);
+
+        RETVAL = newSV(0);
+        sv_setref_pv(RETVAL, "UV::Req", req);
+        req->selfrv = SvREFCNT_inc(SvRV(RETVAL));
+    OUTPUT:
+        RETVAL
+
+SV *
+getpeername(UV::Pipe self)
+    ALIAS:
+        getpeername = 0
+        getsockname = 1
+    INIT:
+        size_t len;
+        int err;
+    CODE:
+        RETVAL = newSV(256);
+        len = SvLEN(RETVAL);
+
+        err = (ix == 0) ?
+            uv_pipe_getpeername(self->h, SvPVX(RETVAL), &len) :
+            uv_pipe_getsockname(self->h, SvPVX(RETVAL), &len);
+        if(err != 0) {
+            SvREFCNT_dec(RETVAL);
+            croak("Couldn't %s from pipe handle (%d): %s", (ix == 0) ? "getpeername" : "getsockname",
+                err, uv_strerror(err));
+        }
+
+        SvCUR_set(RETVAL, len);
+        SvPOK_on(RETVAL);
+    OUTPUT:
+        RETVAL
+
+void
+chmod(UV::Pipe self, int flags)
+    CODE:
+        CHECKCALL(uv_pipe_chmod(self->h, flags));
+
 MODULE = UV             PACKAGE = UV::Poll
 
 SV *
@@ -1155,6 +1390,97 @@ void
 stop(UV::Timer self)
     CODE:
         CHECKCALL(uv_timer_stop(self->h));
+
+MODULE = UV             PACKAGE = UV::Stream
+
+SV *
+_on_read(UV::Stream self, SV *cb = NULL)
+    CODE:
+        RETVAL = do_callback_accessor(&self->on_read, cb);
+    OUTPUT:
+        RETVAL
+
+SV *
+_on_connection(UV::Stream self, SV *cb = NULL)
+    CODE:
+        RETVAL = do_callback_accessor(&self->on_connection, cb);
+    OUTPUT:
+        RETVAL
+
+void
+_listen(UV::Stream self, int backlog)
+    CODE:
+        CHECKCALL(uv_listen(self->h, backlog, on_connection_cb));
+
+void
+_accept(UV::Stream self, UV::Stream client)
+    CODE:
+        CHECKCALL(uv_accept(self->h, client->h));
+
+SV *
+shutdown(UV::Stream self, SV *cb)
+    INIT:
+        UV__Req_shutdown req;
+        int err;
+    CODE:
+        NEW_UV__Req(req, uv_shutdown_t);
+        INIT_UV__Req(req);
+
+        err = uv_shutdown(req->r, self->h, (uv_shutdown_cb)on_req_cb);
+
+        if(err != 0) {
+            Safefree(req);
+            THROWERR("Couldn't shutdown", err);
+        }
+
+        req->cb = newSVsv(cb);
+
+        RETVAL = newSV(0);
+        sv_setref_pv(RETVAL, "UV::Req", req);
+        req->selfrv = SvREFCNT_inc(SvRV(RETVAL));
+    OUTPUT:
+        RETVAL
+
+void
+read_start(UV::Stream self)
+    CODE:
+        CHECKCALL(uv_read_start(self->h, on_alloc_cb, on_read_cb));
+
+void
+read_stop(UV::Stream self)
+    CODE:
+        CHECKCALL(uv_read_stop(self->h));
+
+SV *
+write(UV::Stream self, SV *s, SV *cb)
+    INIT:
+        UV__Req_write req;
+        uv_buf_t buf[1];
+        int err;
+    CODE:
+        NEW_UV__Req(req, uv_write_t);
+        INIT_UV__Req(req);
+
+        buf[0].len  = SvCUR(s);
+        buf[0].base = savepvn(SvPVX(s), buf[0].len);
+
+        req->s = buf[0].base;
+
+        err = uv_write(req->r, self->h, buf, 1, (uv_write_cb)on_req_cb);
+
+        if(err != 0) {
+            Safefree(req->s);
+            Safefree(req);
+            THROWERR("Couldn't write", err);
+        }
+
+        req->cb = newSVsv(cb);
+
+        RETVAL = newSV(0);
+        sv_setref_pv(RETVAL, "UV::Req", req);
+        req->selfrv = SvREFCNT_inc(SvRV(RETVAL));
+    OUTPUT:
+        RETVAL
 
 MODULE = UV             PACKAGE = UV::Loop
 
@@ -1328,12 +1654,25 @@ void
 DESTROY(UV::Req req)
     CODE:
         switch(req->r->type) {
+            case UV_CONNECT:
+                SvREFCNT_dec(((UV__Req_connect)req)->cb);
+                break;
+
             case UV_GETADDRINFO:
                 SvREFCNT_dec(((UV__Req_getaddrinfo)req)->cb);
                 break;
 
             case UV_GETNAMEINFO:
                 SvREFCNT_dec(((UV__Req_getnameinfo)req)->cb);
+                break;
+
+            case UV_SHUTDOWN:
+                SvREFCNT_dec(((UV__Req_shutdown)req)->cb);
+                break;
+
+            case UV_WRITE:
+                Safefree(((UV__Req_write)req)->s);
+                SvREFCNT_dec(((UV__Req_write)req)->cb);
                 break;
         }
 
