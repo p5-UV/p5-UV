@@ -53,7 +53,7 @@ sub repeat_2_cb {
     $repeat_2_cb_called++;
 
     if (0 == $repeat_2->repeat()) {
-        is(0, $handle->active(), 'not active');
+        ok(!$handle->active(), 'not active');
         $handle->close(\&close_cb);
         return;
     }

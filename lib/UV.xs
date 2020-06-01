@@ -838,7 +838,7 @@ closing(UV::Handle self)
     OUTPUT:
         RETVAL
 
-int
+bool
 active(UV::Handle self)
     CODE:
         RETVAL = uv_is_active(self->h);
@@ -1204,7 +1204,7 @@ _walk(UV::Loop self)
     CODE:
         uv_walk(self->loop, on_loop_walk, self->on_walk);
 
-int
+bool
 alive(UV::Loop self)
     CODE:
         RETVAL = uv_loop_alive(self->loop);
@@ -1237,7 +1237,7 @@ configure(UV::Loop self, int option, int value)
     CODE:
         CHECKCALL(uv_loop_configure(self->loop, option, value));
 
-int
+bool
 is_default(UV::Loop self)
     CODE:
         RETVAL = (self->loop == uv_default_loop());

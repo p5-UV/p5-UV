@@ -21,7 +21,7 @@ my $huge_timer2;
 sub once_close_cb {
     my $handle = shift;
     ok($handle, 'Got a handle in the once_close_cb');
-    is($handle->active(), 0, 'handle is not active');
+    ok(!$handle->active(), 'handle is not active');
     $once_close_cb_called++;
 }
 
@@ -29,7 +29,7 @@ sub once_close_cb {
 sub once_cb {
     my $handle = shift;
     ok($handle, 'Got a handle in the once_cb');
-    is($handle->active(), 0, 'handle is not active');
+    ok(!$handle->active(), 'handle is not active');
 
     $once_cb_called++;
 
@@ -50,7 +50,7 @@ sub repeat_close_cb {
 sub repeat_cb {
     my $handle = shift;
     ok($handle, 'Got a handle in the repeat_cb');
-    is($handle->active(), 1, 'handle is not active');
+    ok($handle->active(), 'handle is active');
 
     $repeat_cb_called++;
 
@@ -119,7 +119,7 @@ sub never_cb {
     my $handle = UV::Timer->new();
     isa_ok($handle, 'UV::Timer', 'Got a new timer');
     $handle->repeat();
-    is(0, $handle->active(), 'active is zero');
+    ok(!$handle->active(), 'handle is not active');
 }
 
 sub order_cb_a {

@@ -42,7 +42,7 @@ sub cb {
     my $timer = UV::Timer->new();
     isa_ok($timer, 'UV::Timer', 'timer: got a new timer');
 
-    is($loop->alive(), 0, 'loop->alive: not alive yet');
+    ok(!$loop->alive(), 'loop->alive: not alive yet');
     is($loop->backend_timeout(), 0, 'loop->backend_timeout: still zero');
 
     $timer->start(1000, 0, \&cb);
