@@ -95,6 +95,35 @@ static SV *MY_newSV_error(pTHX_ int err)
     return sv;
 }
 
+static HV *make_errstash(pTHX_ int err)
+{
+    /* Technically a memory leak within libuv if err is unknown; we should
+     * consider using uv_err_name_r()
+     */
+    SV *name = newSVpvf("UV::Exception::%s::", uv_err_name(err));
+    sv_2mortal(name);
+
+    HV *stash = get_hv(SvPVX(name), 0);
+    if(stash) return stash;
+
+    stash = get_hv(SvPVX(name), GV_ADD);
+
+    /* push @ISA, "UV::Exception" */
+    sv_catpvs(name, "ISA");
+    av_push(get_av(SvPVX(name), GV_ADD), newSVpvs_share("UV::Exception"));
+
+    return stash;
+}
+
+#define THROWERR(message, err)                                            \
+    do {                                                                  \
+        SV *msgsv = mess_sv(                                              \
+            newSVpvf(message " (%d): %s", err, uv_strerror(err)), TRUE);  \
+        sv_upgrade(msgsv, SVt_PVIV);                                      \
+        SvIV_set(msgsv, err); SvIOK_on(msgsv);                            \
+        croak_sv(sv_bless(newRV_noinc(msgsv), make_errstash(aTHX_ err))); \
+    } while(0)
+
 /**************
  * UV::Handle *
  **************/
@@ -754,6 +783,23 @@ unsigned int uv_version()
 
 const char* uv_version_string()
 
+MODULE = UV             PACKAGE = UV::Exception
+
+SV *
+message(SV *self)
+    CODE:
+        RETVAL = newSV(0);
+        sv_copypv(RETVAL, SvRV(self));
+    OUTPUT:
+        RETVAL
+
+int
+code(SV *self)
+    CODE:
+        RETVAL = SvIV(SvRV(self));
+    OUTPUT:
+        RETVAL
+
 MODULE = UV             PACKAGE = UV::Handle
 
 void
@@ -839,7 +885,7 @@ _new(char *class, UV::Loop loop)
         err = uv_check_init(loop->loop, self->h);
         if (err != 0) {
             Safefree(self);
-            croak("Couldn't initialize check handle (%d): %s", err, uv_strerror(err));
+            THROWERR("Couldn't initialise check handle", err);
         }
 
         INIT_UV__Handle(self);
@@ -885,7 +931,7 @@ _new(char *class, UV::Loop loop)
         err = uv_idle_init(loop->loop, self->h);
         if (err != 0) {
             Safefree(self);
-            croak("Couldn't initialize idle handle (%d): %s", err, uv_strerror(err));
+            THROWERR("Couldn't initialise idle handle", err);
         }
 
         INIT_UV__Handle(self);
@@ -931,7 +977,7 @@ _new(char *class, UV::Loop loop)
         err = uv_prepare_init(loop->loop, self->h);
         if (err != 0) {
             Safefree(self);
-            croak("Couldn't initialize prepare handle (%d): %s", err, uv_strerror(err));
+            THROWERR("Couldn't initialise prepare handle", err);
         }
 
         INIT_UV__Handle(self);
@@ -980,7 +1026,7 @@ _new(char *class, UV::Loop loop, int fd, bool is_socket)
             err = uv_poll_init(loop->loop, self->h, fd);
         if (err != 0) {
             Safefree(self);
-            croak("Couldn't initialize poll handle (%d): %s", err, uv_strerror(err));
+            THROWERR("Couldn't initialise poll handle", err);
         }
 
         INIT_UV__Handle(self);
@@ -1026,7 +1072,7 @@ _new(char *class, UV::Loop loop, int signum)
         err = uv_signal_init(loop->loop, self->h);
         if (err != 0) {
             Safefree(self);
-            croak("Couldn't initialise signal handle (%d): %s", err, uv_strerror(err));
+            THROWERR("Couldn't initialise signal handle", err);
         }
 
         INIT_UV__Handle(self);
@@ -1073,7 +1119,7 @@ _new(char *class, UV::Loop loop)
         err = uv_timer_init(loop->loop, self->h);
         if (err != 0) {
             Safefree(self);
-            croak("Couldn't initialize timer handle (%d): %s", err, uv_strerror(err));
+            THROWERR("Couldn't initialise timer handle", err);
         }
 
         INIT_UV__Handle(self);
@@ -1145,7 +1191,7 @@ _new(char *class, int want_default)
             err = uv_loop_init(self->loop);
             if(err != 0) {
                 Safefree(self);
-                croak("Error initialising loop (%d): %s", err, uv_strerror(err));
+                THROWERR("Couldn't initialise loop", err);
             }
         }
 
@@ -1258,7 +1304,7 @@ _getaddrinfo(UV::Loop self, char *node, char *service, SV *flags, SV *family, SV
             node, service, &hints);
         if (err != 0) {
             Safefree(req);
-            croak("Couldn't getaddrinfo (%d): %s", err, uv_strerror(err));
+            THROWERR("Couldn't getaddrinfo", err);
         }
 
         req->cb = newSVsv(cb);
@@ -1282,7 +1328,7 @@ getnameinfo(UV::Loop self, SV *addr, int flags, SV *cb)
             (struct sockaddr *)SvPV_nolen(addr), flags);
         if (err != 0) {
             Safefree(req);
-            croak("Couldn't getnameinfo (%d): %s", err, uv_strerror(err));
+            THROWERR("Couldn't getnameinfo", err);
         }
 
         req->cb = newSVsv(cb);

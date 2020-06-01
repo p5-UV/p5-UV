@@ -41,4 +41,17 @@ $wr->syswrite("Hello\n");
     is($poll_cb_events, UV_READABLE, 'poll cb was invoked with correct events');
 }
 
+# Unit test the error message throwing logic
+{
+    # Invoke the underlying ->_new method so we can fabricate an error
+    my $FILE = $0;
+    my $LINE = __LINE__+1;
+    my $err = do { local $@; eval { UV::Poll->_new(UV::Loop->default, -1, 0); 1 } ? undef : $@ };
+    isa_ok($err, 'UV::Exception::EBADF');
+    isa_ok($err, 'UV::Exception');
+    like($err, qr/^Couldn't initialise poll handle \(-\d+\): .* at \Q$FILE\E line \Q$LINE\E.\n/,
+        'Stringified error message');
+    is($err->code, UV::UV_EBADF, 'Numerical error code');
+}
+
 done_testing;

@@ -76,6 +76,14 @@ sub timer {
     return UV::Timer->new(@_);
 }
 
+{
+    package UV::Exception;
+
+    use overload
+        '""' => sub { $_[0]->message },
+        fallback => 1;
+}
+
 1;
 
 __END__
@@ -567,6 +575,37 @@ significant bits. E.g. for libuv 1.2.3 this would be C<0x010203>.
 The L<version_string|http://docs.libuv.org/en/v1.x/version.html#c.uv_version_string>
 function returns the libuv version number as a string. For non-release versions
 the version suffix is included.
+
+=head1 EXCEPTIONS
+
+If any call to F<libuv> fails, an exception will be thrown. The exception will
+be a blessed object having a C<code> method which returns the numerical error
+code (which can be compared to one of the C<UV::UV_E*> error constants), and a
+C<message> method which returns a human-readable string describing the failure.
+
+    try { ... }
+    catch my $e {
+        if(blessed $e and $e->isa("UV::Exception")) {
+            print "The failure was ", $e->message, " of code ", $e->code;
+        }
+    }
+
+The exception class provides stringify overload to call the C<message> method,
+so the normal Perl behaviour of just printing the exception will print the
+message from it, as expected.
+
+Exceptions are blessed into a subclass of C<UV::Exception> named after the
+type of the failure code. This allows type-based testing of error types.
+
+    try { ... }
+    catch my $e {
+        if(blessed $e and $e->isa("UV::Exception::ECANCELED") {
+            # ignore
+        }
+        else ...
+    }
+
+=cut
 
 =head1 AUTHOR
 
