@@ -83,7 +83,6 @@ UV::Poll - Poll handles in libuv
   my $poll = UV::Poll->new(
     fd => fileno($handle),
     loop => $loop,
-    on_alloc => sub {say "alloc!"},
     on_close => sub {say "close!"},
     on_poll => sub {say "poll!"},
   );
@@ -93,7 +92,6 @@ UV::Poll - Poll handles in libuv
   my $poll = UV::Poll->new(
     socket => 1,
     fd => fileno($socket),
-    on_alloc => sub {say "alloc!"},
     on_close => sub {say "close!"},
     on_poll => sub {say "poll!"},
   );
@@ -204,7 +202,6 @@ following extra methods available.
     my $poll = UV::Poll->new(
         socket => $socket,
         loop => $some_loop,
-        on_alloc => sub {say "alloc!"},
         on_close => sub {say "close!"},
         on_poll => sub {say "poll!"},
     );

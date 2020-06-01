@@ -50,7 +50,6 @@ UV::Check - Check handles in libuv
   my $loop = UV::Loop->new(); # non-default loop
   my $check = UV::Check->new(
     loop => $loop,
-    on_alloc => sub {say "alloc!"},
     on_close => sub {say "close!"},
     on_check => sub {say "check!"},
   );
@@ -104,7 +103,6 @@ following extra methods available.
     # Or tell it what loop to initialize against
     my $check = UV::Check->new(
         loop => $loop,
-        on_alloc => sub {say "alloc!"},
         on_close => sub {say "close!"},
         on_check => sub {say "check!"},
     );

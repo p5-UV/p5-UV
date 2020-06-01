@@ -50,7 +50,6 @@ UV::Prepare - Prepare handles in libuv
   my $loop = UV::Loop->new(); # non-default loop
   my $prepare = UV::Prepare->new(
     loop => $loop,
-    on_alloc => sub {say "alloc!"},
     on_close => sub {say "close!"},
     on_prepare => sub {say "prepare!"},
   );
@@ -106,7 +105,6 @@ following extra methods available.
     # Or tell it what loop to initialize against
     my $prepare = UV::Prepare->new(
         loop => $loop,
-        on_alloc => sub {say "alloc!"},
         on_close => sub {say "close!"},
         on_prepare => sub {say "prepare!"},
     );

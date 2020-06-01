@@ -117,19 +117,6 @@ from those sub-classes.
 
 L<UV::Handle> makes the following extra events available.
 
-=head2 alloc
-
-    $handle->on("alloc", sub { say "We are allocating!"});
-    $handle->on("alloc", sub {
-        # the handle instance this event fired on and the buffer size in use
-        my ($invocant, $buffer_size) = @_;
-        say "A buffer of size $buffer_size was just allocated for us!";
-    });
-
-The L<alloc|http://docs.libuv.org/en/v1.x/handle.html#c.uv_alloc_cb> callback
-fires when a C<< $handle->read_start() >> or C<< $handle->recv_start() >>
-method gets called.
-
 =head2 close
 
     $handle->on("close", sub { say "We are closing!"});
