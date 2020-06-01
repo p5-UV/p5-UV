@@ -19,7 +19,8 @@ sub signal_cb {
 
 my $signal = UV::Signal->new(signal => SIGHUP, on_signal => \&signal_cb);
 isa_ok($signal, 'UV::Signal');
-is($signal->start(), 0, 'signal run success');
+$signal->start();
+
 kill SIGHUP => $$;
 is(UV::Loop->default()->run(), 0, 'Default loop ran');
 

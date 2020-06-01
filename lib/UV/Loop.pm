@@ -213,10 +213,6 @@ The L<configure|http://docs.libuv.org/en/v1.x/loop.html#c.uv_loop_configure>
 method sets additional loop options. You should normally call this before the
 first call to L<UV::Loop/"run"> unless mentioned otherwise.
 
-Returns C<0> on success or a C<UV/"CONSTANTS"> error code on failure. Be
-prepared to handle C<UV::UV_ENOSYS>; it means the loop option is not supported
-by the platform.
-
 Supported options:
 
 =over

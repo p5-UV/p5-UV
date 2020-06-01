@@ -45,7 +45,7 @@ sub cb {
     is($loop->alive(), 0, 'loop->alive: not alive yet');
     is($loop->backend_timeout(), 0, 'loop->backend_timeout: still zero');
 
-    is($timer->start(1000, 0, \&cb), 0, 'timer: started correctly');
+    $timer->start(1000, 0, \&cb);
 
     ok($loop->backend_timeout() > 100, 'backend_timeout > 0.1 sec' );
     ok($loop->backend_timeout() <= 1000, 'backend_timeout <= 1 sec');

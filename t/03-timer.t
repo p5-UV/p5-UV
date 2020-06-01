@@ -78,19 +78,19 @@ sub never_cb {
         my $once = UV::Timer->new();
         isa_ok($once, 'UV::Timer', "Got a timer to add to the array");
         push @once_timers, $once;
-        is(0, $once->start($i*50, 0, \&once_cb), 'once timer started');
+        $once->start($i*50, 0, \&once_cb);
     }
 
     # The 11th timer is a repeating timer that runs 4 times
     my $repeat = UV::Timer->new();
     isa_ok($repeat, 'UV::Timer', "Got a repeat timer");
-    is(0, $repeat->start(100, 100, \&repeat_cb), 'repeat timer started');
+    $repeat->start(100, 100, \&repeat_cb);
 
     # The 12th timer should not do anything
     my $never = UV::Timer->new();
     isa_ok($never, 'UV::Timer', "Got a never timer");
-    is(0, $never->start(100, 100, \&never_cb), 'never timer started');
-    is(0, $never->stop(), 'never timer stopped');
+    $never->start(100, 100, \&never_cb);
+    $never->stop();
     $never->close(undef);
 
     UV::Loop->default()->run();
@@ -107,8 +107,8 @@ sub never_cb {
     $once_cb_called = 0;
     my $once = UV::Timer->new();
     isa_ok($once, 'UV::Timer', 'got a new timer');
-    is(0, $once->start(86400 * 1000, 0, \&never_cb), 'once timer started with never_cb');
-    is(0, $once->start(10, 0, \&once_cb), 'once timer started with once_cb');
+    $once->start(86400 * 1000, 0, \&never_cb);
+    $once->start(10, 0, \&once_cb);
 
     is(0, UV::Loop->default->run(), 'default loop run');
     is($once_cb_called, 1, 'once cb called once');
@@ -118,7 +118,7 @@ sub never_cb {
 {
     my $handle = UV::Timer->new();
     isa_ok($handle, 'UV::Timer', 'Got a new timer');
-    is(0, $handle->repeat(), 'Get-repeat value is zero');
+    $handle->repeat();
     is(0, $handle->active(), 'active is zero');
 }
 
@@ -145,25 +145,25 @@ sub order_cb_b {
 
     # Test for starting handle_a then handle_b
     $handle_a->data($first);
-    is(0, $handle_a->start(0, 0, \&order_cb_a), 'handle_a started with data');
+    $handle_a->start(0, 0, \&order_cb_a);
 
     $handle_b->data($second);
-    is(0, $handle_b->start(0, 0, \&order_cb_b), 'handle_b started with data');
+    $handle_b->start(0, 0, \&order_cb_b);
 
     is(0, UV::Loop->default()->run(), 'default loop run');
 
     is($order_cb_called, 2, 'got the right number of CBs called');
 
-    is(0, $handle_a->stop(), 'handle_a stopped');
-    is(0, $handle_b->stop(), 'handle_b stopped');
+    $handle_a->stop();
+    $handle_b->stop();
 
     # Test for starting handle_b then handle_a
     $order_cb_called = 0;
     $handle_b->data($first);
-    is(0, $handle_b->start(0, 0, \&order_cb_b), 'handle_b started with data');
+    $handle_b->start(0, 0, \&order_cb_b);
 
     $handle_a->data($second);
-    is(0, $handle_a->start(0, 0, \&order_cb_a), 'handle_a started with data');
+    $handle_a->start(0, 0, \&order_cb_a);
 
     is(0, UV::Loop->default()->run(), 'default loop run');
 
@@ -190,9 +190,9 @@ sub tiny_timer_cb {
     $huge_timer2 = UV::Timer->new();
     isa_ok($huge_timer2, 'UV::Timer', 'huge_timer2 new');
 
-    is(0, $tiny_timer->start(1, 0, \&tiny_timer_cb), 'tiny_timer start');
-    is(0, $huge_timer1->start(4294967295, 0, \&tiny_timer_cb), 'huge_timer1 start');
-    is(0, $huge_timer2->start(-1, 0, \&tiny_timer_cb), 'huge_timer2 start');
+    $tiny_timer->start(1, 0, \&tiny_timer_cb);
+    $huge_timer1->start(4294967295, 0, \&tiny_timer_cb);
+    $huge_timer2->start(-1, 0, \&tiny_timer_cb);
     is(0, UV::Loop->default()->run(), 'default loop run');
 }
 
@@ -219,8 +219,8 @@ sub huge_repeat_cb {
     $huge_timer1 = UV::Timer->new();
     isa_ok($tiny_timer, 'UV::Timer', 'tiny_timer new');
     isa_ok($huge_timer1, 'UV::Timer', 'huge_timer1 new');
-    is(0, $tiny_timer->start(2, 2, \&huge_repeat_cb), 'tiny_timer start');
-    is(0, $huge_timer1->start(1, -1, \&huge_repeat_cb), 'huge_timer1 start');
+    $tiny_timer->start(2, 2, \&huge_repeat_cb);
+    $huge_timer1->start(1, -1, \&huge_repeat_cb);
     is(0, UV::Loop->default()->run(), 'default loop run');
 }
 
@@ -237,11 +237,11 @@ sub timer_run_once_timer_cb {
 {
     my $timer_handle = UV::Timer->new();
     isa_ok($timer_handle, 'UV::Timer', 'timer_handle new');
-    is(0, $timer_handle->start(0, 0, \&timer_run_once_timer_cb), 'timer_handle start');
+    $timer_handle->start(0, 0, \&timer_run_once_timer_cb);
     is(0, UV::Loop->default()->run(UV_RUN_ONCE), 'default loop run once');
     is(1, $timer_run_once_timer_cb_called, 'callback called once');
 
-    is(0, $timer_handle->start(1, 0, \&timer_run_once_timer_cb), 'timer_handle start');
+    $timer_handle->start(1, 0, \&timer_run_once_timer_cb);
     is(0, UV::Loop->default()->run(UV_RUN_ONCE), 'default loop run once');
     is(2, $timer_run_once_timer_cb_called, 'callback called twice');
 
@@ -266,7 +266,8 @@ sub timer_early_check_cb {
 
     my $timer_handle = UV::Timer->new();
     isa_ok($timer_handle, 'UV::Timer', 'got a new timer');
-    is($timer_handle->start($timeout_ms, 0, \&timer_early_check_cb), 0, 'handle start');
+    $timer_handle->start($timeout_ms, 0, \&timer_early_check_cb);
+
     is(UV::Loop->default()->run(UV_RUN_DEFAULT), 0, 'loop run before handle close');
 
     $timer_handle->close(undef);

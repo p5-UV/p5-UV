@@ -28,7 +28,7 @@ sub poll_cb
 
 {
     my $poll = UV::Poll->new(fh => $wr, on_poll => \&poll_cb);
-    is($poll->start(UV_WRITABLE), 0, 'poll started successfully');
+    $poll->start(UV_WRITABLE);
 
     UV::Loop->default()->run();
 

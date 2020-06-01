@@ -35,7 +35,7 @@ sub timer_cb {
         on_timer => \&timer_cb,
     );
     isa_ok($timer, 'UV::Timer', 'got a timer');
-    is($timer->start(0,0), 0, 'timer started');
+    $timer->start(0,0);
     ok($loop->alive(), 'A loop with a handle is alive');
     is($loop->run(UV_RUN_DEFAULT), 0, 'loop ran');
 

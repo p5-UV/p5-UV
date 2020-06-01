@@ -32,7 +32,7 @@ $wr->syswrite("Hello\n");
 
 {
     my $poll = UV::Poll->new(fh => $rd, on_poll => \&poll_cb);
-    is($poll->start(UV_READABLE), 0, 'poll started successfully');
+    $poll->start(UV_READABLE);
 
     UV::Loop->default()->run();
 

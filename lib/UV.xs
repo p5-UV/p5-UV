@@ -115,14 +115,25 @@ static HV *make_errstash(pTHX_ int err)
     return stash;
 }
 
-#define THROWERR(message, err)                                            \
+#define THROWERRSV(sv, err)                                               \
     do {                                                                  \
-        SV *msgsv = mess_sv(                                              \
-            newSVpvf(message " (%d): %s", err, uv_strerror(err)), TRUE);  \
+        SV *msgsv = mess_sv(sv, TRUE);                                    \
         sv_upgrade(msgsv, SVt_PVIV);                                      \
         SvIV_set(msgsv, err); SvIOK_on(msgsv);                            \
         croak_sv(sv_bless(newRV_noinc(msgsv), make_errstash(aTHX_ err))); \
     } while(0)
+
+#define THROWERR(message, err)                                            \
+    THROWERRSV(newSVpvf(message " (%d): %s", err, uv_strerror(err)), err)
+
+#define CHECKCALL(call)                                  \
+  do {                                                   \
+    int err = call;                                      \
+    if(err != 0)                                         \
+      THROWERRSV(newSVpvf("Couldn't %" HEKf " (%d): %s", \
+        HEKfARG(GvNAME_HEK(CvGV(cv))),                   \
+        err, uv_strerror(err)), err);                    \
+  } while(0)
 
 /**************
  * UV::Handle *
@@ -904,19 +915,15 @@ _on_check(UV::Check self, SV *cb = NULL)
     OUTPUT:
         RETVAL
 
-int
+void
 _start(UV::Check self)
     CODE:
-        RETVAL = uv_check_start(self->h, on_check_cb);
-    OUTPUT:
-        RETVAL
+        CHECKCALL(uv_check_start(self->h, on_check_cb));
 
-int
+void
 stop(UV::Check self)
     CODE:
-        RETVAL = uv_check_stop(self->h);
-    OUTPUT:
-        RETVAL
+        CHECKCALL(uv_check_stop(self->h));
 
 MODULE = UV             PACKAGE = UV::Idle
 
@@ -950,19 +957,15 @@ _on_idle(UV::Idle self, SV *cb = NULL)
     OUTPUT:
         RETVAL
 
-int
+void
 _start(UV::Idle self)
     CODE:
-        RETVAL = uv_idle_start(self->h, on_idle_cb);
-    OUTPUT:
-        RETVAL
+        CHECKCALL(uv_idle_start(self->h, on_idle_cb));
 
-int
+void
 stop(UV::Idle self)
     CODE:
-        RETVAL = uv_idle_stop(self->h);
-    OUTPUT:
-        RETVAL
+        CHECKCALL(uv_idle_stop(self->h));
 
 MODULE = UV             PACKAGE = UV::Prepare
 
@@ -996,19 +999,15 @@ _on_prepare(UV::Prepare self, SV *cb = NULL)
     OUTPUT:
         RETVAL
 
-int
+void
 _start(UV::Prepare self)
     CODE:
-        RETVAL = uv_prepare_start(self->h, on_prepare_cb);
-    OUTPUT:
-        RETVAL
+        CHECKCALL(uv_prepare_start(self->h, on_prepare_cb));
 
-int
+void
 stop(UV::Prepare self)
     CODE:
-        RETVAL = uv_prepare_stop(self->h);
-    OUTPUT:
-        RETVAL
+        CHECKCALL(uv_prepare_stop(self->h));
 
 MODULE = UV             PACKAGE = UV::Poll
 
@@ -1045,19 +1044,15 @@ _on_poll(UV::Poll self, SV *cb = NULL)
     OUTPUT:
         RETVAL
 
-int
+void
 _start(UV::Poll self, int events = UV_READABLE)
     CODE:
-        RETVAL = uv_poll_start(self->h, events, on_poll_cb);
-    OUTPUT:
-        RETVAL
+        CHECKCALL(uv_poll_start(self->h, events, on_poll_cb));
 
-int
+void
 stop(UV::Poll self)
     CODE:
-        RETVAL = uv_poll_stop(self->h);
-    OUTPUT:
-        RETVAL
+        CHECKCALL(uv_poll_stop(self->h));
 
 MODULE = UV             PACKAGE = UV::Signal
 
@@ -1092,19 +1087,15 @@ _on_signal(UV::Signal self, SV *cb = NULL)
     OUTPUT:
         RETVAL
 
-int
+void
 _start(UV::Signal self)
     CODE:
-        RETVAL = uv_signal_start(self->h, on_signal_cb, self->signum);
-    OUTPUT:
-        RETVAL
+        CHECKCALL(uv_signal_start(self->h, on_signal_cb, self->signum));
 
-int
+void
 stop(UV::Signal self)
     CODE:
-        RETVAL = uv_signal_stop(self->h);
-    OUTPUT:
-        RETVAL
+        CHECKCALL(uv_signal_stop(self->h));
 
 MODULE = UV             PACKAGE = UV::Timer
 
@@ -1138,12 +1129,10 @@ _on_timer(UV::Timer self, SV *cb = NULL)
     OUTPUT:
         RETVAL
 
-int
+void
 _start(UV::Timer self, UV timeout, UV repeat)
     CODE:
-        RETVAL = uv_timer_start(self->h, on_timer_cb, timeout, repeat);
-    OUTPUT:
-        RETVAL
+        CHECKCALL(uv_timer_start(self->h, on_timer_cb, timeout, repeat));
 
 UV
 _get_repeat(UV::Timer self)
@@ -1157,19 +1146,15 @@ _set_repeat(UV::Timer self, UV repeat)
     CODE:
         uv_timer_set_repeat(self->h, repeat);
 
-int
+void
 again(UV::Timer self)
     CODE:
-        RETVAL = uv_timer_again(self->h);
-    OUTPUT:
-        RETVAL
+        CHECKCALL(uv_timer_again(self->h));
 
-int
+void
 stop(UV::Timer self)
     CODE:
-        RETVAL = uv_timer_stop(self->h);
-    OUTPUT:
-        RETVAL
+        CHECKCALL(uv_timer_stop(self->h));
 
 MODULE = UV             PACKAGE = UV::Loop
 
@@ -1247,12 +1232,10 @@ DESTROY(UV::Loop self)
         if(self->loop != uv_default_loop())
             uv_loop_close(self->loop);
 
-int
+void
 configure(UV::Loop self, int option, int value)
     CODE:
-        RETVAL = uv_loop_configure(self->loop, option, value);
-    OUTPUT:
-        RETVAL
+        CHECKCALL(uv_loop_configure(self->loop, option, value));
 
 int
 is_default(UV::Loop self)
@@ -1356,12 +1339,16 @@ DESTROY(UV::Req req)
 
         Safefree(req);
 
-int
+void
 cancel(UV::Req req)
+    INIT:
+        int err;
     CODE:
-        RETVAL = uv_cancel(req->r);
-    OUTPUT:
-        RETVAL
+        err = uv_cancel(req->r);
+        /* Cancellation is best-effort; don't consider it an error if we get
+         * EBUSY */
+        if((err != 0) && (err != UV_EBUSY))
+            THROWERR("Couldn't cancel", err);
 
 MODULE = UV             PACKAGE = UV::getaddrinfo_result
 
