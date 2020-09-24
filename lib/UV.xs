@@ -1332,65 +1332,6 @@ stop(UV::Signal self)
     CODE:
         CHECKCALL(uv_signal_stop(self->h));
 
-MODULE = UV             PACKAGE = UV::Timer
-
-SV *
-_new(char *class, UV::Loop loop)
-    INIT:
-        UV__Timer self;
-        int err;
-    CODE:
-        NEW_UV__Handle(self, uv_timer_t);
-
-        err = uv_timer_init(loop->loop, self->h);
-        if (err != 0) {
-            Safefree(self);
-            THROWERR("Couldn't initialise timer handle", err);
-        }
-
-        INIT_UV__Handle(self);
-        self->on_timer = NULL;
-
-        RETVAL = newSV(0);
-        sv_setref_pv(RETVAL, "UV::Timer", self);
-        self->selfrv = SvRV(RETVAL); /* no inc */
-    OUTPUT:
-        RETVAL
-
-SV *
-_on_timer(UV::Timer self, SV *cb = NULL)
-    CODE:
-        RETVAL = do_callback_accessor(&self->on_timer, cb);
-    OUTPUT:
-        RETVAL
-
-void
-_start(UV::Timer self, UV timeout, UV repeat)
-    CODE:
-        CHECKCALL(uv_timer_start(self->h, on_timer_cb, timeout, repeat));
-
-UV
-_get_repeat(UV::Timer self)
-    CODE:
-        RETVAL = uv_timer_get_repeat(self->h);
-    OUTPUT:
-        RETVAL
-
-void
-_set_repeat(UV::Timer self, UV repeat)
-    CODE:
-        uv_timer_set_repeat(self->h, repeat);
-
-void
-again(UV::Timer self)
-    CODE:
-        CHECKCALL(uv_timer_again(self->h));
-
-void
-stop(UV::Timer self)
-    CODE:
-        CHECKCALL(uv_timer_stop(self->h));
-
 MODULE = UV             PACKAGE = UV::Stream
 
 SV *
@@ -1481,6 +1422,65 @@ write(UV::Stream self, SV *s, SV *cb)
         req->selfrv = SvREFCNT_inc(SvRV(RETVAL));
     OUTPUT:
         RETVAL
+
+MODULE = UV             PACKAGE = UV::Timer
+
+SV *
+_new(char *class, UV::Loop loop)
+    INIT:
+        UV__Timer self;
+        int err;
+    CODE:
+        NEW_UV__Handle(self, uv_timer_t);
+
+        err = uv_timer_init(loop->loop, self->h);
+        if (err != 0) {
+            Safefree(self);
+            THROWERR("Couldn't initialise timer handle", err);
+        }
+
+        INIT_UV__Handle(self);
+        self->on_timer = NULL;
+
+        RETVAL = newSV(0);
+        sv_setref_pv(RETVAL, "UV::Timer", self);
+        self->selfrv = SvRV(RETVAL); /* no inc */
+    OUTPUT:
+        RETVAL
+
+SV *
+_on_timer(UV::Timer self, SV *cb = NULL)
+    CODE:
+        RETVAL = do_callback_accessor(&self->on_timer, cb);
+    OUTPUT:
+        RETVAL
+
+void
+_start(UV::Timer self, UV timeout, UV repeat)
+    CODE:
+        CHECKCALL(uv_timer_start(self->h, on_timer_cb, timeout, repeat));
+
+UV
+_get_repeat(UV::Timer self)
+    CODE:
+        RETVAL = uv_timer_get_repeat(self->h);
+    OUTPUT:
+        RETVAL
+
+void
+_set_repeat(UV::Timer self, UV repeat)
+    CODE:
+        uv_timer_set_repeat(self->h, repeat);
+
+void
+again(UV::Timer self)
+    CODE:
+        CHECKCALL(uv_timer_again(self->h));
+
+void
+stop(UV::Timer self)
+    CODE:
+        CHECKCALL(uv_timer_stop(self->h));
 
 MODULE = UV             PACKAGE = UV::Loop
 
