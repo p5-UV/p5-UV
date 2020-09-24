@@ -76,6 +76,11 @@ sub timer {
     return UV::Timer->new(@_);
 }
 
+sub tty {
+    require UV::TTY;
+    return UV::TTY->new(@_);
+}
+
 {
     package UV::Exception;
 
@@ -557,6 +562,12 @@ never be called.
     my $timer = UV::timer(loop => $some_other_loop); # non-default loop
 
 Returns a new L<UV::Timer> object.
+
+=head2 tty
+
+    my $tty = UV::TTY(fd => 0);
+
+Returns a new L<UV::TTY> object.
 
 =head2 version
 

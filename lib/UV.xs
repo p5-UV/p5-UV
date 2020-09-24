@@ -585,6 +585,23 @@ static void on_timer_cb(uv_timer_t *timer)
     LEAVE;
 }
 
+/***********
+ * UV::TTY *
+ ***********/
+
+/* See also http://docs.libuv.org/en/v1.x/tty.html */
+
+typedef struct UV__TTY {
+    uv_tty_t *h;
+    FIELDS_UV__Handle
+    FIELDS_UV__Stream
+} *UV__TTY;
+
+static void destroy_tty(pTHX_ UV__TTY self)
+{
+    destroy_stream(aTHX_ (UV__Stream)self);
+}
+
 /* Handle destructor has to be able to see the type-specific destroy_
  * functions above, so must be last
  */
@@ -603,6 +620,7 @@ static void destroy_handle(UV__Handle self)
         case UV_PREPARE: destroy_prepare(aTHX_ (UV__Prepare)self); break;
         case UV_SIGNAL:  destroy_signal (aTHX_ (UV__Signal) self); break;
         case UV_TIMER:   destroy_timer  (aTHX_ (UV__Timer)  self); break;
+        case UV_TTY:     destroy_tty    (aTHX_ (UV__TTY)    self); break;
     }
 
     destroy_handle_base(aTHX_ self);
@@ -928,6 +946,17 @@ BOOT:
         DO_CONST_IV(UV_WRITABLE);
         DO_CONST_IV(UV_DISCONNECT);
         DO_CONST_IV(UV_PRIORITIZED);
+    }
+
+    /* constants under UV::TTY */
+    {
+        stash = gv_stashpv("UV::TTY", GV_ADD);
+        export = get_av("UV::TTY::EXPORT_XS", TRUE);
+
+        /* TTY mode types */
+        DO_CONST_IV(UV_TTY_MODE_NORMAL);
+        DO_CONST_IV(UV_TTY_MODE_RAW);
+        DO_CONST_IV(UV_TTY_MODE_IO);
     }
 }
 
@@ -1481,6 +1510,47 @@ void
 stop(UV::Timer self)
     CODE:
         CHECKCALL(uv_timer_stop(self->h));
+
+MODULE = UV             PACKAGE = UV::TTY
+
+SV *
+_new(char *class, UV::Loop loop, int fd)
+    INIT:
+        UV__TTY self;
+        int err;
+    CODE:
+        NEW_UV__Handle(self, uv_tty_t);
+
+        err = uv_tty_init(loop->loop, self->h, fd, 0);
+        if (err != 0) {
+            Safefree(self);
+            THROWERR("Couldn't initialise tty handle", err);
+        }
+
+        INIT_UV__Handle(self);
+        INIT_UV__Stream(self);
+
+        RETVAL = newSV(0);
+        sv_setref_pv(RETVAL, "UV::TTY", self);
+        self->selfrv = SvRV(RETVAL); /* no inc */
+    OUTPUT:
+        RETVAL
+
+void
+set_mode(UV::TTY self, int mode)
+    CODE:
+        CHECKCALL(uv_tty_set_mode(self->h, mode));
+
+void
+get_winsize(UV::TTY self)
+    INIT:
+        int width, height;
+    PPCODE:
+        CHECKCALL(uv_tty_get_winsize(self->h, &width, &height));
+        EXTEND(SP, 2);
+        mPUSHi(width);
+        mPUSHi(height);
+        XSRETURN(2);
 
 MODULE = UV             PACKAGE = UV::Loop
 

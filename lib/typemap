@@ -10,6 +10,7 @@ UV::Prepare         T_PTROBJ
 UV::Signal          T_PTROBJ
 UV::Stream          T_PTROBJ
 UV::Timer           T_PTROBJ
+UV::TTY             T_PTROBJ
 
 UV::Req             T_PTROBJ
 
