@@ -1897,6 +1897,38 @@ send(UV::UDP self, SV *s, ...)
     OUTPUT:
         RETVAL
 
+void
+try_send(UV::UDP self, SV *s, ...)
+    INIT:
+        uv_buf_t buf[1];
+        int err;
+        SV *addr;
+        struct sockaddr *sockaddr = NULL;
+    CODE:
+        if(items > 3)
+            croak_xs_usage(cv, "self, s, [from]");
+        else if(items == 3) {
+            addr = ST(2);
+        }
+        else {
+            addr = NULL;
+        }
+
+        if(addr) {
+            if(!SvPOK(addr) || SvCUR(addr) < sizeof(struct sockaddr))
+                croak("Expected a packed socket address for addr");
+            sockaddr = (struct sockaddr *)SvPVX(addr);
+        }
+
+        buf[0].len  = SvCUR(s);
+        buf[0].base = savepvn(SvPVX(s), buf[0].len);
+
+        err = uv_udp_try_send(self->h, buf, 1, sockaddr);
+
+        if(err < 0) {
+            THROWERR("Couldn't send", err);
+        }
+
 MODULE = UV             PACKAGE = UV::Loop
 
 SV *

@@ -137,6 +137,20 @@ The L<send|http://docs.libuv.org/en/v1.x/udp.html#c.uv_udp_send> method
 sends another datagram to the peer. The callback argument will be invoked when
 it has been flushed to the filehandle.
 
+    $udp->send($s, $addr, sub { ... });
+
+Optionally additionally a destination address can be provided, for use with
+unconnected UDP sockets.
+
+=head2 try_send
+
+    $udp->try_send($s);
+    $udp->try_send($s, $addr);
+
+The L<try_send|http://docs.libuv.org/en/v1.x/udp.html#c.uv_udp_try_send>
+method behaves similarly to L</send> but will fail with C<UV_EAGAIN> if it
+cannot send the data immediately, rather than enqueing for later.
+
 =head1 AUTHOR
 
 Paul Evans <leonerd@leonerd.org.uk>

@@ -82,6 +82,11 @@ sub socketpair_inet
     $rd->recv(my $buf, 8192);
     is($buf, "data to send", 'data was sent to udp socket');
 
+    $udp->try_send("more data");
+
+    $rd->recv($buf, 8192);
+    is($buf, "more data", 'data was sent to udp socket by try_send');
+
     # both libuv and perl want to close(2) this filehandle. Perl will warn if
     # it gets  EBADF
     { no warnings; undef $wr; }
