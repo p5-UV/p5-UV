@@ -1845,6 +1845,7 @@ send(UV::UDP self, SV *s, ...)
         uv_buf_t buf[1];
         int err;
         SV *addr;
+        struct sockaddr *sockaddr = NULL;
         SV *cb;
     CODE:
         if(items > 4)
@@ -1862,6 +1863,12 @@ send(UV::UDP self, SV *s, ...)
             cb   = NULL;
         }
 
+        if(addr) {
+            if(!SvPOK(addr) || SvCUR(addr) < sizeof(struct sockaddr))
+                croak("Expected a packed socket address for addr");
+            sockaddr = (struct sockaddr *)SvPVX(addr);
+        }
+
         NEW_UV__Req(req, uv_udp_send_t);
         INIT_UV__Req(req);
 
@@ -1870,8 +1877,7 @@ send(UV::UDP self, SV *s, ...)
 
         req->s = buf[0].base;
 
-        err = uv_udp_send(req->r, self->h, buf, 1,
-            addr ? (struct sockaddr *)SvPVX(addr) : NULL,
+        err = uv_udp_send(req->r, self->h, buf, 1, sockaddr,
             (uv_udp_send_cb)on_req_cb);
 
         if(err != 0) {
