@@ -586,6 +586,23 @@ static void on_timer_cb(uv_timer_t *timer)
 }
 
 /***********
+ * UV::TCP *
+ ***********/
+
+/* See also http://docs.libuv.org/en/v1.x/tcp.html */
+
+typedef struct UV__TCP {
+    uv_tcp_t *h;
+    FIELDS_UV__Handle;
+    FIELDS_UV__Stream;
+} *UV__TCP;
+
+static void destroy_tcp(pTHX_ UV__TCP self)
+{
+    destroy_stream(aTHX_ (UV__Stream)self);
+}
+
+/***********
  * UV::TTY *
  ***********/
 
@@ -619,6 +636,7 @@ static void destroy_handle(UV__Handle self)
         case UV_POLL:    destroy_poll   (aTHX_ (UV__Poll)   self); break;
         case UV_PREPARE: destroy_prepare(aTHX_ (UV__Prepare)self); break;
         case UV_SIGNAL:  destroy_signal (aTHX_ (UV__Signal) self); break;
+        case UV_TCP:     destroy_tcp    (aTHX_ (UV__TCP)    self); break;
         case UV_TIMER:   destroy_timer  (aTHX_ (UV__Timer)  self); break;
         case UV_TTY:     destroy_tty    (aTHX_ (UV__TTY)    self); break;
     }
@@ -1510,6 +1528,114 @@ void
 stop(UV::Timer self)
     CODE:
         CHECKCALL(uv_timer_stop(self->h));
+
+MODULE = UV             PACKAGE = UV::TCP
+
+SV *
+_new(char *class, UV::Loop loop)
+    INIT:
+        UV__TCP self;
+        int err;
+    CODE:
+        NEW_UV__Handle(self, uv_tcp_t);
+
+        err = uv_tcp_init(loop->loop, self->h);
+        if (err != 0) {
+            Safefree(self);
+            THROWERR("Couldn't initialise tcp handle", err);
+        }
+
+        INIT_UV__Handle(self);
+        INIT_UV__Stream(self);
+
+        RETVAL = newSV(0);
+        sv_setref_pv(RETVAL, "UV::TCP", self);
+        self->selfrv = SvRV(RETVAL); /* no inc */
+    OUTPUT:
+        RETVAL
+
+void
+_open(UV::TCP self, int fd)
+    CODE:
+        CHECKCALL(uv_tcp_open(self->h, fd));
+
+void
+nodelay(UV::TCP self, bool enable)
+    CODE:
+        CHECKCALL(uv_tcp_nodelay(self->h, enable));
+
+void
+keepalive(UV::TCP self, bool enable, unsigned int delay = 0)
+    CODE:
+        if(enable && items < 3)
+            croak_xs_usage(cv, "self, enable=true, delay");
+
+        CHECKCALL(uv_tcp_keepalive(self->h, enable, delay));
+
+void
+simultaneous_accepts(UV::TCP self, bool enable)
+    CODE:
+        CHECKCALL(uv_tcp_simultaneous_accepts(self->h, enable));
+
+void
+bind(UV::TCP self, SV *addr, int flags = 0)
+    CODE:
+        if(!SvPOK(addr) || SvCUR(addr) < sizeof(struct sockaddr))
+            croak("Expected a packed socket address for addr");
+
+        CHECKCALL(uv_tcp_bind(self->h, (struct sockaddr *)SvPVX(addr), flags));
+
+SV *
+connect(UV::TCP self, SV *addr, SV *cb)
+    INIT:
+        UV__Req_connect req;
+    CODE:
+        NEW_UV__Req(req, uv_connect_t);
+        INIT_UV__Req(req);
+
+        if(!SvPOK(addr) || SvCUR(addr) < sizeof(struct sockaddr))
+            croak("Expected a packed socket address for addr");
+
+        uv_tcp_connect(req->r, self->h, (struct sockaddr *)SvPVX(addr), (uv_connect_cb)on_req_cb);
+
+        req->cb = newSVsv(cb);
+
+        RETVAL = newSV(0);
+        sv_setref_pv(RETVAL, "UV::Req", req);
+        req->selfrv = SvREFCNT_inc(SvRV(RETVAL));
+    OUTPUT:
+        RETVAL
+
+SV *
+getpeername(UV::TCP self)
+    ALIAS:
+        getpeername = 0
+        getsockname = 1
+    INIT:
+        int len;
+        int err;
+    CODE:
+        len = sizeof(struct sockaddr_storage);
+        RETVAL = newSV(len);
+
+        err = (ix == 0) ?
+            uv_tcp_getpeername(self->h, (struct sockaddr *)SvPVX(RETVAL), &len) :
+            uv_tcp_getsockname(self->h, (struct sockaddr *)SvPVX(RETVAL), &len);
+        if(err != 0) {
+            SvREFCNT_dec(RETVAL);
+            croak("Couldn't %s from tcp handle (%d): %s", (ix == 0) ? "getpeername" : "getsockname",
+                err, uv_strerror(err));
+        }
+
+        SvCUR_set(RETVAL, len);
+        SvPOK_on(RETVAL);
+    OUTPUT:
+        RETVAL
+
+void
+_close_reset(UV::TCP self)
+    CODE:
+        CHECKCALL(uv_tcp_close_reset(self->h, on_close_cb));
 
 MODULE = UV             PACKAGE = UV::TTY
 

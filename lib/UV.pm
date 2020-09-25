@@ -71,6 +71,11 @@ sub signal {
     return UV::Signal->new(@_);
 }
 
+sub tcp {
+    require UV::TCP;
+    return UV::TCP->new(@_);
+}
+
 sub timer {
     require UV::Timer;
     return UV::Timer->new(@_);
@@ -555,6 +560,12 @@ number will imply an error.
 
 When a function which takes a callback returns an error, the callback will
 never be called.
+
+=head2 tcp
+
+    my $tcp = UV::tcp();
+
+Returns a new L<UV::TCP> object.
 
 =head2 timer
 
