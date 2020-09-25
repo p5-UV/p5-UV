@@ -619,6 +619,68 @@ static void destroy_tty(pTHX_ UV__TTY self)
     destroy_stream(aTHX_ (UV__Stream)self);
 }
 
+/***********
+ * UV::UDP *
+ ***********/
+
+/* See also http://docs.libuv.org/en/v1.x/udp.html */
+
+typedef struct UV__UDP {
+    uv_udp_t *h;
+    FIELDS_UV__Handle
+    SV       *on_recv;
+} *UV__UDP;
+
+static void destroy_udp(pTHX_ UV__UDP self)
+{
+    if(self->on_recv)
+        SvREFCNT_dec(self->on_recv);
+}
+
+static void on_recv_cb(uv_udp_t *udp, ssize_t nread, const uv_buf_t *buf, const struct sockaddr *addr, unsigned flags)
+{
+    UV__UDP self;
+    SV      *cb;
+
+    if(!udp || !udp->data) return;
+
+    self = udp->data;
+    if((cb = self->on_recv) && SvOK(cb)) {
+        size_t addrlen = 0;
+        dTHXa(self->perl);
+        dSP;
+
+        /* libuv doesn't give us the length of addr; we'll have to guess */
+        switch(((struct sockaddr_storage *)addr)->ss_family) {
+            case AF_INET:  addrlen = sizeof(struct sockaddr_in);  break;
+            case AF_INET6: addrlen = sizeof(struct sockaddr_in6); break;
+        }
+
+        ENTER;
+        SAVETMPS;
+
+        PUSHMARK(SP);
+        EXTEND(SP, 5);
+        mPUSHs(newRV_inc(self->selfrv));
+        mPUSHs(nread < 0 ? newSV_error(nread) : &PL_sv_undef);
+        if(nread >= 0)
+            mPUSHp(buf->base, nread);
+        else
+            PUSHs(&PL_sv_undef);
+        mPUSHp((char *)addr, addrlen);
+        mPUSHi(flags);
+        PUTBACK;
+
+        call_sv(cb, G_DISCARD|G_VOID);
+
+        FREETMPS;
+        LEAVE;
+    }
+
+    if(buf && buf->base)
+        Safefree(buf->base);
+}
+
 /* Handle destructor has to be able to see the type-specific destroy_
  * functions above, so must be last
  */
@@ -639,6 +701,7 @@ static void destroy_handle(UV__Handle self)
         case UV_TCP:     destroy_tcp    (aTHX_ (UV__TCP)    self); break;
         case UV_TIMER:   destroy_timer  (aTHX_ (UV__Timer)  self); break;
         case UV_TTY:     destroy_tty    (aTHX_ (UV__TTY)    self); break;
+        case UV_UDP:     destroy_udp    (aTHX_ (UV__UDP)    self); break;
     }
 
     destroy_handle_base(aTHX_ self);
@@ -672,19 +735,21 @@ static void on_req_cb(uv_req_t *_req, int status)
     UV__Req req = _req->data;
     dTHXa(req->perl);
 
-    dSP;
-    ENTER;
-    SAVETMPS;
+    if(req->cb) {
+        dSP;
+        ENTER;
+        SAVETMPS;
 
-    PUSHMARK(SP);
-    EXTEND(SP, 1);
-    mPUSHs(newSV_error(status));
-    PUTBACK;
+        PUSHMARK(SP);
+        EXTEND(SP, 1);
+        mPUSHs(newSV_error(status));
+        PUTBACK;
 
-    call_sv(req->cb, G_DISCARD|G_VOID);
+        call_sv(req->cb, G_DISCARD|G_VOID);
 
-    FREETMPS;
-    LEAVE;
+        FREETMPS;
+        LEAVE;
+    }
 
     SvREFCNT_dec(req->selfrv);
 }
@@ -700,6 +765,12 @@ typedef struct UV__Req_shutdown {
     uv_shutdown_t *r;
     FIELDS_UV__Req
 } *UV__Req_shutdown;
+
+typedef struct UV__Req_udp_send {
+    uv_udp_send_t *r;
+    FIELDS_UV__Req
+    char       *s;
+} *UV__Req_udp_send;
 
 typedef struct UV__Req_write {
     uv_write_t *r;
@@ -1677,6 +1748,148 @@ get_winsize(UV::TTY self)
         mPUSHi(width);
         mPUSHi(height);
         XSRETURN(2);
+
+MODULE = UV             PACKAGE = UV::UDP
+
+SV *
+_new(char *class, UV::Loop loop)
+    INIT:
+        UV__UDP self;
+        int err;
+    CODE:
+        NEW_UV__Handle(self, uv_udp_t);
+
+        err = uv_udp_init(loop->loop, self->h);
+        if (err != 0) {
+            Safefree(self);
+            THROWERR("Couldn't initialse udp handle", err);
+        }
+
+        INIT_UV__Handle(self);
+        self->on_recv = NULL;
+
+        RETVAL = newSV(0);
+        sv_setref_pv(RETVAL, "UV::UDP", self);
+        self->selfrv = SvRV(RETVAL); /* no inc */
+    OUTPUT:
+        RETVAL
+
+SV *
+_on_recv(UV::UDP self, SV *cb = NULL)
+    CODE:
+        RETVAL = do_callback_accessor(&self->on_recv, cb);
+    OUTPUT:
+        RETVAL
+
+void
+_open(UV::UDP self, int fd)
+    CODE:
+        CHECKCALL(uv_udp_open(self->h, fd));
+
+void
+bind(UV::UDP self, SV *addr, int flags = 0)
+    CODE:
+        if(!SvPOK(addr) || SvCUR(addr) < sizeof(struct sockaddr))
+            croak("Expected a packed socket address for addr");
+
+        CHECKCALL(uv_udp_bind(self->h, (struct sockaddr *)SvPVX(addr), flags));
+
+SV *
+connect(UV::UDP self, SV *addr)
+    CODE:
+        if(!SvPOK(addr) || SvCUR(addr) < sizeof(struct sockaddr))
+            croak("Expected a packed socket address for addr");
+
+        CHECKCALL(uv_udp_connect(self->h, (struct sockaddr *)SvPVX(addr)));
+
+SV *
+getpeername(UV::UDP self)
+    ALIAS:
+        getpeername = 0
+        getsockname = 1
+    INIT:
+        int len;
+        int err;
+    CODE:
+        len = sizeof(struct sockaddr_storage);
+        RETVAL = newSV(len);
+
+        err = (ix == 0) ?
+            uv_udp_getpeername(self->h, (struct sockaddr *)SvPVX(RETVAL), &len) :
+            uv_udp_getsockname(self->h, (struct sockaddr *)SvPVX(RETVAL), &len);
+        if(err != 0) {
+            SvREFCNT_dec(RETVAL);
+            croak("Couldn't %s from udp handle (%d): %s", (ix == 0) ? "getpeername" : "getsockname",
+                err, uv_strerror(err));
+        }
+
+        SvCUR_set(RETVAL, len);
+        SvPOK_on(RETVAL);
+    OUTPUT:
+        RETVAL
+
+void
+recv_start(UV::UDP self)
+    CODE:
+        CHECKCALL(uv_udp_recv_start(self->h, on_alloc_cb, on_recv_cb));
+
+void
+recv_stop(UV::UDP self)
+    CODE:
+        CHECKCALL(uv_udp_recv_stop(self->h));
+
+SV *
+send(UV::UDP self, SV *s, ...)
+    INIT:
+        UV__Req_udp_send req;
+        uv_buf_t buf[1];
+        int err;
+        SV *addr;
+        SV *cb;
+    CODE:
+        if(items > 4)
+            croak_xs_usage(cv, "self, s, [from], cb");
+        else if(items == 4) {
+            addr = ST(2);
+            cb   = ST(3);
+        }
+        else if(SvTYPE(SvRV(ST(2))) == SVt_PVCV) {
+            addr = NULL;
+            cb   = ST(2);
+        }
+        else {
+            addr = ST(2);
+            cb   = NULL;
+        }
+
+        NEW_UV__Req(req, uv_udp_send_t);
+        INIT_UV__Req(req);
+
+        buf[0].len  = SvCUR(s);
+        buf[0].base = savepvn(SvPVX(s), buf[0].len);
+
+        req->s = buf[0].base;
+
+        err = uv_udp_send(req->r, self->h, buf, 1,
+            addr ? (struct sockaddr *)SvPVX(addr) : NULL,
+            (uv_udp_send_cb)on_req_cb);
+
+        if(err != 0) {
+            Safefree(req->s);
+            Safefree(req);
+            THROWERR("Couldn't send", err);
+        }
+
+        if(cb)
+            req->cb = newSVsv(cb);
+        else
+            req->cb = NULL;
+
+        RETVAL = newSV(0);
+        sv_setref_pv(RETVAL, "UV::Req", req);
+        req->selfrv = SvREFCNT_inc(SvRV(RETVAL));
+    OUTPUT:
+        RETVAL
 
 MODULE = UV             PACKAGE = UV::Loop
 

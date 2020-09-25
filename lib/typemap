@@ -12,6 +12,7 @@ UV::Stream          T_PTROBJ
 UV::Timer           T_PTROBJ
 UV::TCP             T_PTROBJ
 UV::TTY             T_PTROBJ
+UV::UDP             T_PTROBJ
 
 UV::Req             T_PTROBJ
 

@@ -86,6 +86,11 @@ sub tty {
     return UV::TTY->new(@_);
 }
 
+sub udp {
+    require UV::UDP;
+    return UV::UDP->new(@_);
+}
+
 {
     package UV::Exception;
 
@@ -579,6 +584,12 @@ Returns a new L<UV::Timer> object.
     my $tty = UV::TTY(fd => 0);
 
 Returns a new L<UV::TTY> object.
+
+=head2 udp
+
+    my $udp = UV::udp();
+
+Returns a new L<UV::UDP> object.
 
 =head2 version
 
