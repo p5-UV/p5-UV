@@ -1236,48 +1236,6 @@ stop(UV::Idle self)
     CODE:
         CHECKCALL(uv_idle_stop(self->h));
 
-MODULE = UV             PACKAGE = UV::Prepare
-
-SV *
-_new(char *class, UV::Loop loop)
-    INIT:
-        UV__Prepare self;
-        int err;
-    CODE:
-        NEW_UV__Handle(self, uv_prepare_t);
-
-        err = uv_prepare_init(loop->loop, self->h);
-        if (err != 0) {
-            Safefree(self);
-            THROWERR("Couldn't initialise prepare handle", err);
-        }
-
-        INIT_UV__Handle(self);
-        self->on_prepare = NULL;
-
-        RETVAL = newSV(0);
-        sv_setref_pv(RETVAL, "UV::Prepare", self);
-        self->selfrv = SvRV(RETVAL); /* no inc */
-    OUTPUT:
-        RETVAL
-
-SV *
-_on_prepare(UV::Prepare self, SV *cb = NULL)
-    CODE:
-        RETVAL = do_callback_accessor(&self->on_prepare, cb);
-    OUTPUT:
-        RETVAL
-
-void
-_start(UV::Prepare self)
-    CODE:
-        CHECKCALL(uv_prepare_start(self->h, on_prepare_cb));
-
-void
-stop(UV::Prepare self)
-    CODE:
-        CHECKCALL(uv_prepare_stop(self->h));
-
 MODULE = UV             PACKAGE = UV::Pipe
 
 SV *
@@ -1406,6 +1364,48 @@ void
 stop(UV::Poll self)
     CODE:
         CHECKCALL(uv_poll_stop(self->h));
+
+MODULE = UV             PACKAGE = UV::Prepare
+
+SV *
+_new(char *class, UV::Loop loop)
+    INIT:
+        UV__Prepare self;
+        int err;
+    CODE:
+        NEW_UV__Handle(self, uv_prepare_t);
+
+        err = uv_prepare_init(loop->loop, self->h);
+        if (err != 0) {
+            Safefree(self);
+            THROWERR("Couldn't initialise prepare handle", err);
+        }
+
+        INIT_UV__Handle(self);
+        self->on_prepare = NULL;
+
+        RETVAL = newSV(0);
+        sv_setref_pv(RETVAL, "UV::Prepare", self);
+        self->selfrv = SvRV(RETVAL); /* no inc */
+    OUTPUT:
+        RETVAL
+
+SV *
+_on_prepare(UV::Prepare self, SV *cb = NULL)
+    CODE:
+        RETVAL = do_callback_accessor(&self->on_prepare, cb);
+    OUTPUT:
+        RETVAL
+
+void
+_start(UV::Prepare self)
+    CODE:
+        CHECKCALL(uv_prepare_start(self->h, on_prepare_cb));
+
+void
+stop(UV::Prepare self)
+    CODE:
+        CHECKCALL(uv_prepare_stop(self->h));
 
 MODULE = UV             PACKAGE = UV::Signal
 
