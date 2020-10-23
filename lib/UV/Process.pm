@@ -69,6 +69,21 @@ L<spawns|http://docs.libuv.org/en/v1.x/process.html#c.uv_spawn> the actual
 process to begin running. If no L<UV::Loop> is provided then the
 L<UV::Loop/"default loop"> is assumed.
 
+The following named options are supported:
+
+=over 4
+
+=item
+
+C<file>: a string giving the command name or path to it.
+
+=item
+
+C<args>: a reference to an array of addtional argument values to invoke the
+command with.
+
+=back
+
 =head1 AUTHOR
 
 Paul Evans <leonerd@leonerd.org.uk>
