@@ -1498,6 +1498,34 @@ _set_args(UV::Process self, SV *args)
         self->options.args[i+1] = NULL;
 
 void
+_set_env(UV::Process self, SV *env)
+    INIT:
+        HV *envhv;
+        I32 nkeys, i, dummy;
+        HE *iter;
+        SV *tmp;
+    CODE:
+        if(!SvROK(env) || SvTYPE(SvRV(env)) != SVt_PVHV)
+            croak("Expected env as HASH reference");
+
+        envhv = (HV *)SvRV(env);
+        nkeys = hv_iterinit(envhv);
+
+        Newx(self->options.env, nkeys + 1, char *);
+        tmp = sv_newmortal();
+
+        i = 0;
+        while((iter = hv_iternext(envhv))) {
+            sv_setpvf(tmp, "%s=%s",
+                hv_iterkey(iter, &dummy), SvPVbyte_nolen(HeVAL(iter)));
+
+            self->options.env[i++] = SvPVX(tmp);
+            SvPVX(tmp) = NULL;
+            SvLEN(tmp) = 0;
+        }
+        self->options.env[i] = NULL;
+
+void
 _spawn(UV::Process self)
     INIT:
         int err;

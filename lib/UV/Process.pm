@@ -82,6 +82,11 @@ C<file>: a string giving the command name or path to it.
 C<args>: a reference to an array of addtional argument values to invoke the
 command with.
 
+=item
+
+C<env>: an optional reference to a hash containing the environment variables
+for the new process.
+
 =back
 
 =head1 AUTHOR

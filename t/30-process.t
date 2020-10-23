@@ -58,4 +58,21 @@ is($exit_cb_called, 1, "The exit callback was run");
     is($term_signal, POSIX::SIGTERM, 'term signal from `perl -e "kill SIGTERM => $$"`');
 }
 
+{
+    my $exit_status;
+
+    my $process = UV::Process->spawn(
+        file => $^X,
+        args => [ "-e", 'exit ($ENV{VAR} eq "value")' ],
+        env => {
+            VAR => "value",
+        },
+        on_exit => sub {
+            (undef, $exit_status, undef) = @_;
+        },
+    );
+    UV::Loop->default()->run();
+    is($exit_status, 1, 'exit status from process with env');
+}
+
 done_testing();
