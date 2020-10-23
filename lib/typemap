@@ -7,6 +7,7 @@ UV::Idle            T_PTROBJ
 UV::Pipe            T_PTROBJ
 UV::Poll            T_PTROBJ
 UV::Prepare         T_PTROBJ
+UV::Process         T_PTROBJ
 UV::Signal          T_PTROBJ
 UV::Stream          T_PTROBJ
 UV::Timer           T_PTROBJ

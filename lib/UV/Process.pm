@@ -1,0 +1,81 @@
+package UV::Process;
+
+our $VERSION = '1.000010';
+
+use strict;
+use warnings;
+use Carp ();
+use parent 'UV::Handle';
+
+sub spawn {
+    my $self = shift;
+    ref $self or $self = $self->new(@_);
+
+    $self->_spawn();
+
+    return $self;
+}
+
+1;
+
+__END__
+
+=encoding utf8
+
+=head1 NAME
+
+UV::Process - Process handles in libuv
+
+=head1 SYNOPSIS
+
+  #!/usr/bin/env perl
+  use strict;
+  use warnings;
+
+  use UV;
+
+  my $process = UV::Process->spawn(...)
+
+=head1 DESCRIPTION
+
+This module provides an interface to
+L<libuv's process|http://docs.libuv.org/en/v1.x/process.html> handle.
+
+=head1 EVENTS
+
+=head2 exit
+
+    $process->on("exit", sub {
+        my ($invocant, $exit_status, $term_signal) = @_;
+        say "The process exited with status $exit_status" unless $term_signal;
+        say "The process terminated with signal $term_signal" if $term_signal;
+    });
+
+When the process terminates (either by C<exit> or a signal), this event will
+be fired.
+
+=head1 METHODS
+
+L<UV::Signal> inherits all methods from L<UV::Handle> and also makes the
+following extra methods available.
+
+=head2 spawn (class method)
+
+    my $process = UV::Process->spawn(file => $file, args => \@args);
+
+This constructor method creates a new L<UV::Process> object with the given
+configuration, and
+L<spawns|http://docs.libuv.org/en/v1.x/process.html#c.uv_spawn> the actual
+process to begin running. If no L<UV::Loop> is provided then the
+L<UV::Loop/"default loop"> is assumed.
+
+=head1 AUTHOR
+
+Paul Evans <leonerd@leonerd.org.uk>
+
+=head1 LICENSE
+
+This library is free software; you can redistribute it and/or modify it under
+the same terms as Perl itself.
+
+=cut

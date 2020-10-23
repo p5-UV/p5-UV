@@ -495,6 +495,46 @@ static void on_prepare_cb(uv_prepare_t *prepare)
     LEAVE;
 }
 
+/* See also http://docs.libuv.org/en/v1.x/process.html */
+
+typedef struct UV__Process {
+    uv_process_t *h;
+    FIELDS_UV__Handle
+    SV           *on_exit;
+
+    /* fields for spawn */
+    uv_loop_t *loop;
+    uv_process_options_t options;
+} *UV__Process;
+
+static void on_exit_cb(uv_process_t *process, int64_t exit_status, int term_signal)
+{
+    UV__Process self;
+    SV          *cb;
+
+    if(!process || !process->data) return;
+
+    self = process->data;
+    if(!(cb = self->on_exit) || !SvOK(cb)) return;
+
+    dTHXa(self->perl);
+    dSP;
+    ENTER;
+    SAVETMPS;
+
+    PUSHMARK(SP);
+    EXTEND(SP, 3);
+    mPUSHs(newRV_inc(self->selfrv));
+    mPUSHi(exit_status);
+    mPUSHi(term_signal);
+    PUTBACK;
+
+    call_sv(cb, G_DISCARD|G_VOID);
+
+    FREETMPS;
+    LEAVE;
+}
+
 /**************
  * UV::Signal *
  **************/
@@ -1406,6 +1446,76 @@ void
 stop(UV::Prepare self)
     CODE:
         CHECKCALL(uv_prepare_stop(self->h));
+
+MODULE = UV             PACKAGE = UV::Process
+
+SV *
+_new(char *class, UV::Loop loop)
+    INIT:
+        UV__Process self;
+        int err;
+    CODE:
+        NEW_UV__Handle(self, uv_process_t);
+        self->loop = loop->loop;
+
+        Zero(&self->options, 1, uv_process_options_t);
+
+        self->options.exit_cb = &on_exit_cb;
+
+        RETVAL = newSV(0);
+        sv_setref_pv(RETVAL, "UV::Process", self);
+        self->selfrv = SvRV(RETVAL); /* no inc */
+    OUTPUT:
+        RETVAL
+
+SV *
+_on_exit(UV::Process self, SV *cb = NULL)
+    CODE:
+        RETVAL = do_callback_accessor(&self->on_exit, cb);
+    OUTPUT:
+        RETVAL
+
+void
+_set_file(UV::Process self, char *file)
+    CODE:
+        self->options.file = savepv(file);
+
+void
+_set_args(UV::Process self, SV *args)
+    INIT:
+        AV *argsav;
+        U32 i;
+    CODE:
+        if(!SvROK(args) || SvTYPE(SvRV(args)) != SVt_PVAV)
+            croak("Expected args as ARRAY reference");
+
+        argsav = (AV *)SvRV(args);
+
+        Newx(self->options.args, AvFILL(argsav) + 3, char *);
+        self->options.args[0] = NULL;
+        for(i = 0; i <= AvFILL(argsav); i++)
+            self->options.args[i+1] = savepv(SvPVbyte_nolen(AvARRAY(argsav)[i]));
+        self->options.args[i+1] = NULL;
+
+void
+_spawn(UV::Process self)
+    INIT:
+        int err;
+    CODE:
+        if(!self->options.file)
+            croak("Require 'file' to spawn a UV::Process");
+        if(!self->options.args)
+            croak("Require 'args' to spawn a UV::Process");
+
+        if(!self->options.args[0])
+            self->options.args[0] = savepv(self->options.file);
+
+        err = uv_spawn(self->loop, self->h, &self->options);
+        if (err != 0) {
+            THROWERR("Couldn't spawn process", err);
+        }
+
+        INIT_UV__Handle(self);
 
 MODULE = UV             PACKAGE = UV::Signal
 

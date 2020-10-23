@@ -21,7 +21,12 @@ sub new {
 
     my $self = $class->_new($class->_new_args(\%args));
     $self->on(($_ =~ m/^on_(.*)/)[0] => delete $args{$_}) for grep { m/^on_/ } keys %args;
-    die "TODO: more args @{[ keys %args ]}" if %args;
+
+    if(%args) {
+        my $code;
+        $code = $self->can("_set_$_") and $self->$code(delete $args{$_}) for keys %args;
+        die "TODO: more args @{[ keys %args ]}" if keys %args;
+    }
 
     return $self;
 }
