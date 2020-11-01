@@ -99,6 +99,13 @@ in the child process.
 Pass a plain integer, or filehandle reference to inherit that FD from the
 parent.
 
+=item
+
+C<setuid>, C<setgid>: optional integer arguments to attempt to change the
+user and group ID of the newly-spawned process.
+
+Not supported on Windows.
+
 =back
 
 =head1 AUTHOR

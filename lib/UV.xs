@@ -1568,6 +1568,19 @@ _set_stdio_h(UV::Process self, int fd, SV *arg)
         cont->flags = flags;
 
 void
+_set_setuid(UV::Process self, int uid)
+    CODE:
+        self->options.flags |= UV_PROCESS_SETUID;
+        self->options.uid = uid;
+
+void
+_set_setgid(UV::Process self, int gid)
+    CODE:
+        self->options.flags |= UV_PROCESS_SETGID;
+        self->options.uid = gid;
+
+
+void
 _spawn(UV::Process self)
     INIT:
         int err;
