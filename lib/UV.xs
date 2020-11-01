@@ -1526,6 +1526,48 @@ _set_env(UV::Process self, SV *env)
         self->options.env[i] = NULL;
 
 void
+_set_stdio_h(UV::Process self, int fd, SV *arg)
+    INIT:
+        uv_stdio_container_t *cont;
+        int flags = 0;
+        SV *fdarg = arg;
+    CODE:
+        if(self->options.stdio_count < (fd+1)) {
+            int n = self->options.stdio_count;
+            if(n < (fd+1)) n = (fd+1);
+            if(n < 3)      n = 3;
+
+            Renew(self->options.stdio, n, uv_stdio_container_t);
+            int i;
+            for(i = self->options.stdio_count; i < n; i++)
+                self->options.stdio[i].flags = UV_IGNORE;
+
+            self->options.stdio_count = n;
+        }
+
+        cont = self->options.stdio + fd;
+
+        if(SvROK(arg) && SvTYPE(SvRV(arg)) == SVt_PVHV) {
+            fprintf(stderr, "TODO: grab extra values from hash\n");
+        }
+
+        if(!SvROK(fdarg)) {
+            /* FD by stream number */
+            cont->data.fd = SvIV(arg);
+            flags |= UV_INHERIT_FD;
+        }
+        else if(SvTYPE(SvRV(fdarg)) == SVt_PVGV) {
+            /* FD by globref */
+            cont->data.fd = PerlIO_fileno(IoOFP(GvIO(SvRV(fdarg))));
+            flags |= UV_INHERIT_FD;
+        }
+        else {
+            croak("Unsure what to do with _set_stdio_h fd argument %" SVf, SVfARG(arg));
+        }
+
+        cont->flags = flags;
+
+void
 _spawn(UV::Process self)
     INIT:
         int err;

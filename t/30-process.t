@@ -3,6 +3,7 @@ use warnings;
 
 use UV::Loop ();
 use UV::Process ();
+use UV::Pipe ();
 
 use Test::More;
 
@@ -73,6 +74,36 @@ is($exit_cb_called, 1, "The exit callback was run");
     );
     UV::Loop->default()->run();
     is($exit_status, 1, 'exit status from process with env');
+}
+
+{
+    # TODO: This test might not work on MSWin32. We might need to find a different
+    #   implementation, or just skip it?
+
+    pipe my ($rd, $wr) or die "Cannot pipe - $!";
+    my $read_cb_called;
+
+    my $process = UV::Process->spawn(
+        file => $^X,
+        args => [ "-e", 'print "Hello, world!\n"' ],
+        stdout => $wr,
+        on_exit => sub {},
+    );
+    my $pipe = UV::Pipe->new(
+        on_read => sub {
+            my ($self, $status, $buf) = @_;
+            $read_cb_called++;
+
+            is($buf, "Hello, world!\n", 'data was read from pipe from process');
+
+            $self->close;
+        },
+    );
+    $pipe->open($rd);
+    $pipe->read_start;
+
+    UV::Loop->default()->run();
+    ok($read_cb_called, 'read callback was called');
 }
 
 done_testing();

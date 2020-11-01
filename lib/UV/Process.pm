@@ -16,6 +16,10 @@ sub spawn {
     return $self;
 }
 
+sub _set_stdin  { shift->_set_stdio_h(0 => @_); }
+sub _set_stdout { shift->_set_stdio_h(1 => @_); }
+sub _set_stderr { shift->_set_stdio_h(2 => @_); }
+
 1;
 
 __END__
@@ -86,6 +90,14 @@ command with.
 
 C<env>: an optional reference to a hash containing the environment variables
 for the new process.
+
+=item
+
+C<stdin>, C<stdout>, C<stderr>: optional argument to set up a file descriptor
+in the child process.
+
+Pass a plain integer, or filehandle reference to inherit that FD from the
+parent.
 
 =back
 
