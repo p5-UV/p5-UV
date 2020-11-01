@@ -107,4 +107,22 @@ is($exit_cb_called, 1, "The exit callback was run");
     ok($read_cb_called, 'read callback was called');
 }
 
+{
+    my $term_signal;
+
+    my $process = UV::Process->spawn(
+        file => $^X,
+        args => [ "-e", 'sleep 20' ],
+        on_exit => sub {
+            (undef, undef, $term_signal) = @_;
+        },
+    );
+
+    $process->kill(POSIX::SIGTERM);
+
+    UV::Loop->default()->run();
+
+    is($term_signal, POSIX::SIGTERM, 'term signal from killed process');
+}
+
 done_testing();

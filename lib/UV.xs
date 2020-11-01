@@ -1600,6 +1600,11 @@ _spawn(UV::Process self)
 
         INIT_UV__Handle(self);
 
+void
+kill(UV::Process self, int signum)
+    CODE:
+        CHECKCALL(uv_process_kill(self->h, signum));
+
 int
 pid(UV::Process self)
     CODE:

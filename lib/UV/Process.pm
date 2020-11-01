@@ -108,9 +108,15 @@ Not supported on Windows.
 
 =back
 
+=head2 kill
+
+    $process->kill($signal);
+
+Sends the specified signal to the process.
+
 =head2 pid
 
-    $pid = $process->pid
+    my $pid = $process->pid;
 
 Returns the PID number.
 
