@@ -85,16 +85,17 @@ is($exit_cb_called, 1, "The exit callback was run");
 
     my $process = UV::Process->spawn(
         file => $^X,
-        args => [ "-e", 'print "Hello, world!\n"' ],
+        args => [ "-e", 'print "Hello, world I am $$!\n"' ],
         stdout => $wr,
         on_exit => sub {},
     );
+    my $pid = $process->pid;
     my $pipe = UV::Pipe->new(
         on_read => sub {
             my ($self, $status, $buf) = @_;
             $read_cb_called++;
 
-            is($buf, "Hello, world!\n", 'data was read from pipe from process');
+            is($buf, "Hello, world I am $pid!\n", 'data was read from pipe from process');
 
             $self->close;
         },

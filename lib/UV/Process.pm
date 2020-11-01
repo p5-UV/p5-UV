@@ -108,6 +108,12 @@ Not supported on Windows.
 
 =back
 
+=head2 pid
+
+    $pid = $process->pid
+
+Returns the PID number.
+
 =head1 AUTHOR
 
 Paul Evans <leonerd@leonerd.org.uk>

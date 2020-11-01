@@ -1600,6 +1600,13 @@ _spawn(UV::Process self)
 
         INIT_UV__Handle(self);
 
+int
+pid(UV::Process self)
+    CODE:
+        RETVAL = self->h->pid;
+    OUTPUT:
+        RETVAL
+
 MODULE = UV             PACKAGE = UV::Signal
 
 SV *
