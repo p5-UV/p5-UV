@@ -2183,6 +2183,16 @@ send(UV::UDP self, SV *s, ...)
         RETVAL
 
 void
+set_broadcast(UV::UDP self, bool on)
+    CODE:
+        CHECKCALL(uv_udp_set_broadcast(self->h, on));
+
+void
+set_ttl(UV::UDP self, int ttl)
+    CODE:
+        CHECKCALL(uv_udp_set_ttl(self->h, ttl));
+
+void
 try_send(UV::UDP self, SV *s, ...)
     INIT:
         uv_buf_t buf[1];
@@ -2213,6 +2223,19 @@ try_send(UV::UDP self, SV *s, ...)
         if(err < 0) {
             THROWERR("Couldn't send", err);
         }
+
+UV
+get_send_queue_size(UV::UDP self)
+    ALIAS:
+        get_send_queue_size  = 0
+        get_send_queue_count = 1
+    CODE:
+        switch(ix) {
+            case 0: RETVAL = uv_udp_get_send_queue_size(self->h);  break;
+            case 1: RETVAL = uv_udp_get_send_queue_count(self->h); break;
+        }
+    OUTPUT:
+        RETVAL
 
 MODULE = UV             PACKAGE = UV::Loop
 

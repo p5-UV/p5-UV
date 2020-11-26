@@ -151,6 +151,29 @@ The L<try_send|http://docs.libuv.org/en/v1.x/udp.html#c.uv_udp_try_send>
 method behaves similarly to L</send> but will fail with C<UV_EAGAIN> if it
 cannot send the data immediately, rather than enqueing for later.
 
+=head2 set_broadcast
+
+    $udp->set_broadcast($on);
+
+The L<set_broadcast|http://docs.libuv.org/en/v1.x/udp.html#c.uv_udp_set_broadcast>
+method turns broadcast on or off.
+
+=head2 set_ttl
+
+    $udp->set_ttl($ttl);
+
+The L<set_ttl|http://docs.libuv.org/en/v1.x/udp.html#c.uv_udp_set_ttl> method
+sets the time-to-live of transmitted packets.
+
+=head2 get_send_queue_size
+
+=head2 get_send_queue_count
+
+    $size  = $udp->get_send_queue_size;
+    $count = $udp->get_send_queue_count;
+
+Returns the total size and current count of items in the send queue.
+
 =head1 AUTHOR
 
 Paul Evans <leonerd@leonerd.org.uk>
