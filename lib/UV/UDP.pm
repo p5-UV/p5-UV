@@ -189,7 +189,7 @@ address is specified in a plain byte string.
 
 =head2 set_membership
 
-    $udp->set_membership($mcaddr, $ifaddr, $membership)
+    $udp->set_membership($mcaddr, $ifaddr, $membership);
 
 The L<set_membership|http://docs.libuv.org/en/v1.x/udp.html#c.uv_udp_set_membership>
 method joins or leaves a multicast group. C<$membership> should be one of the
@@ -198,7 +198,7 @@ interface addresses are specified in plain byte strings.
 
 =head2 set_source_membership
 
-    $udp->set_source_membership($mcaddr, $ifaddr, $srcaddr, $membership)
+    $udp->set_source_membership($mcaddr, $ifaddr, $srcaddr, $membership);
 
 The L<set_source_membership|http://docs.libuv.org/en/v1.x/udp.html#c.uv_udp_set_source_membership>
 method joins or leaves a source-specific multicast group. C<$membership>
