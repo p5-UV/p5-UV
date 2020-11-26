@@ -2,6 +2,7 @@ UV::Loop            T_PTROBJ
 
 UV::Handle          T_PTROBJ
 
+UV::Async           T_PTROBJ
 UV::Check           T_PTROBJ
 UV::Idle            T_PTROBJ
 UV::Pipe            T_PTROBJ

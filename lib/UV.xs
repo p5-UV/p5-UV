@@ -301,6 +301,48 @@ static void on_connection_cb(uv_stream_t *stream, int status)
 }
 
 /*************
+ * UV::Async *
+ *************/
+
+typedef struct UV__Async {
+    uv_async_t *h;
+    FIELDS_UV__Handle
+    SV         *on_async;
+} *UV__Async;
+
+static void destroy_async(pTHX_ UV__Async self)
+{
+    if(self->on_async)
+        SvREFCNT_dec(self->on_async);
+}
+
+static void on_async_cb(uv_async_t *async)
+{
+    UV__Async self;
+    SV        *cb;
+
+    if(!async || !async->data) return;
+
+    self = async->data;
+    if(!(cb = self->on_async) || !SvOK(cb)) return;
+
+    dTHXa(self->perl);
+    dSP;
+    ENTER;
+    SAVETMPS;
+
+    PUSHMARK(SP);
+    EXTEND(SP, 1);
+    mPUSHs(newRV_inc(self->selfrv));
+    PUTBACK;
+
+    call_sv(cb, G_DISCARD|G_VOID);
+
+    FREETMPS;
+    LEAVE;
+}
+
+/*************
  * UV::Check *
  *************/
 
@@ -731,6 +773,7 @@ static void destroy_handle(UV__Handle self)
 
     uv_handle_t *handle = self->h;
     switch(handle->type) {
+        case UV_ASYNC:   destroy_async  (aTHX_ (UV__Async)  self); break;
         case UV_CHECK:   destroy_check  (aTHX_ (UV__Check)  self); break;
         case UV_IDLE:    destroy_idle   (aTHX_ (UV__Idle)   self); break;
         case UV_NAMED_PIPE:
@@ -1191,6 +1234,43 @@ _on_close(UV::Handle self, SV *cb = NULL)
         RETVAL = do_callback_accessor(&self->on_close, cb);
     OUTPUT:
         RETVAL
+
+MODULE = UV             PACKAGE = UV::Async
+
+SV *
+_new(char *class, UV::Loop loop)
+    INIT:
+        UV__Async self;
+        int err;
+    CODE:
+        NEW_UV__Handle(self, uv_async_t);
+
+        err = uv_async_init(loop->loop, self->h, &on_async_cb);
+        if (err != 0) {
+            Safefree(self);
+            THROWERR("Couldn't initialise async handle", err);
+        }
+
+        INIT_UV__Handle(self);
+        self->on_async = NULL;
+
+        RETVAL = newSV(0);
+        sv_setref_pv(RETVAL, "UV::Async", self);
+        self->selfrv = SvRV(RETVAL); /* no inc */
+    OUTPUT:
+        RETVAL
+
+SV *
+_on_async(UV::Async self, SV *cb = NULL)
+    CODE:
+        RETVAL = do_callback_accessor(&self->on_async, cb);
+    OUTPUT:
+        RETVAL
+
+void
+send(UV::Async self)
+    CODE:
+        CHECKCALL(uv_async_send(self->h));
 
 MODULE = UV             PACKAGE = UV::Check
 
