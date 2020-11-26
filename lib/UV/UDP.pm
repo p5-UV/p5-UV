@@ -165,6 +165,47 @@ method turns broadcast on or off.
 The L<set_ttl|http://docs.libuv.org/en/v1.x/udp.html#c.uv_udp_set_ttl> method
 sets the time-to-live of transmitted packets.
 
+=head2 set_multicast_loop
+
+    $udp->set_multicast_loop($on);
+
+The L<set_multicast_loop|http://docs.libuv.org/en/v1.x/udp.html#c.uv_udp_set_multicast_loop>
+method turns the multicast loopback flag on or off.
+
+=head2 set_multicast_ttl
+
+    $udp->set_multicast_ttl($ttl);
+
+The L<set_multicast_ttl|http://docs.libuv.org/en/v1.x/udp.html#c.uv_udp_set_multicast_ttl>
+method sets the time-to-live of transmitted multicast packets.
+
+=head2 set_multicast_interface
+
+    $udp->set_multicast_interface($ifaddr);
+
+The L<set_multicast_interface|http://docs.libuv.org/en/v1.x/udp.html#c.uv_udp_set_multicast_interface>
+method sets the interface address to send or receive data on. The interface
+address is specified in a plain byte string.
+
+=head2 set_membership
+
+    $udp->set_membership($mcaddr, $ifaddr, $membership)
+
+The L<set_membership|http://docs.libuv.org/en/v1.x/udp.html#c.uv_udp_set_membership>
+method joins or leaves a multicast group. C<$membership> should be one of the
+exported constants C<UV_JOIN_GROUP> or C<UV_LEAVE_GROUP>. The group and
+interface addresses are specified in plain byte strings.
+
+=head2 set_source_membership
+
+    $udp->set_source_membership($mcaddr, $ifaddr, $srcaddr, $membership)
+
+The L<set_source_membership|http://docs.libuv.org/en/v1.x/udp.html#c.uv_udp_set_source_membership>
+method joins or leaves a source-specific multicast group. C<$membership>
+should be one of the exported constants C<UV_JOIN_GROUP> or C<UV_LEAVE_GROUP>.
+The group, interface, and source addresses are specified in plain byte
+strings.
+
 =head2 get_send_queue_size
 
 =head2 get_send_queue_count

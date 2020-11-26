@@ -15,6 +15,8 @@ can_ok('UV::UDP', (
 can_ok('UV::UDP', (
     qw(open bind connect getpeername getsockname),
     qw(set_broadcast set_ttl get_send_queue_size get_send_queue_count),
+    qw(set_multicast_loop set_multicast_ttl set_multicast_interface),
+    qw(set_membership set_source_membership),
     qw(recv_start recv_stop send try_send),
 ));
 

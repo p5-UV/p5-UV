@@ -1130,6 +1130,16 @@ BOOT:
         DO_CONST_IV(UV_TTY_MODE_RAW);
         DO_CONST_IV(UV_TTY_MODE_IO);
     }
+
+    /* constants under UV::UDP */
+    {
+        stash = gv_stashpv("UV::UDP", GV_ADD);
+        export = get_av("UV::UDP::EXPORT_XS", TRUE);
+
+        /* TTY mode types */
+        DO_CONST_IV(UV_JOIN_GROUP);
+        DO_CONST_IV(UV_LEAVE_GROUP);
+    }
 }
 
 const char* uv_err_name(int err)
@@ -2191,6 +2201,33 @@ void
 set_ttl(UV::UDP self, int ttl)
     CODE:
         CHECKCALL(uv_udp_set_ttl(self->h, ttl));
+
+void
+set_multicast_loop(UV::UDP self, bool on)
+    CODE:
+        CHECKCALL(uv_udp_set_multicast_loop(self->h, on));
+
+void
+set_multicast_ttl(UV::UDP self, int ttl)
+    CODE:
+        CHECKCALL(uv_udp_set_multicast_ttl(self->h, ttl));
+
+void
+set_multicast_interface(UV::UDP self, SV *ifaddr)
+    CODE:
+        CHECKCALL(uv_udp_set_multicast_interface(self->h, SvPVbyte_nolen(ifaddr)));
+
+void
+set_membership(UV::UDP self, SV *mcaddr, SV *ifaddr, int membership)
+    CODE:
+        CHECKCALL(uv_udp_set_membership(
+            self->h, SvPVbyte_nolen(mcaddr), SvPVbyte_nolen(ifaddr), membership));
+
+void
+set_source_membership(UV::UDP self, SV *mcaddr, SV *ifaddr, SV *srcaddr, int membership)
+    CODE:
+        CHECKCALL(uv_udp_set_source_membership(
+            self->h, SvPVbyte_nolen(mcaddr), SvPVbyte_nolen(ifaddr), SvPVbyte_nolen(srcaddr), membership));
 
 void
 try_send(UV::UDP self, SV *s, ...)
