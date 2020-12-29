@@ -1,6 +1,6 @@
 package UV::Idle;
 
-our $VERSION = '1.000010';
+our $VERSION = '1.900';
 
 use strict;
 use warnings;
