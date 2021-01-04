@@ -72,8 +72,7 @@ static void loop_walk_cb(uv_handle_t* handle, void* arg)
 static SV *MY_do_callback_accessor(pTHX_ SV **var, SV *cb)
 {
     if(cb && SvOK(cb)) {
-        if(*var)
-            SvREFCNT_dec(*var);
+        SvREFCNT_dec(*var);
 
         *var = newSVsv(cb);
     }
@@ -164,10 +163,8 @@ typedef struct UV__Handle {
 static void destroy_handle(UV__Handle self);
 static void destroy_handle_base(pTHX_ UV__Handle self)
 {
-    if(self->data)
-        SvREFCNT_dec(self->data);
-    if(self->on_close)
-        SvREFCNT_dec(self->on_close);
+    SvREFCNT_dec(self->data);
+    SvREFCNT_dec(self->on_close);
 
     /* No need to destroy self->selfrv because Perl is already destroying
      * it, being the reason we are invoked in the first place
@@ -235,10 +232,8 @@ typedef struct UV__Stream {
 
 static void destroy_stream(pTHX_ UV__Stream self)
 {
-    if(self->on_read)
-        SvREFCNT_dec(self->on_read);
-    if(self->on_connection)
-        SvREFCNT_dec(self->on_connection);
+    SvREFCNT_dec(self->on_read);
+    SvREFCNT_dec(self->on_connection);
 }
 
 static void on_read_cb(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf)
@@ -312,8 +307,7 @@ typedef struct UV__Async {
 
 static void destroy_async(pTHX_ UV__Async self)
 {
-    if(self->on_async)
-        SvREFCNT_dec(self->on_async);
+    SvREFCNT_dec(self->on_async);
 }
 
 static void on_async_cb(uv_async_t *async)
@@ -356,8 +350,7 @@ typedef struct UV__Check {
 
 static void destroy_check(pTHX_ UV__Check self)
 {
-    if(self->on_check)
-        SvREFCNT_dec(self->on_check);
+    SvREFCNT_dec(self->on_check);
 }
 
 static void on_check_cb(uv_check_t *check)
@@ -400,8 +393,7 @@ typedef struct UV__Idle {
 
 static void destroy_idle(pTHX_ UV__Idle self)
 {
-    if(self->on_idle)
-        SvREFCNT_dec(self->on_idle);
+    SvREFCNT_dec(self->on_idle);
 }
 
 static void on_idle_cb(uv_idle_t *idle)
@@ -461,8 +453,7 @@ typedef struct UV__Poll {
 
 static void destroy_poll(pTHX_ UV__Poll self)
 {
-    if(self->on_poll)
-        SvREFCNT_dec(self->on_poll);
+    SvREFCNT_dec(self->on_poll);
 }
 
 static void on_poll_cb(uv_poll_t *poll, int status, int events)
@@ -507,8 +498,7 @@ typedef struct UV__Prepare {
 
 static void destroy_prepare(pTHX_ UV__Prepare self)
 {
-    if(self->on_prepare)
-        SvREFCNT_dec(self->on_prepare);
+    SvREFCNT_dec(self->on_prepare);
 }
 
 static void on_prepare_cb(uv_prepare_t *prepare)
@@ -592,8 +582,7 @@ typedef struct UV__Signal {
 
 static void destroy_signal(pTHX_ UV__Signal self)
 {
-    if(self->on_signal)
-        SvREFCNT_dec(self->on_signal);
+    SvREFCNT_dec(self->on_signal);
 }
 
 static void on_signal_cb(uv_signal_t *signal, int signum)
@@ -637,8 +626,7 @@ typedef struct UV__Timer {
 
 static void destroy_timer(pTHX_ UV__Timer self)
 {
-    if(self->on_timer)
-        SvREFCNT_dec(self->on_timer);
+    SvREFCNT_dec(self->on_timer);
 }
 
 static void on_timer_cb(uv_timer_t *timer)
@@ -715,8 +703,7 @@ typedef struct UV__UDP {
 
 static void destroy_udp(pTHX_ UV__UDP self)
 {
-    if(self->on_recv)
-        SvREFCNT_dec(self->on_recv);
+    SvREFCNT_dec(self->on_recv);
 }
 
 static void on_recv_cb(uv_udp_t *udp, ssize_t nread, const uv_buf_t *buf, const struct sockaddr *addr, unsigned flags)
@@ -1225,8 +1212,7 @@ SV *
 data(UV::Handle self, SV *data = NULL)
     CODE:
         if(items > 1) {
-            if(self->data)
-                SvREFCNT_dec(self->data);
+            SvREFCNT_dec(self->data);
             self->data = newSVsv(data);
         }
         RETVAL = self->data ? newSVsv(self->data) : &PL_sv_undef;
@@ -2307,8 +2293,7 @@ SV *
 _on_walk(UV::Loop self, SV *cb = NULL)
     CODE:
         if(cb && SvOK(cb)) {
-            if(self->on_walk)
-                SvREFCNT_dec(self->on_walk);
+            SvREFCNT_dec(self->on_walk);
 
             self->on_walk = newSVsv(cb);
         }
