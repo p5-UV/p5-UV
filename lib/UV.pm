@@ -581,7 +581,7 @@ Returns a new L<UV::Timer> object.
 
 =head2 tty
 
-    my $tty = UV::TTY(fd => 0);
+    my $tty = UV::tty(fd => 0);
 
 Returns a new L<UV::TTY> object.
 
