@@ -1,6 +1,6 @@
 package UV::Req;
 
-our $VERSION = '1.900';
+our $VERSION = '1.901';
 
 use strict;
 use warnings;
