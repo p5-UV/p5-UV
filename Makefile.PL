@@ -9,7 +9,21 @@ use ExtUtils::MakeMaker;
 
 use Alien::Base::Wrapper ();
 
-my %xsbuild = Alien::Base::Wrapper->new('Alien::libuv')->mm_args2;
+my %xsbuild;
+
+if( defined eval { require ExtUtils::PkgConfig; ExtUtils::PkgConfig->find( "libuv" ) } ) {
+    my @cflags = split m/ /, ExtUtils::PkgConfig->cflags("libuv") // "";
+    my @libs   = split m/ /, ExtUtils::PkgConfig->libs("libuv");
+
+    %xsbuild = (
+        INC  => join( " ", grep { m/^-I/ } @cflags ),
+        LIBS    => [          grep {  m/-l/i } @libs ],
+        LDFLAGS => join( " ", grep { !m/-l/  } @libs ),
+    );
+}
+else {
+    %xsbuild = Alien::Base::Wrapper->new('Alien::libuv')->mm_args2;
+}
 
 # Our cpanfile contains the proper configure requires already
 delete $xsbuild{CONFIGURE_REQUIRES};
