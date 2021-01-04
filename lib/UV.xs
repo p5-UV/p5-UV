@@ -1534,6 +1534,9 @@ _new(char *class, UV::Loop loop)
         NEW_UV__Handle(self, uv_process_t);
         self->loop = loop->loop;
 
+        INIT_UV__Handle(self);
+        self->on_exit = NULL;
+
         Zero(&self->options, 1, uv_process_options_t);
 
         self->options.exit_cb = &on_exit_cb;
@@ -1673,8 +1676,6 @@ _spawn(UV::Process self)
         if (err != 0) {
             THROWERR("Couldn't spawn process", err);
         }
-
-        INIT_UV__Handle(self);
 
 void
 kill(UV::Process self, int signum)
