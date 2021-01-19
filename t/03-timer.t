@@ -3,7 +3,6 @@ use warnings;
 
 use Test::More;
 
-use Try::Tiny qw(try catch);
 use UV ();
 use UV::Loop qw(UV_RUN_ONCE UV_RUN_DEFAULT);
 use UV::Timer ();
