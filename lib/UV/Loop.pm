@@ -1,6 +1,6 @@
 package UV::Loop;
 
-our $VERSION = '1.902';
+our $VERSION = '1.903';
 
 use strict;
 use warnings;
