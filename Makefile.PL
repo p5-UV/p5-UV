@@ -16,6 +16,8 @@ my $have_libuv_by_pkgconfig = defined eval {
     ExtUtils::PkgConfig->atleast_version( "libuv", "1.32" );
 };
 
+my %extra_prereq;
+
 if( $have_libuv_by_pkgconfig ) {
     my %info = ExtUtils::PkgConfig->find( "libuv" );
     print STDERR "Using libuv $info{modversion} from pkg-config\n";
@@ -33,6 +35,7 @@ else {
     print STDERR "Using libuv from Alien::libuv\n";
 
     %xsbuild = Alien::Base::Wrapper->new('Alien::libuv')->mm_args2;
+    $extra_prereq{"Alien::libuv"} = "1.000";
 }
 
 # Our cpanfile contains the proper configure requires already
@@ -49,9 +52,9 @@ my %WriteMakefileArgs = (
   "AUTHOR" => "Chase Whitener <capoeirab\@cpan.org>, Daisuke Murase <typester\@cpan.org>",
   "BUILD_REQUIRES" => {
     "Alien::Base::Wrapper" => 0,
-    "Alien::libuv" => "1.000",
     "Config" => 0,
     "ExtUtils::MakeMaker" => "7.12",
+    %extra_prereq,
   },
   "CONFIGURE_REQUIRES" => {
     "Alien::Base::Wrapper" => 0,
@@ -62,17 +65,16 @@ my %WriteMakefileArgs = (
   "LICENSE" => "perl",
   "NAME" => "UV",
   "PREREQ_PM" => {
-    "Alien::libuv" => "1.000",
     "Carp" => 0,
     "Exporter" => "5.57",
     "Scalar::Util" => 0,
     "XSLoader" => "0.14",
     "parent" => 0,
     "strict" => 0,
-    "warnings" => 0
+    "warnings" => 0,
+    %extra_prereq,
   },
   "TEST_REQUIRES" => {
-    "Alien::libuv" => "1.000",
     "Errno" => 0,
     "ExtUtils::MakeMaker" => "7.12",
     "File::Spec" => 0,
@@ -82,7 +84,8 @@ my %WriteMakefileArgs = (
     "POSIX" => 0,
     "Socket" => 0,
     "Test::More" => "0.88",
-    "Try::Tiny" => 0
+    "Try::Tiny" => 0,
+    %extra_prereq,
   },
   "VERSION" => "1.901",
   "test" => {
@@ -97,7 +100,6 @@ my %WriteMakefileArgs = (
 
 my %FallbackPrereqs = (
   "Alien::Base::Wrapper" => 0,
-  "Alien::libuv" => "1.000",
   "Carp" => 0,
   "Config" => 0,
   "Errno" => 0,
@@ -115,7 +117,8 @@ my %FallbackPrereqs = (
   "XSLoader" => "0.14",
   "parent" => 0,
   "strict" => 0,
-  "warnings" => 0
+  "warnings" => 0,
+  %extra_prereq,
 );
 
 unless ( eval { ExtUtils::MakeMaker->VERSION('6.63_03') } ) {
