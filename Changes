@@ -1,7 +1,7 @@
-Revision history for Perl extension {{$dist->name}}
+Revision history for Perl extension UV
 
-{{$NEXT}}
-    -
+1.900, 1.901
+    - Totally rewritten XS logic by Paul "LeoNerd" Evans
 
 1.000009  2019-02-07
     - Improve the way we create constants. (xenu: pr/27)
