@@ -16,6 +16,7 @@ my $have_libuv_by_pkgconfig = defined eval {
     ExtUtils::PkgConfig->atleast_version( "libuv", "1.32" );
 };
 
+my %extra_buildreq;
 my %extra_prereq;
 
 if( $have_libuv_by_pkgconfig ) {
@@ -35,6 +36,7 @@ else {
     print STDERR "Using libuv from Alien::libuv\n";
 
     %xsbuild = Alien::Base::Wrapper->new('Alien::libuv')->mm_args2;
+    $extra_buildreq{"Alien::Base::Wrapper"} = 0;
     $extra_prereq{"Alien::libuv"} = "1.000";
 }
 
@@ -51,9 +53,9 @@ my %WriteMakefileArgs = (
   "ABSTRACT" => "Perl interface to libuv",
   "AUTHOR" => "Chase Whitener <capoeirab\@cpan.org>, Daisuke Murase <typester\@cpan.org>",
   "BUILD_REQUIRES" => {
-    "Alien::Base::Wrapper" => 0,
     "Config" => 0,
     "ExtUtils::MakeMaker" => "7.12",
+    %extra_buildreq,
     %extra_prereq,
   },
   "CONFIGURE_REQUIRES" => {
