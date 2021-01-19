@@ -89,7 +89,7 @@ my %WriteMakefileArgs = (
     "Try::Tiny" => 0,
     %extra_prereq,
   },
-  "VERSION" => "1.901",
+  "VERSION" => "1.902",
   "test" => {
     "TESTS" => "t/*.t"
   }

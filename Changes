@@ -1,5 +1,8 @@
 Revision history for Perl extension UV
 
+1.902     2021-01-19
+    - Adjust Makefile.PL for better pkg-config or Alien handling
+
 1.900, 1.901
     - Totally rewritten XS logic by Paul "LeoNerd" Evans
 
