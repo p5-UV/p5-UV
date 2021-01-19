@@ -11,9 +11,17 @@ use Alien::Base::Wrapper ();
 
 my %xsbuild;
 
-if( defined eval { require ExtUtils::PkgConfig; ExtUtils::PkgConfig->find( "libuv" ) } ) {
-    my @cflags = split m/ /, ExtUtils::PkgConfig->cflags("libuv") // "";
-    my @libs   = split m/ /, ExtUtils::PkgConfig->libs("libuv");
+my $have_libuv_by_pkgconfig = defined eval {
+    require ExtUtils::PkgConfig;
+    ExtUtils::PkgConfig->atleast_version( "libuv", "1.32" );
+};
+
+if( $have_libuv_by_pkgconfig ) {
+    my %info = ExtUtils::PkgConfig->find( "libuv" );
+    print STDERR "Using libuv $info{modversion} from pkg-config\n";
+
+    my @cflags = split m/ /, $info{cflags} // "";
+    my @libs   = split m/ /, $info{libs};
 
     %xsbuild = (
         INC  => join( " ", grep { m/^-I/ } @cflags ),
@@ -22,6 +30,8 @@ if( defined eval { require ExtUtils::PkgConfig; ExtUtils::PkgConfig->find( "libu
     );
 }
 else {
+    print STDERR "Using libuv from Alien::libuv\n";
+
     %xsbuild = Alien::Base::Wrapper->new('Alien::libuv')->mm_args2;
 }
 
