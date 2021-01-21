@@ -36,7 +36,8 @@ my $port = sockaddr_port($udp->getsockname);
 
         $self->close;
     });
-    $udp->recv_start;
+    my $ret = $udp->recv_start;
+    is($ret, $udp, '$udp->read_start returns $udp');
 
     UV::Loop->default->run;
     ok($recv_cb_called, 'recv callback was called');

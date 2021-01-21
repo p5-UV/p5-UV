@@ -181,6 +181,8 @@ then repeatedly after C<repeat> milliseconds.
 B<* Note:> Does not update the event loop's concept of L<UV::Loop/"now">. See
 L<UV::Loop/"update_time"> for more information.
 
+Returns the C<$timer> instance itself.
+
 =head2 stop
 
     $timer->stop();

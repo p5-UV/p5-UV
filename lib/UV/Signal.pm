@@ -121,6 +121,8 @@ starts the handle.
 Note that the signal number is given to the constructor, not the C<start>
 method.
 
+Returns the C<$signal> instance itself.
+
 =head2 stop
 
     $signal->stop();

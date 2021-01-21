@@ -107,7 +107,8 @@ sub never_cb {
     my $once = UV::Timer->new();
     isa_ok($once, 'UV::Timer', 'got a new timer');
     $once->start(86400 * 1000, 0, \&never_cb);
-    $once->start(10, 0, \&once_cb);
+    my $ret = $once->start(10, 0, \&once_cb);
+    is($ret, $once, '$timer->start returns $timer');
 
     is(0, UV::Loop->default->run(), 'default loop run');
     is($once_cb_called, 1, 'once cb called once');

@@ -136,6 +136,8 @@ L<UV::Loop/"default_loop"> is assumed.
 The L<start|http://docs.libuv.org/en/v1.x/idle.html#c.uv_idle_start> method
 starts the handle.
 
+Returns the C<$idle> instance itself.
+
 =head2 stop
 
     $idle->stop();

@@ -27,7 +27,8 @@ use Test::More;
 
         $self->close;
     });
-    $pipe->read_start;
+    my $ret = $pipe->read_start;
+    is($ret, $pipe, '$pipe->read_start returns $pipe');
 
     $wr->syswrite("data to read");
 

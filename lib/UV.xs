@@ -1300,10 +1300,13 @@ _on_check(UV::Check self, SV *cb = NULL)
     OUTPUT:
         RETVAL
 
-void
+SV *
 _start(UV::Check self)
     CODE:
         CHECKCALL(uv_check_start(self->h, on_check_cb));
+        RETVAL = SvREFCNT_inc(ST(0));
+    OUTPUT:
+        RETVAL
 
 void
 stop(UV::Check self)
@@ -1342,10 +1345,13 @@ _on_idle(UV::Idle self, SV *cb = NULL)
     OUTPUT:
         RETVAL
 
-void
+SV *
 _start(UV::Idle self)
     CODE:
         CHECKCALL(uv_idle_start(self->h, on_idle_cb));
+        RETVAL = SvREFCNT_inc(ST(0));
+    OUTPUT:
+        RETVAL
 
 void
 stop(UV::Idle self)
@@ -1471,10 +1477,13 @@ _on_poll(UV::Poll self, SV *cb = NULL)
     OUTPUT:
         RETVAL
 
-void
+SV *
 _start(UV::Poll self, int events = UV_READABLE)
     CODE:
         CHECKCALL(uv_poll_start(self->h, events, on_poll_cb));
+        RETVAL = SvREFCNT_inc(ST(0));
+    OUTPUT:
+        RETVAL
 
 void
 stop(UV::Poll self)
@@ -1513,10 +1522,13 @@ _on_prepare(UV::Prepare self, SV *cb = NULL)
     OUTPUT:
         RETVAL
 
-void
+SV *
 _start(UV::Prepare self)
     CODE:
         CHECKCALL(uv_prepare_start(self->h, on_prepare_cb));
+        RETVAL = SvREFCNT_inc(ST(0));
+    OUTPUT:
+        RETVAL
 
 void
 stop(UV::Prepare self)
@@ -1722,10 +1734,13 @@ _on_signal(UV::Signal self, SV *cb = NULL)
     OUTPUT:
         RETVAL
 
-void
+SV *
 _start(UV::Signal self)
     CODE:
         CHECKCALL(uv_signal_start(self->h, on_signal_cb, self->signum));
+        RETVAL = SvREFCNT_inc(ST(0));
+    OUTPUT:
+        RETVAL
 
 void
 stop(UV::Signal self)
@@ -1782,10 +1797,13 @@ shutdown(UV::Stream self, SV *cb)
     OUTPUT:
         RETVAL
 
-void
+SV *
 read_start(UV::Stream self)
     CODE:
         CHECKCALL(uv_read_start(self->h, on_alloc_cb, on_read_cb));
+        RETVAL = SvREFCNT_inc(ST(0));
+    OUTPUT:
+        RETVAL
 
 void
 read_stop(UV::Stream self)
@@ -1855,10 +1873,13 @@ _on_timer(UV::Timer self, SV *cb = NULL)
     OUTPUT:
         RETVAL
 
-void
+SV *
 _start(UV::Timer self, UV timeout, UV repeat)
     CODE:
         CHECKCALL(uv_timer_start(self->h, on_timer_cb, timeout, repeat));
+        RETVAL = SvREFCNT_inc(ST(0));
+    OUTPUT:
+        RETVAL
 
 UV
 _get_repeat(UV::Timer self)
@@ -2110,10 +2131,13 @@ getpeername(UV::UDP self)
     OUTPUT:
         RETVAL
 
-void
+SV *
 recv_start(UV::UDP self)
     CODE:
         CHECKCALL(uv_udp_recv_start(self->h, on_alloc_cb, on_recv_cb));
+        RETVAL = SvREFCNT_inc(ST(0));
+    OUTPUT:
+        RETVAL
 
 void
 recv_stop(UV::UDP self)

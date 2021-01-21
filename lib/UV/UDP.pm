@@ -120,6 +120,8 @@ method starts the receiving side of the UDP socket handle. The C<recv> event
 callback will be invoked whenever there is new data to be given to the
 application.
 
+Returns the C<$udp> instance itself.
+
 =head2 recv_stop
 
     $udp->recv_stop;

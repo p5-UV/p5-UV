@@ -135,6 +135,8 @@ The L<read_start|http://docs.libuv.org/en/v1.x/stream.html#c.uv_read_start>
 starts the reading side of the stream handle. The C<read> event callback will
 be invoked whenever there is new data to be given to the application.
 
+Returns the C<$stream> instance itself.
+
 =head2 read_stop
 
     $stream->read_stop;
