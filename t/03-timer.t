@@ -260,7 +260,7 @@ sub timer_run_once_timer_cb {
     $timer_handle->start($timeout_ms, 0,
         sub {
             my $hrtime = UV::hrtime() / 1000000;
-            ok($hrtime >= $timer_early_check_expected_time, 'hires time >= expected check time');
+            cmp_ok($hrtime, '>=', $timer_early_check_expected_time, 'hires time >= expected check time');
         }
     );
 
