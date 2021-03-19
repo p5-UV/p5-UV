@@ -249,23 +249,20 @@ sub timer_run_once_timer_cb {
 }
 
 
-my $timer_early_check_expected_time;
-
-
-sub timer_early_check_cb {
-    my $hrtime = UV::hrtime() / 1000000;
-    ok($hrtime >= $timer_early_check_expected_time, 'hires time >= expected check time');
-}
-
 # timer_early_check
 {
     my $timeout_ms = 10;
 
-    $timer_early_check_expected_time = UV::Loop->default()->now() + $timeout_ms;
+    my $timer_early_check_expected_time = UV::Loop->default()->now() + $timeout_ms;
 
     my $timer_handle = UV::Timer->new();
     isa_ok($timer_handle, 'UV::Timer', 'got a new timer');
-    $timer_handle->start($timeout_ms, 0, \&timer_early_check_cb);
+    $timer_handle->start($timeout_ms, 0,
+        sub {
+            my $hrtime = UV::hrtime() / 1000000;
+            ok($hrtime >= $timer_early_check_expected_time, 'hires time >= expected check time');
+        }
+    );
 
     is(UV::Loop->default()->run(UV_RUN_DEFAULT), 0, 'loop run before handle close');
 
