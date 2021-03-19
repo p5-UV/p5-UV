@@ -1,6 +1,6 @@
 package UV::Poll;
 
-our $VERSION = '1.903';
+our $VERSION = '1.904';
 
 use strict;
 use warnings;
