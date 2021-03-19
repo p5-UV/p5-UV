@@ -37,37 +37,6 @@
 #  define _MAKE_SOCK(f) (f)
 #endif
 
-static void loop_walk_cb(uv_handle_t* handle, void* arg)
-{
-    SV *self;
-    SV *cb;
-
-    dTHX;
-
-    if (!handle || !arg) return;
-    cb = (SV *)arg;
-    if (!cb || !SvOK(cb)) return;
-
-    self = (SV *)(handle->data);
-
-    /* provide info to the caller: invocant, suggested_size */
-    dSP;
-    ENTER;
-    SAVETMPS;
-
-    if (self && SvROK(self)) {
-        PUSHMARK(SP);
-        EXTEND(SP, 1);
-        PUSHs(SvREFCNT_inc(self)); /* invocant */
-        PUTBACK;
-    }
-
-    call_sv(cb, G_DISCARD|G_VOID);
-
-    FREETMPS;
-    LEAVE;
-}
-
 #define do_callback_accessor(var, cb) MY_do_callback_accessor(aTHX_ var, cb)
 static SV *MY_do_callback_accessor(pTHX_ SV **var, SV *cb)
 {
@@ -947,13 +916,7 @@ static void on_getnameinfo_cb(uv_getnameinfo_t *_req, int status, const char *ho
 
 typedef struct UV__Loop {
     uv_loop_t *loop; /* may point to uv_default_loop() or past this struct */
-    SV *on_walk;     /* TODO as yet unused and probably not correct */
 } *UV__Loop;
-
-static void on_loop_walk(uv_handle_t* handle, void* arg)
-{
-    fprintf(stderr, "TODO: on_loop_walk\n");
-}
 
 MODULE = UV             PACKAGE = UV            PREFIX = uv_
 
@@ -1201,7 +1164,6 @@ loop(UV::Handle self)
     CODE:
         Newx(loop, 1, struct UV__Loop);
         loop->loop = self->h->loop;
-        loop->on_walk = NULL; /* this is a mess */
 
         RETVAL = newSV(0);
         sv_setref_pv(RETVAL, "UV::Loop", loop);
@@ -2271,7 +2233,6 @@ _new(char *class, int want_default)
     CODE:
         Newxc(self, sizeof(struct UV__Loop) + (!want_default * sizeof(uv_loop_t)),
             char, struct UV__Loop);
-        self->on_walk = NULL;
 
         if(want_default) {
             self->loop = uv_default_loop();
@@ -2289,24 +2250,6 @@ _new(char *class, int want_default)
         sv_setref_pv(RETVAL, "UV::Loop", self);
     OUTPUT:
         RETVAL
-
-SV *
-_on_walk(UV::Loop self, SV *cb = NULL)
-    CODE:
-        if(cb && SvOK(cb)) {
-            SvREFCNT_dec(self->on_walk);
-
-            self->on_walk = newSVsv(cb);
-        }
-
-        RETVAL = newSVsv(self->on_walk);
-    OUTPUT:
-        RETVAL
-
-void
-_walk(UV::Loop self)
-    CODE:
-        uv_walk(self->loop, on_loop_walk, self->on_walk);
 
 bool
 alive(UV::Loop self)
