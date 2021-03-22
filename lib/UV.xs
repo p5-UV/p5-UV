@@ -1094,11 +1094,23 @@ BOOT:
 
 const char* uv_err_name(int err)
 
+#if UVSIZE >= 8
+
 UV uv_hrtime()
     CODE:
         RETVAL = uv_hrtime();
     OUTPUT:
         RETVAL
+
+#else
+
+NV uv_hrtime()
+    CODE:
+        RETVAL = (NV)uv_hrtime();
+    OUTPUT:
+        RETVAL
+
+#endif
 
 const char* uv_strerror(int err)
 
