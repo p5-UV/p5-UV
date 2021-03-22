@@ -1445,13 +1445,19 @@ _new(char *class, UV::Loop loop, int fd, bool is_socket)
     CODE:
         NEW_UV__Handle(self, uv_poll_t);
 
-        if(is_socket)
+        if(is_socket) {
             err = uv_poll_init_socket(loop->loop, self->h, _MAKE_SOCK(fd));
-        else
+            if (err != 0) {
+                Safefree(self);
+                THROWERR("Couldn't initialise poll handle for socket", err);
+            }
+        }
+        else {
             err = uv_poll_init(loop->loop, self->h, fd);
-        if (err != 0) {
-            Safefree(self);
-            THROWERR("Couldn't initialise poll handle", err);
+            if (err != 0) {
+                Safefree(self);
+                THROWERR("Couldn't initialise poll handle for non-socket", err);
+            }
         }
 
         INIT_UV__Handle(self);
