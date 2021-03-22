@@ -1070,6 +1070,31 @@ BOOT:
         DO_CONST_IV(UV_PRIORITIZED);
     }
 
+    /* constants under UV::Signal */
+    {
+        stash = gv_stashpv("UV::Signal", GV_ADD);
+        export = get_av("UV::Signal::EXPORT_XS", TRUE);
+
+        /* Signal numbers - exported again because at least on MSWin32 several
+         * of these are emulated, and the values are not known to the rest of
+         * the system, including POSIX.xs
+         */
+        DO_CONST_IV(SIGINT);
+        DO_CONST_IV(SIGILL);
+        DO_CONST_IV(SIGABRT);
+        DO_CONST_IV(SIGFPE);
+        DO_CONST_IV(SIGSEGV);
+        DO_CONST_IV(SIGTERM);
+#ifdef SIGBREAK
+        DO_CONST_IV(SIGBREAK);
+#endif
+        DO_CONST_IV(SIGHUP);
+        DO_CONST_IV(SIGKILL);
+#ifdef SIGWINCH
+        DO_CONST_IV(SIGWINCH);
+#endif
+}
+
     /* constants under UV::TTY */
     {
         stash = gv_stashpv("UV::TTY", GV_ADD);

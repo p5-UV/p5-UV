@@ -2,10 +2,10 @@ use strict;
 use warnings;
 
 use IO::Socket::INET;
-use POSIX qw(SIGHUP);
 use Test::More;
 use UV ();
 use UV::Loop ();
+use UV::Signal qw(SIGHUP);
 
 {
     my $time = UV::hrtime();

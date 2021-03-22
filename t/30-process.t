@@ -4,10 +4,9 @@ use warnings;
 use UV::Loop ();
 use UV::Process ();
 use UV::Pipe ();
+use UV::Signal qw(SIGTERM);
 
 use Test::More;
-
-use POSIX ();
 
 my $exit_cb_called = 0;
 
@@ -56,7 +55,7 @@ is($exit_cb_called, 1, "The exit callback was run");
 
     UV::Loop->default()->run();
 
-    is($term_signal, POSIX::SIGTERM, 'term signal from `perl -e "kill SIGTERM => $$"`');
+    is($term_signal, SIGTERM, 'term signal from `perl -e "kill SIGTERM => $$"`');
 }
 
 {
@@ -118,11 +117,11 @@ is($exit_cb_called, 1, "The exit callback was run");
         },
     );
 
-    $process->kill(POSIX::SIGTERM);
+    $process->kill(SIGTERM);
 
     UV::Loop->default()->run();
 
-    is($term_signal, POSIX::SIGTERM, 'term signal from killed process');
+    is($term_signal, SIGTERM, 'term signal from killed process');
 }
 
 done_testing();
