@@ -82,6 +82,8 @@ is($exit_cb_called, 1, "The exit callback was run");
     pipe my ($rd, $wr) or die "Cannot pipe - $!";
     my $read_cb_called;
 
+    my $EOL = ( $^O eq "MSWin32" ) ? "\r\n" : "\n";
+
     my $process = UV::Process->spawn(
         file => $^X,
         args => [ "-e", 'print "Hello, world I am $$!\n"' ],
@@ -94,7 +96,7 @@ is($exit_cb_called, 1, "The exit callback was run");
             my ($self, $status, $buf) = @_;
             $read_cb_called++;
 
-            is($buf, "Hello, world I am $pid!\n", 'data was read from pipe from process');
+            is($buf, "Hello, world I am $pid!$EOL", 'data was read from pipe from process');
 
             $self->close;
         },
