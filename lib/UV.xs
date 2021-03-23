@@ -1915,7 +1915,7 @@ _new(char *class, UV::Loop loop)
 void
 _open(UV::TCP self, int fd)
     CODE:
-        CHECKCALL(uv_tcp_open(self->h, fd));
+        CHECKCALL(uv_tcp_open(self->h, _MAKE_SOCK(fd)));
 
 void
 nodelay(UV::TCP self, bool enable)
@@ -2071,7 +2071,7 @@ _on_recv(UV::UDP self, SV *cb = NULL)
 void
 _open(UV::UDP self, int fd)
     CODE:
-        CHECKCALL(uv_udp_open(self->h, fd));
+        CHECKCALL(uv_udp_open(self->h, _MAKE_SOCK(fd)));
 
 void
 bind(UV::UDP self, SV *addr, int flags = 0)
