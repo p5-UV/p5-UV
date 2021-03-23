@@ -6,9 +6,6 @@ use UV::Pipe ();
 
 use Test::More;
 
-# TODO: This test might not work on MSWin32. We might need to find a different
-#   implementation, or just skip it?
-
 # read
 {
     pipe my ($rd, $wr) or die "Cannot pipe - $!";
