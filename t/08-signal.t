@@ -2,11 +2,9 @@ use strict;
 use warnings;
 
 use UV::Loop ();
-use UV::Signal ();
+use UV::Signal qw(SIGHUP);
 
 use Test::More;
-
-use POSIX qw(SIGHUP);
 
 my $signal_cb_called = 0;
 

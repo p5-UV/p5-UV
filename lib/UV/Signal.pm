@@ -1,11 +1,13 @@
 package UV::Signal;
 
-our $VERSION = '1.902';
+our $VERSION = '1.906';
 
 use strict;
 use warnings;
 use Carp ();
 use parent 'UV::Handle';
+
+our @EXPORT_OK = (@UV::Signal::EXPORT_XS,);
 
 sub _new_args {
     my ($class, $args) = @_;
@@ -38,7 +40,7 @@ UV::Signal - Signal handles in libuv
   use warnings;
 
   use UV;
-  use POSIX qw(SIGINT);
+  use UV::Signal qw(SIGINT);
 
   # A new handle will be initialised against the default loop
   my $signal = UV::Signal->new(signal => SIGINT);
