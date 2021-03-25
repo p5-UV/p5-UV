@@ -1,6 +1,6 @@
 package UV::TTY;
 
-our $VERSION = '1.905';
+our $VERSION = '1.906';
 
 use strict;
 use warnings;
