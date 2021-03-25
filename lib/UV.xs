@@ -37,6 +37,12 @@
 #  define _MAKE_SOCK(f) (f)
 #endif
 
+#ifdef AI_V4MAPPED
+#  define DEFAULT_AI_FLAGS  (AI_V4MAPPED|AI_ADDRCONFIG)
+#else
+#  define DEFAULT_AI_FLAGS  (AI_ADDRCONFIG)
+#endif
+
 #define do_callback_accessor(var, cb) MY_do_callback_accessor(aTHX_ var, cb)
 static SV *MY_do_callback_accessor(pTHX_ SV **var, SV *cb)
 {
@@ -2368,7 +2374,7 @@ _getaddrinfo(UV::Loop self, char *node, char *service, SV *flags, SV *family, SV
         NEW_UV__Req(req, uv_getaddrinfo_t);
         INIT_UV__Req(req);
 
-        hints.ai_flags    = SvOK(flags)    ? SvIV(flags)    : (AI_V4MAPPED|AI_ADDRCONFIG);
+        hints.ai_flags    = SvOK(flags)    ? SvIV(flags)    : DEFAULT_AI_FLAGS;
         hints.ai_family   = SvOK(family)   ? SvIV(family)   : AF_UNSPEC;
         hints.ai_socktype = SvOK(socktype) ? SvIV(socktype) : 0;
         hints.ai_protocol = SvOK(protocol) ? SvIV(protocol) : 0;
