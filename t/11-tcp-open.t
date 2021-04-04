@@ -37,6 +37,23 @@ sub socketpair_inet
     return ($rd, $wr);
 }
 
+# Launch watchdog on Windows in background
+if( $^O eq 'MSWin32' ) {
+    my $child= system(1, $^X,'-e',"sleep 5; kill 9 => $$");
+    if( !$child ) {
+        diag "Could not launch watchdog: $^E";
+    } else {
+            note "Watchdog started (5 seconds)";
+    };
+    END {
+        if( $child ) {
+            kill 9 => $child
+                or diag "Could not kill watchdog: $^E";
+            note "Watchdog removed";
+        }
+    }
+}
+
 # read
 {
     my ($rd, $wr) = socketpair_inet();
