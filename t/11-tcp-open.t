@@ -39,7 +39,8 @@ sub socketpair_inet
 
 # Launch watchdog on Windows in background
 if( $^O eq 'MSWin32' ) {
-    my $child= system(1, $^X,'-e',"sleep 5; kill 9 => $$");
+    my $ppid = $$;
+    my $child= system(1, $^X,'-e',"sleep 5; kill KILL => $ppid");
     if( !$child ) {
         diag "Could not launch watchdog: $^E";
     } else {
@@ -47,7 +48,7 @@ if( $^O eq 'MSWin32' ) {
     };
     END {
         if( $child ) {
-            kill 9 => $child
+            kill KILL => $child
                 or diag "Could not kill watchdog: $^E";
             note "Watchdog removed";
         }
