@@ -12,7 +12,9 @@ use UV::Poll qw(UV_READABLE);
 # Feel free to 
 #   plan skip_all ... if $^O eq "MSWin32"
 
-pipe my ( $rd, $wr ) or die "Unable to pipe() - $!";
+use IO::Async::OS;
+my ( $rd, $wr ) = IO::Async::OS->pipepair
+     or die "Unable to pipe() - $!";
 
 my $poll_cb_called = 0;
 my ( $poll_cb_status, $poll_cb_events );
