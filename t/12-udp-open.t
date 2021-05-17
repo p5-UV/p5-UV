@@ -19,10 +19,12 @@ sub socketpair_inet
     # Maybe socketpair(2) can do it?
     ($rd, $wr) = IO::Socket->socketpair(AF_INET, SOCK_DGRAM, 0)
         and return ($rd, $wr);
-
+    note "No socketpair";
     # If not, go the long way round
     $rd = IO::Socket::INET->new(
+        #LocalHost => "0.0.0.0",
         LocalHost => "127.0.0.1",
+        #LocalHost => "localhost",
         LocalPort => 0,
         Proto     => "udp",
     ) or die "Cannot socket - $@";
@@ -33,6 +35,7 @@ sub socketpair_inet
         Proto    => "udp",
     ) or die "Cannot socket/connect - $@";
 
+    note "Two socket connections";
     $rd->connect($wr->sockport, inet_aton($wr->sockhost)) or die "Cannot connect - $!";
 
     return ($rd, $wr);
@@ -44,7 +47,11 @@ sub socketpair_inet
 
     my $udp = UV::UDP->new;
     isa_ok($udp, 'UV::UDP');
-
+    note fileno $rd;
+    #use Win32API::File;
+    #diag Win32API::File::FdGetOsFHandle(fileno $rd);
+    # These actually show up as the correct number so the problem is not in that place
+    #diag $^E;
     $udp->open($rd);
 
     my $recv_cb_called;
