@@ -21,8 +21,10 @@ sub socketpair_inet
         and return ($rd, $wr);
 
     # If not, go the long way round
+    note "Using 'manual' socket pair";
     my $listen = IO::Socket::INET->new(
-        LocalHost => "127.0.0.1",
+        #LocalHost => "127.0.0.1",
+        LocalHost => "localhost",
         LocalPort => 0,
         Listen    => 1,
     ) or die "Cannot listen - $@";
@@ -55,14 +57,15 @@ if( $^O eq 'MSWin32' ) {
     }
 }
 
-# read
+# write, then read
 {
     my ($rd, $wr) = socketpair_inet();
 
     my $tcp = UV::TCP->new;
     isa_ok($tcp, 'UV::TCP');
-
+note "Opening (existing) socket " . $rd->fileno;
     $tcp->open($rd);
+note "Socket opened, setting up callback";
 
     my $read_cb_called;
     $tcp->on(read => sub {
@@ -73,13 +76,56 @@ if( $^O eq 'MSWin32' ) {
 
         $self->close;
     });
-    my $ret = $tcp->read_start;
+    
+    note "Socket opened, writing data";
+    my $ret;
+    for my $word ('', 'data to', ' read') {
+        note "Writing '$word'";
+        $wr->syswrite($word);
+        #$wr->flush();
+        
+        if( ! $ret ) {
+            note "Calling ->read_start";
+            $ret = $tcp->read_start;
+            note "Calling ->read_start returns $tcp ($ret)";
+        };
+    };
     is($ret, $tcp, '$tcp->read_start returns $tcp');
 
+    UV::Loop->default->run;
+    ok($read_cb_called, 'read callback was called when data is already pending');
+}
+
+# read, then write, currently fails
+{
+    my ($rd, $wr) = socketpair_inet();
+
+    my $tcp = UV::TCP->new;
+    isa_ok($tcp, 'UV::TCP');
+note "Opening (existing) socket " . $rd->fileno;
+    $tcp->open($rd);
+note "Socket opened, setting up callback";
+
+    my $read_cb_called;
+    $tcp->on(read => sub {
+        my ($self, $status, $buf) = @_;
+        $read_cb_called++;
+
+        is($buf, "data to read", 'data was read from tcp socket');
+
+        $self->close;
+    });
+    note "Socket opened, writing data";
+    note "Calling ->read_start";
+    my $ret = $tcp->read_start;
+    note "Calling ->read_start returns $tcp ($ret)";
+    is($ret, $tcp, '$tcp->read_start returns $tcp');
+
+note "Socket opened, writing data";
     $wr->syswrite("data to read");
 
     UV::Loop->default->run;
-    ok($read_cb_called, 'read callback was called');
+    ok($read_cb_called, 'read callback was called after data became pending');
 }
 
 # write
