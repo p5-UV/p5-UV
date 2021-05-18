@@ -15,7 +15,7 @@ use UVTestHelpers qw(pipepair);
 # Feel free to 
 #   plan skip_all ... if $^O eq "MSWin32"
 
-my ( $rd, $wr ) = pipepair or die "Unable to pipe() - $!";
+my ( $rd, $wr ) = pipepair;
 
 my $poll_cb_called = 0;
 my ( $poll_cb_status, $poll_cb_events );
