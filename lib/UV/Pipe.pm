@@ -1,6 +1,6 @@
 package UV::Pipe;
 
-our $VERSION = '1.908';
+our $VERSION = '1.908_001';
 
 use strict;
 use warnings;

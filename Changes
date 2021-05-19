@@ -1,5 +1,10 @@
 Revision history for Perl extension UV
 
+1.908001 2021-05-19
+    - Account for different errno value on MSWin32 in unit test
+    - Experiment with removing _MAKE_SOCK() to see if it makes a difference to
+      test results
+
 1.908 2021-05-18
     - Don't attempt to unlink $path at END time if the entire test was skipped
     - A better implementation of pipepair for testing that might work on
