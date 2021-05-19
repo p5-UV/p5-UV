@@ -50,11 +50,16 @@ $wr->syswrite("Hello\n");
     my $FILE = $0;
     my $LINE = __LINE__+1;
     my $err = do { local $@; eval { UV::Poll->_new(UV::Loop->default, -1, 0); 1 } ? undef : $@ };
-    isa_ok($err, 'UV::Exception::EBADF');
+
+    # On most platforms we get EBADF but on MSWin32 we'll get ENOTSOCK instead
+    my $errname = ( $^O eq "MSWin32" ) ? "ENOTSOCK" : "EBADF";
+    my $errno = UV->can( "UV_$errname" )->();
+
+    isa_ok($err, "UV::Exception::$errname");
     isa_ok($err, 'UV::Exception');
     like($err, qr/^Couldn't initialise poll handle for non-socket \(-\d+\): .* at \Q$FILE\E line \Q$LINE\E.\n/,
         'Stringified error message');
-    is($err->code, UV::UV_EBADF, 'Numerical error code');
+    is($err->code, $errno, 'Numerical error code');
 }
 
 done_testing;
