@@ -30,12 +30,7 @@
 #  define dTHXfield(var)
 #endif
 
-#if defined(__MINGW32__) || defined(WIN32)
-#include <io.h> /* we need _get_osfhandle() on windows */
-#  define _MAKE_SOCK(f) (_get_osfhandle(f))
-#else
-#  define _MAKE_SOCK(f) (f)
-#endif
+#define _MAKE_SOCK(f) (f)
 
 #ifdef AI_V4MAPPED
 #  define DEFAULT_AI_FLAGS  (AI_V4MAPPED|AI_ADDRCONFIG)
