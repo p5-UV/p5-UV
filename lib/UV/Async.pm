@@ -1,6 +1,6 @@
 package UV::Async;
 
-our $VERSION = '1.908_001';
+our $VERSION = '1.908_002';
 
 use strict;
 use warnings;
