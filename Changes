@@ -1,5 +1,10 @@
 Revision history for Perl extension UV
 
+1.910 2021-07-16
+    - Don't attempt to support UV::TCP->open or UV::UDP->open on Windows,
+      because we'd need WSA_FLAG_OVERLAPPED but Perl doesn't set it on sockets
+      it creates (related to #38).
+
 1.909 2021-05-26
     - Avoid use-after-free bug when ->close'ing newly listened client
       connections

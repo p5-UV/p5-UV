@@ -1,6 +1,6 @@
 package UV::Signal;
 
-our $VERSION = '1.909';
+our $VERSION = '1.910';
 
 use strict;
 use warnings;
