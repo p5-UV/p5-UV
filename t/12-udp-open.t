@@ -12,7 +12,7 @@ use lib "t/lib";
 use UVTestHelpers qw(socketpair_inet_dgram);
 
 $^O eq "MSWin32" and
-    plan skip_all => "UV::TCP->open is not supported on Windows";
+    plan skip_all => "UV::UDP->open is not supported on Windows";
 
 # recv
 {
