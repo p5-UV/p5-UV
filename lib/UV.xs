@@ -2102,7 +2102,7 @@ _on_recv(UV::UDP self, SV *cb = NULL)
 void
 _open(UV::UDP self, int fd)
     CODE:
-#if HAVE_MSWIN32
+#ifdef HAVE_MSWIN32
         /* Not supported currently, because libuv would want overlapped IO on
          * sockets and perl does not create those. See also
          *   https://github.com/p5-UV/p5-UV/issues/38
