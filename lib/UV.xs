@@ -28,7 +28,8 @@
 #endif
 
 #if defined(__MINGW32__) || defined(WIN32)
-#include <io.h> /* we need _get_osfhandle() on windows */
+#  define HAVE_MSWIN32
+#  include <io.h> /* we need _get_osfhandle() on windows */
 #  define _MAKE_SOCK(f) (_get_osfhandle(f))
 #else
 #  define _MAKE_SOCK(f) (f)
@@ -1938,6 +1939,13 @@ _new(char *class, UV::Loop loop)
 void
 _open(UV::TCP self, int fd)
     CODE:
+#ifdef HAVE_MSWIN32
+        /* Not supported currently, because libuv would want overlapped IO on
+         * sockets and perl does not create those. See also
+         *   https://github.com/p5-UV/p5-UV/issues/38
+         */
+        croak("UV::TCP->open is not currently supported on Windows");
+#endif
         CHECKCALL(uv_tcp_open(self->h, _MAKE_SOCK(fd)));
 
 void
@@ -2094,6 +2102,13 @@ _on_recv(UV::UDP self, SV *cb = NULL)
 void
 _open(UV::UDP self, int fd)
     CODE:
+#if HAVE_MSWIN32
+        /* Not supported currently, because libuv would want overlapped IO on
+         * sockets and perl does not create those. See also
+         *   https://github.com/p5-UV/p5-UV/issues/38
+         */
+        croak("UV::UDP->open is not currently supported on Windows");
+#endif
         CHECKCALL(uv_udp_open(self->h, _MAKE_SOCK(fd)));
 
 void
