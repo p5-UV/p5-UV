@@ -655,11 +655,12 @@ Unknown error
 
 =head1 AUTHOR
 
+Paul Evans <leonerd@leonerd.org.uk>
+
+=head1 AUTHORS EMERITUS
+
+Daisuke Murase <F<typester@cpan.org>>,
 Chase Whitener <F<capoeirab@cpan.org>>
-
-=head1 AUTHOR EMERITUS
-
-Daisuke Murase <F<typester@cpan.org>>
 
 =head1 COPYRIGHT AND LICENSE
 
