@@ -43,6 +43,5 @@ jobs:
       - run: id
       - name: Run Tests
         run: |
-          perl Makefile.PL
-          make
-          make test
+          perl Build.PL
+          perl Build test

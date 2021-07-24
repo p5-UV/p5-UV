@@ -43,6 +43,5 @@ jobs:
       - name: Run Tests as non-root user "runner"
         run: |
           chown -R runner:runner .
-          runuser runner -c 'perl Makefile.PL'
-          runuser runner -c 'make'
-          runuser runner -c 'make test'
+          runuser runner -c 'perl Build.PL'
+          runuser runner -c 'perl Build test'
