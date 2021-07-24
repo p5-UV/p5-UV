@@ -6,6 +6,8 @@ use Module::Build::Using::PkgConfig;
 my $build = Module::Build::Using::PkgConfig->new(
     module_name => 'UV',
     requires => {
+        'perl' => '5.014',
+
         'Carp' => 0,
         'Exporter' => '5.57',
         'Scalar::Util' => 0,
