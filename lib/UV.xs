@@ -98,7 +98,8 @@ static HV *make_errstash(pTHX_ int err)
 #define THROWERR(message, err)                                            \
     THROWERRSV(newSVpvf(message " (%d): %s", err, uv_strerror(err)), err)
 
-#define CHECKCALL(call)                                  \
+#ifdef HEKf
+#  define CHECKCALL(call)                                \
   do {                                                   \
     int err = call;                                      \
     if(err != 0)                                         \
@@ -106,6 +107,16 @@ static HV *make_errstash(pTHX_ int err)
         HEKfARG(GvNAME_HEK(CvGV(cv))),                   \
         err, uv_strerror(err)), err);                    \
   } while(0)
+#else
+#  define CHECKCALL(call)                                \
+  do {                                                   \
+    int err = call;                                      \
+    if(err != 0)                                         \
+      THROWERRSV(newSVpvf("Couldn't %s (%d): %s",        \
+        GvNAME(CvGV(cv)),                                \
+        err, uv_strerror(err)), err);                    \
+  } while(0)
+#endif
 
 /**************
  * UV::Handle *

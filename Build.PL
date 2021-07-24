@@ -9,7 +9,7 @@ my $build = Module::Build::Using::PkgConfig->new(
         'Carp' => 0,
         'Exporter' => '5.57',
         'Scalar::Util' => 0,
-        'XSLoader' => '0.14',
+        'XSLoader' => '0.13',
     },
     configure_requires => {
         'Module::Build' => '0.4004', # test_requires
