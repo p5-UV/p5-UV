@@ -1,11 +1,14 @@
 Build
 Build.bat
+build.log
+MANIFEST
 /MANIFEST.SKIP.bak
 /MANIFEST.bak
-META.YML
-MYMETA*
+META.*
+MYMETA.*
 Makefile
 Makefile.old
+README
 SSL
 blib
 blib/
