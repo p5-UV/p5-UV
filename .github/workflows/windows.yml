@@ -41,6 +41,8 @@ jobs:
           cpanm --notest Alien::Base::Wrapper
           cpanm --notest --installdeps Alien::libuv
           cpanm --notest Alien::libuv
+      - name: Install Module::Build::Using::PkgConfig
+        run: cpanm --notest Module::Build::Using::PkgConfig
       - name: Install Dependencies
         run: cpanm --notest --installdeps -v .
       - name: Run Tests

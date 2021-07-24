@@ -34,8 +34,10 @@ jobs:
         run: |
           cpanm --notest Alien::Base::Wrapper Sort::Versions URI::Escape URI Mojo::DOM58
           cpanm --notest Alien::libtool Alien::automake Alien::m4 Alien::autoconf Alien::Autotools
-      - name: Alien::libuv
+      - name: Install Alien::libuv
         run: cpanm --notest Alien::libuv
+      - name: Install Module::Build::Using::PkgConfig
+        run: cpanm --notest Module::Build::Using::PkgConfig
       - name: Install Dependencies
         run: cpanm --notest --installdeps -v .
       - name: Create a non-root user called "runner"
