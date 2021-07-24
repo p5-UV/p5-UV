@@ -1,25 +1,11 @@
 package UV::Prepare;
 
-our $VERSION = '1.000010';
+our $VERSION = '1.911';
 
 use strict;
 use warnings;
 use Carp ();
-use Exporter qw(import);
 use parent 'UV::Handle';
-
-sub _after_new {
-    my ($self, $args) = @_;
-    $self->_add_event('prepare', $args->{on_prepare});
-
-    my $err = do { #catch
-        local $@;
-        eval { $self->_init($self->{_loop}); 1; }; #try
-        $@;
-    };
-    Carp::croak($err) if $err; # throw
-    return $self;
-}
 
 sub start {
     my $self = shift;
@@ -64,7 +50,6 @@ UV::Prepare - Prepare handles in libuv
   my $loop = UV::Loop->new(); # non-default loop
   my $prepare = UV::Prepare->new(
     loop => $loop,
-    on_alloc => sub {say "alloc!"},
     on_close => sub {say "close!"},
     on_prepare => sub {say "prepare!"},
   );
@@ -120,7 +105,6 @@ following extra methods available.
     # Or tell it what loop to initialize against
     my $prepare = UV::Prepare->new(
         loop => $loop,
-        on_alloc => sub {say "alloc!"},
         on_close => sub {say "close!"},
         on_prepare => sub {say "prepare!"},
     );
@@ -144,6 +128,8 @@ L<UV::Loop/"default_loop"> is assumed.
 
 The L<start|http://docs.libuv.org/en/v1.x/prepare.html#c.uv_prepare_start> method
 starts the handle.
+
+Returns the C<$prepare> instance itself.
 
 =head2 stop
 

@@ -1,6 +1,6 @@
 package UV::Timer;
 
-our $VERSION = '1.000010';
+our $VERSION = '1.911';
 
 use strict;
 use warnings;
@@ -9,19 +9,6 @@ use Exporter qw(import);
 use parent 'UV::Handle';
 
 our @EXPORT_OK = (@UV::Timer::EXPORT_XS,);
-
-sub _after_new {
-    my ($self, $args) = @_;
-    $self->_add_event('timer', $args->{on_timer});
-
-    my $err = do { #catch
-        local $@;
-        eval { $self->_init($self->{_loop}); 1; }; #try
-        $@;
-    };
-    Carp::croak($err) if $err; # throw
-    return $self;
-}
 
 sub repeat {
     my $self = shift;
@@ -75,7 +62,6 @@ UV::Timer - Timers in libuv
   my $loop = UV::Loop->new(); # non-default loop
   my $timer = UV::Timer->new(
     loop => $loop,
-    on_alloc => sub {say "alloc!"},
     on_close => sub {say "close!"},
     on_timer => sub {say "timer!"},
   );
@@ -129,7 +115,6 @@ following extra methods available.
     # Or tell it what loop to initialize against
     my $timer = UV::Timer->new(
         loop => $loop,
-        on_alloc => sub {say "alloc!"},
         on_close => sub {say "close!"},
         on_timer => sub {say "timer!"},
     );
@@ -195,6 +180,8 @@ then repeatedly after C<repeat> milliseconds.
 
 B<* Note:> Does not update the event loop's concept of L<UV::Loop/"now">. See
 L<UV::Loop/"update_time"> for more information.
+
+Returns the C<$timer> instance itself.
 
 =head2 stop
 

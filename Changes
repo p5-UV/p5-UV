@@ -1,7 +1,56 @@
-Revision history for Perl extension {{$dist->name}}
+Revision history for Perl extension UV
 
-{{$NEXT}}
-    -
+1.911 2021-07-16
+    - Fix an `#if` that should have been an `#ifdef`
+    - Fix skip message in t/12-udp-open.t
+
+1.910 2021-07-16
+    - Don't attempt to support UV::TCP->open or UV::UDP->open on Windows,
+      because we'd need WSA_FLAG_OVERLAPPED but Perl doesn't set it on sockets
+      it creates (related to #38).
+
+1.909 2021-05-26
+    - Avoid use-after-free bug when ->close'ing newly listened client
+      connections
+    - Account for different errno value on MSWin32 in unit test
+
+1.908 2021-05-18
+    - Don't attempt to unlink $path at END time if the entire test was skipped
+    - A better implementation of pipepair for testing that might work on
+      MSWin32
+
+1.907 2021-04-09
+    - Various small fixes from @Corion to improve unit testing on MSWin32
+
+1.906 2021-03-25
+    - Don't worry about `AI_V4MAPPED` on systems which don't provide it
+    - Removed now-dead `cpanfile`
+
+1.905 TRIAL 2021-03-23
+    - Various blind stabbings-in-the-dark that might be MSWin32 bugfixes
+       + Export SIG* constants because libuv emulates a few
+       + Handle CRLF linefeeds in Process tests
+       + Maybe we need to _MAKE_SOCK() when calling uv_tcp_open() and
+         uv_udp_open()
+       + Skip some AF_UNIX tests that won't work there
+    - Return hrtime() as an NV on platforms without 64bit int (thanks ilmari)
+
+1.904 TRIAL 2021-03-19
+    - Use cmp_ok() on unreliably-failing timer test so when it fails we at
+      least get a log of the numbers
+    - No need for _cleanup_loop() in unit tests
+    - Remove UV::Loop->walk and related code because it isn't implemented
+      and can't easily be made to work
+
+1.903 TRIAL 2021-01-19
+    - Switch build system to Module::Build::Using::PkgConfig to see if the
+      late-alien handling there works better for users to install
+
+1.902     2021-01-19
+    - Adjust Makefile.PL for better pkg-config or Alien handling
+
+1.900, 1.901
+    - Totally rewritten XS logic by Paul "LeoNerd" Evans
 
 1.000009  2019-02-07
     - Improve the way we create constants. (xenu: pr/27)

@@ -1,14 +1,12 @@
 package UV;
 
-our $VERSION = '1.000010';
+our $VERSION = '1.911';
 our $XS_VERSION = $VERSION;
 
 use strict;
 use warnings;
 use Carp ();
 use Exporter qw(import);
-use Math::Int64 ();
-use XS::Object::Magic ();
 require XSLoader;
 XSLoader::load('UV', $XS_VERSION);
 
@@ -68,9 +66,37 @@ sub prepare {
     return UV::Prepare->new(@_);
 }
 
+sub signal {
+    require UV::Signal;
+    return UV::Signal->new(@_);
+}
+
+sub tcp {
+    require UV::TCP;
+    return UV::TCP->new(@_);
+}
+
 sub timer {
     require UV::Timer;
     return UV::Timer->new(@_);
+}
+
+sub tty {
+    require UV::TTY;
+    return UV::TTY->new(@_);
+}
+
+sub udp {
+    require UV::UDP;
+    return UV::UDP->new(@_);
+}
+
+{
+    package UV::Exception;
+
+    use overload
+        '""' => sub { $_[0]->message },
+        fallback => 1;
 }
 
 1;
@@ -119,325 +145,6 @@ work.
 
 Event loops that work properly on all platforms. YAY!
 
-=head1 CONSTANTS
-
-=head2 VERSION CONSTANTS
-
-=head3 UV_VERSION_MAJOR
-
-=head3 UV_VERSION_MINOR
-
-=head3 UV_VERSION_PATCH
-
-=head3 UV_VERSION_IS_RELEASE
-
-=head3 UV_VERSION_SUFFIX
-
-=head3 UV_VERSION_HEX
-
-=head2 ERROR CONSTANTS
-
-=head3 UV_E2BIG
-
-Argument list too long
-
-=head3 UV_EACCES
-
-Permission denied
-
-=head3 UV_EADDRINUSE
-
-Address already in use
-
-=head3 UV_EADDRNOTAVAIL
-
-Address not available
-
-=head3 UV_EAFNOSUPPORT
-
-Address family not supported
-
-=head3 UV_EAGAIN
-
-Resource temporarily unavailable
-
-=head3 UV_EAI_ADDRFAMILY
-
-Address family not supported
-
-=head3 UV_EAI_AGAIN
-
-Temporary failure
-
-=head3 UV_EAI_BADFLAGS
-
-Bad ai_flags value
-
-=head3 UV_EAI_BADHINTS
-
-Invalid value for hints
-
-=head3 UV_EAI_CANCELED
-
-Request canceled
-
-=head3 UV_EAI_FAIL
-
-Permanent failure
-
-=head3 UV_EAI_FAMILY
-
-ai_family not supported
-
-=head3 UV_EAI_MEMORY
-
-Out of memory
-
-=head3 UV_EAI_NODATA
-
-No address
-
-=head3 UV_EAI_NONAME
-
-Unknown node or service
-
-=head3 UV_EAI_OVERFLOW
-
-Argument buffer overflow
-
-=head3 UV_EAI_PROTOCOL
-
-Resolved protocol is unknown
-
-=head3 UV_EAI_SERVICE
-
-Service not available for socket type
-
-=head3 UV_EAI_SOCKTYPE
-
-Socket type not supported
-
-=head3 UV_EALREADY
-
-Connection already in progress
-
-=head3 UV_EBADF
-
-Bad file descriptor
-
-=head3 UV_EBUSY
-
-Resource busy or locked
-
-=head3 UV_ECANCELED
-
-Operation canceled
-
-=head3 UV_ECHARSET
-
-Invalid Unicode character
-
-=head3 UV_ECONNABORTED
-
-Software caused connection abort
-
-=head3 UV_ECONNREFUSED
-
-Connection refused
-
-=head3 UV_ECONNRESET
-
-Connection reset by peer
-
-=head3 UV_EDESTADDRREQ
-
-Destination address required
-
-=head3 UV_EEXIST
-
-File already exists
-
-=head3 UV_EFAULT
-
-Bad address in system call argument
-
-=head3 UV_EFBIG
-
-File too large
-
-=head3 UV_EHOSTUNREACH
-
-Host is unreachable
-
-=head3 UV_EINTR
-
-Interrupted system call
-
-=head3 UV_EINVAL
-
-Invalid argument
-
-=head3 UV_EIO
-
-i/o error
-
-=head3 UV_EISCONN
-
-Socket is already connected
-
-=head3 UV_EISDIR
-
-Illegal operation on a directory
-
-=head3 UV_ELOOP
-
-Too many symbolic links encountered
-
-=head3 UV_EMFILE
-
-Too many open files
-
-=head3 UV_EMLINK
-
-Too many links
-
-=head3 UV_EMSGSIZE
-
-Message too long
-
-=head3 UV_ENAMETOOLONG
-
-Name too long
-
-=head3 UV_ENETDOWN
-
-Network is down
-
-=head3 UV_ENETUNREACH
-
-Network is unreachable
-
-=head3 UV_ENFILE
-
-File table overflow
-
-=head3 UV_ENOBUFS
-
-No buffer space available
-
-=head3 UV_ENODEV
-
-No such device
-
-=head3 UV_ENOENT
-
-No such file or directory
-
-=head3 UV_ENOMEM
-
-Not enough memory
-
-=head3 UV_ENONET
-
-Machine is not on the network
-
-=head3 UV_ENOPROTOOPT
-
-Protocol not available
-
-=head3 UV_ENOSPC
-
-No space left on device
-
-=head3 UV_ENOSYS
-
-Function not implemented
-
-=head3 UV_ENOTCONN
-
-Socket is not connected
-
-=head3 UV_ENOTDIR
-
-Not a directory
-
-=head3 UV_ENOTEMPTY
-
-Directory not empty
-
-=head3 UV_ENOTSOCK
-
-Socket operation on non-socket
-
-=head3 UV_ENOTSUP
-
-Operation not supported on socket
-
-=head3 UV_ENXIO
-
-No such device or address
-
-=head3 UV_EOF
-
-End of file
-
-=head3 UV_EPERM
-
-Operation not permitted
-
-=head3 UV_EPIPE
-
-Broken pipe
-
-=head3 UV_EPROTO
-
-Protocol error
-
-=head3 UV_EPROTONOSUPPORT
-
-Protocol not supported
-
-=head3 UV_EPROTOTYPE
-
-Protocol wrong type for socket
-
-=head3 UV_ERANGE
-
-Result too large
-
-=head3 UV_EROFS
-
-Read-only file system
-
-=head3 UV_ESHUTDOWN
-
-Cannot send after transport endpoint shutdown
-
-=head3 UV_ESPIPE
-
-Invalid seek
-
-=head3 UV_ESRCH
-
-No such process
-
-=head3 UV_ETIMEDOUT
-
-Connection timed out
-
-=head3 UV_ETXTBSY
-
-Text file is busy
-
-=head3 UV_EXDEV
-
-Cross-device link not permitted
-
-=head3 UV_UNKNOWN
-
-Unknown error
-
-
 =head1 FUNCTIONS
 
 The following functions are available:
@@ -482,7 +189,11 @@ never be called.
 
     my $uint64_t = UV::hrtime();
 
-Get the current Hi-Res time (C<uint64_t>).
+Get the current Hi-Res time; a value given in nanoseconds since some arbitrary
+point in the past. On 64bit-capable perls this will be represented by an
+integer with full precision. On perls unable to represent a 64bit integer this
+will be given as a floating-point value so may lose some precision if the
+value is large enough.
 
 =head2 idle
 
@@ -515,6 +226,15 @@ Returns a new L<UV::Poll> Handle object.
 
 Returns a new L<UV::Prepare> Handle object.
 
+=head2 signal
+
+    my $handle = UV::signal(POSIX::SIGHUP); # uses the default loop
+
+    my $handle = UV::signal(loop => $some_other_loop, signal => POSIX::SIGHUP);
+        # non-default loop
+
+Returns a new L<UV::Signal> Handle object.
+
 =head2 strerror
 
     my $error = UV::strerror(UV::UV_EAI_BADFLAGS);
@@ -531,12 +251,30 @@ number will imply an error.
 When a function which takes a callback returns an error, the callback will
 never be called.
 
+=head2 tcp
+
+    my $tcp = UV::tcp();
+
+Returns a new L<UV::TCP> object.
+
 =head2 timer
 
     my $timer = UV::timer(); # uses the default loop
     my $timer = UV::timer(loop => $some_other_loop); # non-default loop
 
 Returns a new L<UV::Timer> object.
+
+=head2 tty
+
+    my $tty = UV::tty(fd => 0);
+
+Returns a new L<UV::TTY> object.
+
+=head2 udp
+
+    my $udp = UV::udp();
+
+Returns a new L<UV::UDP> object.
 
 =head2 version
 
@@ -556,13 +294,373 @@ The L<version_string|http://docs.libuv.org/en/v1.x/version.html#c.uv_version_str
 function returns the libuv version number as a string. For non-release versions
 the version suffix is included.
 
+=head1 EXCEPTIONS
+
+If any call to F<libuv> fails, an exception will be thrown. The exception will
+be a blessed object having a C<code> method which returns the numerical error
+code (which can be compared to one of the C<UV::UV_E*> error constants), and a
+C<message> method which returns a human-readable string describing the failure.
+
+    try { ... }
+    catch my $e {
+        if(blessed $e and $e->isa("UV::Exception")) {
+            print "The failure was ", $e->message, " of code ", $e->code;
+        }
+    }
+
+The exception class provides stringify overload to call the C<message> method,
+so the normal Perl behaviour of just printing the exception will print the
+message from it, as expected.
+
+Exceptions are blessed into a subclass of C<UV::Exception> named after the
+type of the failure code. This allows type-based testing of error types.
+
+    try { ... }
+    catch my $e {
+        if(blessed $e and $e->isa("UV::Exception::ECANCELED") {
+            # ignore
+        }
+        else ...
+    }
+
+=cut
+
+=head1 CONSTANTS
+
+=head2 VERSION CONSTANTS
+
+=over 4
+
+=item UV_VERSION_MAJOR
+
+=item UV_VERSION_MINOR
+
+=item UV_VERSION_PATCH
+
+=item UV_VERSION_IS_RELEASE
+
+=item UV_VERSION_SUFFIX
+
+=item UV_VERSION_HEX
+
+=back
+
+=head2 ERROR CONSTANTS
+
+=over 4
+
+=item UV_E2BIG
+
+Argument list too long
+
+=item UV_EACCES
+
+Permission denied
+
+=item UV_EADDRINUSE
+
+Address already in use
+
+=item UV_EADDRNOTAVAIL
+
+Address not available
+
+=item UV_EAFNOSUPPORT
+
+Address family not supported
+
+=item UV_EAGAIN
+
+Resource temporarily unavailable
+
+=item UV_EAI_ADDRFAMILY
+
+Address family not supported
+
+=item UV_EAI_AGAIN
+
+Temporary failure
+
+=item UV_EAI_BADFLAGS
+
+Bad ai_flags value
+
+=item UV_EAI_BADHINTS
+
+Invalid value for hints
+
+=item UV_EAI_CANCELED
+
+Request canceled
+
+=item UV_EAI_FAIL
+
+Permanent failure
+
+=item UV_EAI_FAMILY
+
+ai_family not supported
+
+=item UV_EAI_MEMORY
+
+Out of memory
+
+=item UV_EAI_NODATA
+
+No address
+
+=item UV_EAI_NONAME
+
+Unknown node or service
+
+=item UV_EAI_OVERFLOW
+
+Argument buffer overflow
+
+=item UV_EAI_PROTOCOL
+
+Resolved protocol is unknown
+
+=item UV_EAI_SERVICE
+
+Service not available for socket type
+
+=item UV_EAI_SOCKTYPE
+
+Socket type not supported
+
+=item UV_EALREADY
+
+Connection already in progress
+
+=item UV_EBADF
+
+Bad file descriptor
+
+=item UV_EBUSY
+
+Resource busy or locked
+
+=item UV_ECANCELED
+
+Operation canceled
+
+=item UV_ECHARSET
+
+Invalid Unicode character
+
+=item UV_ECONNABORTED
+
+Software caused connection abort
+
+=item UV_ECONNREFUSED
+
+Connection refused
+
+=item UV_ECONNRESET
+
+Connection reset by peer
+
+=item UV_EDESTADDRREQ
+
+Destination address required
+
+=item UV_EEXIST
+
+File already exists
+
+=item UV_EFAULT
+
+Bad address in system call argument
+
+=item UV_EFBIG
+
+File too large
+
+=item UV_EHOSTUNREACH
+
+Host is unreachable
+
+=item UV_EINTR
+
+Interrupted system call
+
+=item UV_EINVAL
+
+Invalid argument
+
+=item UV_EIO
+
+i/o error
+
+=item UV_EISCONN
+
+Socket is already connected
+
+=item UV_EISDIR
+
+Illegal operation on a directory
+
+=item UV_ELOOP
+
+Too many symbolic links encountered
+
+=item UV_EMFILE
+
+Too many open files
+
+=item UV_EMLINK
+
+Too many links
+
+=item UV_EMSGSIZE
+
+Message too long
+
+=item UV_ENAMETOOLONG
+
+Name too long
+
+=item UV_ENETDOWN
+
+Network is down
+
+=item UV_ENETUNREACH
+
+Network is unreachable
+
+=item UV_ENFILE
+
+File table overflow
+
+=item UV_ENOBUFS
+
+No buffer space available
+
+=item UV_ENODEV
+
+No such device
+
+=item UV_ENOENT
+
+No such file or directory
+
+=item UV_ENOMEM
+
+Not enough memory
+
+=item UV_ENONET
+
+Machine is not on the network
+
+=item UV_ENOPROTOOPT
+
+Protocol not available
+
+=item UV_ENOSPC
+
+No space left on device
+
+=item UV_ENOSYS
+
+Function not implemented
+
+=item UV_ENOTCONN
+
+Socket is not connected
+
+=item UV_ENOTDIR
+
+Not a directory
+
+=item UV_ENOTEMPTY
+
+Directory not empty
+
+=item UV_ENOTSOCK
+
+Socket operation on non-socket
+
+=item UV_ENOTSUP
+
+Operation not supported on socket
+
+=item UV_ENXIO
+
+No such device or address
+
+=item UV_EOF
+
+End of file
+
+=item UV_EPERM
+
+Operation not permitted
+
+=item UV_EPIPE
+
+Broken pipe
+
+=item UV_EPROTO
+
+Protocol error
+
+=item UV_EPROTONOSUPPORT
+
+Protocol not supported
+
+=item UV_EPROTOTYPE
+
+Protocol wrong type for socket
+
+=item UV_ERANGE
+
+Result too large
+
+=item UV_EROFS
+
+Read-only file system
+
+=item UV_ESHUTDOWN
+
+Cannot send after transport endpoint shutdown
+
+=item UV_ESPIPE
+
+Invalid seek
+
+=item UV_ESRCH
+
+No such process
+
+=item UV_ETIMEDOUT
+
+Connection timed out
+
+=item UV_ETXTBSY
+
+Text file is busy
+
+=item UV_EXDEV
+
+Cross-device link not permitted
+
+=item UV_UNKNOWN
+
+Unknown error
+
+=back
+
+=cut
+
 =head1 AUTHOR
 
+Paul Evans <leonerd@leonerd.org.uk>
+
+=head1 AUTHORS EMERITUS
+
+Daisuke Murase <F<typester@cpan.org>>,
 Chase Whitener <F<capoeirab@cpan.org>>
-
-=head1 AUTHOR EMERITUS
-
-Daisuke Murase <F<typester@cpan.org>>
 
 =head1 COPYRIGHT AND LICENSE
 
