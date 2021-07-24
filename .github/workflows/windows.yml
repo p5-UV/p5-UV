@@ -42,6 +42,6 @@ jobs:
           cpanm --notest --installdeps Alien::libuv
           cpanm --notest Alien::libuv
       - name: Install Dependencies
-        run: cpanm --installdeps .
+        run: cpanm --notest --installdeps -v .
       - name: Run Tests
         run: cpanm --testonly -v .

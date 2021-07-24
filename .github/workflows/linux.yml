@@ -37,7 +37,7 @@ jobs:
       - name: Alien::libuv
         run: cpanm --notest Alien::libuv
       - name: Install Dependencies
-        run: cpanm --notest --installdeps .
+        run: cpanm --notest --installdeps -v .
       - name: Create a non-root user called "runner"
         run: adduser --disabled-password --gecos '' runner
       - name: Run Tests as non-root user "runner"

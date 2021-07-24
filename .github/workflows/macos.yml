@@ -39,7 +39,7 @@ jobs:
       - name: Alien::libuv
         run: cpanm --notest Alien::libuv
       - name: Install Dependencies
-        run: cpanm --notest --installdeps .
+        run: cpanm --notest --installdeps -v .
       - run: id
       - name: Run Tests
         run: |
