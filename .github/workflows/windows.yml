@@ -38,9 +38,9 @@ jobs:
       - name: Install Alien::libuv
         run: |
           cpanm ExtUtils::Manifest App::cpanminus
-          cpanm -n Alien::Base::Wrapper
-          cpanm -n --installdeps Alien::libuv
-          cpanm -n Alien::libuv
+          cpanm --notest Alien::Base::Wrapper
+          cpanm --notest --installdeps Alien::libuv
+          cpanm --notest Alien::libuv
       - name: Install Dependencies
         run: cpanm --installdeps .
       - name: Run Tests

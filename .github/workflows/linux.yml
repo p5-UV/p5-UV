@@ -32,12 +32,12 @@ jobs:
         run: perl -V
       - name: Alien::libuv prereqs
         run: |
-          cpanm -n Alien::Base::Wrapper Sort::Versions URI::Escape URI Mojo::DOM58
-          cpanm -n Alien::libtool Alien::automake Alien::m4 Alien::autoconf Alien::Autotools
+          cpanm --notest Alien::Base::Wrapper Sort::Versions URI::Escape URI Mojo::DOM58
+          cpanm --notest Alien::libtool Alien::automake Alien::m4 Alien::autoconf Alien::Autotools
       - name: Alien::libuv
-        run: cpanm -n Alien::libuv
+        run: cpanm --notest Alien::libuv
       - name: Install Dependencies
-        run: cpanm -n --installdeps .
+        run: cpanm --notest --installdeps .
       - name: Create a non-root user called "runner"
         run: adduser --disabled-password --gecos '' runner
       - name: Run Tests as non-root user "runner"
