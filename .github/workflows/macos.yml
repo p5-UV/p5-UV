@@ -1,0 +1,48 @@
+name: macos
+on:
+  push:
+    branches:
+      - '*'
+    tags-ignore:
+      - '*'
+  pull_request:
+jobs:
+  perl:
+    runs-on: macOS-latest
+    strategy:
+      matrix:
+        perl-version:
+          - '5.32'
+          # - '5.30'
+          # - '5.28'
+          # - '5.26'
+          # - '5.24'
+          # - '5.22'
+          # - '5.20'
+          # - '5.18'
+          # - '5.16'
+          # - '5.14'
+          # - '5.12'
+          # - '5.10'
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup perl
+        uses: shogo82148/actions-setup-perl@v1
+        with:
+          perl-version: ${{ matrix.perl-version }}
+      - name: perl -V
+        run: perl -V
+      - name: Alien::libuv prereqs
+        run: |
+          cpanm -n Alien::Base::Wrapper Sort::Versions URI::Escape URI Mojo::DOM58
+          cpanm -n Alien::libtool Alien::automake Alien::m4 Alien::autoconf Alien::Autotools
+      - name: Alien::libuv
+        run: cpanm -n Alien::libuv
+      - name: Install Dependencies
+        run: cpanm -n --installdeps .
+      - run: id
+      - name: Run Tests
+        run: |
+          perl Makefile.PL
+          make
+          make test
