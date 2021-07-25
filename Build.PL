@@ -22,6 +22,16 @@ my $build = Module::Build::Using::PkgConfig->new(
     license => 'perl',
     create_license => 1,
     create_readme  => 1,
+    meta_merge => {
+        'meta-spec' => { version => 2 },
+        resources => {
+            repository => {
+                type => 'git',
+                url  => 'git://github.com/p5-UV/p5-UV.git',
+                web  => 'https://github.com/p5-UV/p5-UV',
+            },
+        },
+    },
     extra_compiler_flags => [qw( -Ihax )],
 );
 
