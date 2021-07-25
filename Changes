@@ -1,5 +1,13 @@
 Revision history for Perl extension UV
 
+1.912 2021-07-25
+    - Documentation adjustment preparing for 2.000 release
+    - Misc small internal fixes to Build.PL and git metadata
+    - Bugfix the github CI workflows
+    - Add repository metadata to META files
+    - Regenerated README.md
+    - Back-compat to perl 5.14; declare minimum required perl version
+
 1.911 2021-07-16
     - Fix an `#if` that should have been an `#ifdef`
     - Fix skip message in t/12-udp-open.t
