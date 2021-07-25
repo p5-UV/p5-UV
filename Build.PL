@@ -30,6 +30,9 @@ my $build = Module::Build::Using::PkgConfig->new(
                 url  => 'git://github.com/p5-UV/p5-UV.git',
                 web  => 'https://github.com/p5-UV/p5-UV',
             },
+            bugtracker => {
+                web => 'https://github.com/p5-UV/p5-UV/issues',
+            },
         },
     },
     extra_compiler_flags => [qw( -Ihax )],
