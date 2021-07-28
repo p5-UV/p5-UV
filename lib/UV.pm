@@ -651,6 +651,35 @@ Unknown error
 
 =cut
 
+=head1 TODO
+
+The following features of L<libuv> are not currently wrapped by this module,
+but may be possible in some future version:
+
+=over 4
+
+=item *
+
+Filesystem requests listed in L<http://docs.libuv.org/en/v1.x/fs.html>.
+
+=item *
+
+Thread pools listed in L<http://docs.libuv.org/en/v1.x/threadpool.html>.
+
+=item *
+
+Many of the misc utilities listed in
+L<http://docs.libuv.org/en/v1.x/misc.html>.
+
+=item *
+
+L<UV::Process> stdio stream arguments given at
+L<http://docs.libuv.org/en/v1.x/process.html#c.uv_stdio_flags>.
+
+=back
+
+=cut
+
 =head1 AUTHOR
 
 Paul Evans <leonerd@leonerd.org.uk>
