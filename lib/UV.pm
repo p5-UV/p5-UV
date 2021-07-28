@@ -164,8 +164,9 @@ Returns a new L<UV::Check> Handle object.
     # will also return the default loop
     my $loop = UV::Loop->new(1);
 
-Returns the default loop (which is a singleton object). This module already
-creates the default loop and you get access to it with this method.
+Returns the default loop as a L<UV::Loop> instance (which is a singleton
+object). This module already creates the default loop and you get access to it
+with this method.
 
 =head2 err_name
 
@@ -207,8 +208,9 @@ Returns a new L<UV::Idle> Handle object.
     my $loop = UV::Loop->default_loop();
     my $loop = UV::Loop->default();
 
-Returns the default loop (which is a singleton object). This module already
-creates the default loop and you get access to it with this method.
+Returns the default loop as a L<UV::Loop> instance (which is a singleton
+object). This module already creates the default loop and you get access to it
+with this method.
 
 =head2 poll
 
