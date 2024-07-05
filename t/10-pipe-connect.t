@@ -7,10 +7,11 @@ use UV::Pipe ();
 use Test::More;
 
 use IO::Socket::UNIX;
+use File::Basename;
 
 plan skip_all => "MSWin32 does not support AF_UNIX sockets" if $^O eq "MSWin32";
 
-my $path = "test-tmp.sock";
+my $path = basename( $0 ) . ".sock";
 my $listensock = IO::Socket::UNIX->new(
     Local => $path,
     Listen => 1,
