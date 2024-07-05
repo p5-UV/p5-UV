@@ -9,14 +9,22 @@ use Test::More;
 use IO::Socket::UNIX;
 use File::Basename;
 
-plan skip_all => "MSWin32 does not support AF_UNIX sockets" if $^O eq "MSWin32";
+my $is_win32 = $^O eq 'MSWin32';
 
-my $path = basename( $0 ) . ".sock";
-my $listensock = IO::Socket::UNIX->new(
-    Local => $path,
-    Listen => 1,
-) or die "Cannot create listening socket - $@"; # yes $@
-END { unlink $path if $path; }
+my $path = basename $0;
+my $listensock;
+
+if( $is_win32) {
+    $path = "\\\\?\\pipe\\$path";
+    $listensock = UV::Pipe->new();
+    $listensock->bind( $path );
+} else {
+    $listensock = IO::Socket::UNIX->new(
+        Local => $path,
+        Listen => 1,
+    ) or die "Cannot create listening socket - $@"; # yes $@
+    END { unlink $path if $path; }
+};
 
 my $pipe = UV::Pipe->new;
 isa_ok($pipe, 'UV::Pipe');
