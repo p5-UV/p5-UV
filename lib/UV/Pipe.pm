@@ -1,10 +1,8 @@
-package UV::Pipe;
+package UV::Pipe 2.000;
 
 use v5.14;
 use warnings;
 use parent 'UV::Stream';
-
-our $VERSION = '2.000';
 
 use Carp ();
 

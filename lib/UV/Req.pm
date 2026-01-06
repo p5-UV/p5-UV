@@ -1,9 +1,7 @@
-package UV::Req;
+package UV::Req 2.000;
 
 use v5.14;
 use warnings;
-
-our $VERSION = '2.000';
 
 use UV ();
 

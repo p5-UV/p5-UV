@@ -1,9 +1,7 @@
-package UV::Loop;
+package UV::Loop 2.000;
 
 use v5.14;
 use warnings;
-
-our $VERSION = '2.000';
 
 use Carp ();
 use Exporter qw(import);

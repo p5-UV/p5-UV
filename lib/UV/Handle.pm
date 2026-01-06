@@ -1,9 +1,7 @@
-package UV::Handle;
+package UV::Handle 2.000;
 
 use v5.14;
 use warnings;
-
-our $VERSION = '2.000';
 
 use Carp ();
 use Exporter qw(import);

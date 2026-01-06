@@ -1,10 +1,8 @@
-package UV::TTY;
+package UV::TTY 2.000;
 
 use v5.14;
 use warnings;
 use parent 'UV::Stream';
-
-our $VERSION = '2.000';
 
 use Carp ();
 

@@ -1,10 +1,9 @@
-package UV;
+package UV 2.000;
 
 use v5.14;
 use warnings;
 
-our $VERSION = '2.000';
-our $XS_VERSION = $VERSION;
+our $XS_VERSION = our $VERSION;
 
 use Carp ();
 use Exporter qw(import);

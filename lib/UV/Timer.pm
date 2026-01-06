@@ -1,10 +1,8 @@
-package UV::Timer;
+package UV::Timer 2.000;
 
 use v5.14;
 use warnings;
 use parent 'UV::Handle';
-
-our $VERSION = '2.000';
 
 use Carp ();
 use Exporter qw(import);
