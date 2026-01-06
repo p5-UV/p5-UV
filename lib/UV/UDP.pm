@@ -28,6 +28,8 @@ UV::UDP - UDP socket handles in libuv
 
 =head1 SYNOPSIS
 
+=for highlighter language=perl
+
     #!/usr/bin/perl
     use v5.14;
     use warnings;

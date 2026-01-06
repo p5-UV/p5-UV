@@ -36,6 +36,8 @@ UV::Prepare - Prepare handles in libuv
 
 =head1 SYNOPSIS
 
+=for highlighter language=perl
+
   #!/usr/bin/env perl
   use v5.14;
   use warnings;
