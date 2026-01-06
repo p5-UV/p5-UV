@@ -1,4 +1,4 @@
-package UV::TTY 2.000;
+package UV::TTY 2.001;
 
 use v5.14;
 use warnings;

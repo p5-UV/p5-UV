@@ -1,4 +1,4 @@
-package UV::Handle 2.000;
+package UV::Handle 2.001;
 
 use v5.14;
 use warnings;

@@ -1,4 +1,4 @@
-package UV::Loop 2.000;
+package UV::Loop 2.001;
 
 use v5.14;
 use warnings;
