@@ -46,7 +46,7 @@ L<UV::Req> makes the following methods available.
 
 =head2 cancel
 
-    $req->cancel
+    $req->cancel;
 
 Stops the pending operation. The exact semantics will depend on the type of
 operation the request represents.

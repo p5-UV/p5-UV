@@ -330,7 +330,7 @@ C<AI_CANONNAME> flag was included in the request.
 
 =head2 getnameinfo
 
-    $req = $loop->getnameinfo($addr, $flags, $callback)
+    $req = $loop->getnameinfo($addr, $flags, $callback);
 
         $callback->($status, $hostname, $service)
 
