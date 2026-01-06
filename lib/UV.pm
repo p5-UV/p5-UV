@@ -304,7 +304,7 @@ code (which can be compared to one of the C<UV::UV_E*> error constants), and a
 C<message> method which returns a human-readable string describing the failure.
 
     try { ... }
-    catch my $e {
+    catch ($e) {
         if(blessed $e and $e->isa("UV::Exception")) {
             print "The failure was ", $e->message, " of code ", $e->code;
         }
@@ -318,7 +318,7 @@ Exceptions are blessed into a subclass of C<UV::Exception> named after the
 type of the failure code. This allows type-based testing of error types.
 
     try { ... }
-    catch my $e {
+    catch ($e) {
         if(blessed $e and $e->isa("UV::Exception::ECANCELED") {
             # ignore
         }
