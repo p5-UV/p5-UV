@@ -1,11 +1,12 @@
 package UV::Pipe;
 
+use v5.14;
+use warnings;
+use parent 'UV::Stream';
+
 our $VERSION = '2.000';
 
-use strict;
-use warnings;
 use Carp ();
-use parent 'UV::Stream';
 
 sub open
 {
@@ -27,7 +28,7 @@ UV::Pipe - Pipe stream handles in libuv
 =head1 SYNOPSIS
 
   #!/usr/bin/env perl
-  use strict;
+  use v5.14;
   use warnings;
 
   # A new stream handle will be initialised against the default loop

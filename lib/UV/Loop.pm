@@ -1,9 +1,9 @@
 package UV::Loop;
 
-our $VERSION = '2.000';
-
-use strict;
+use v5.14;
 use warnings;
+
+our $VERSION = '2.000';
 
 use Carp ();
 use Exporter qw(import);
@@ -76,7 +76,7 @@ UV::Loop - Looping with libuv
 =head1 SYNOPSIS
 
   #!/usr/bin/env perl
-  use strict;
+  use v5.14;
   use warnings;
 
   use UV::Loop ();

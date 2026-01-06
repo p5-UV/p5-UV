@@ -1,10 +1,10 @@
 package UV::Async;
 
-our $VERSION = '2.000';
-
-use strict;
+use v5.14;
 use warnings;
 use parent 'UV::Handle';
+
+our $VERSION = '2.000';
 
 use Carp ();
 
@@ -21,7 +21,7 @@ UV::Async - Async notification handles in libuv
 =head1 SYNOPSIS
 
   #!/usr/bin/env perl
-  use strict;
+  use v5.14;
   use warnings;
 
   use UV;

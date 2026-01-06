@@ -1,12 +1,13 @@
 package UV::Timer;
 
+use v5.14;
+use warnings;
+use parent 'UV::Handle';
+
 our $VERSION = '2.000';
 
-use strict;
-use warnings;
 use Carp ();
 use Exporter qw(import);
-use parent 'UV::Handle';
 
 our @EXPORT_OK = (@UV::Timer::EXPORT_XS,);
 
@@ -50,7 +51,7 @@ UV::Timer - Timers in libuv
 =head1 SYNOPSIS
 
   #!/usr/bin/env perl
-  use strict;
+  use v5.14;
   use warnings;
 
   use UV;

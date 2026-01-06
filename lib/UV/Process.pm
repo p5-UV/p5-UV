@@ -1,11 +1,12 @@
 package UV::Process;
 
+use v5.14;
+use warnings;
+use parent 'UV::Handle';
+
 our $VERSION = '2.000';
 
-use strict;
-use warnings;
 use Carp ();
-use parent 'UV::Handle';
 
 sub spawn {
     my $self = shift;
@@ -33,7 +34,7 @@ UV::Process - Process handles in libuv
 =head1 SYNOPSIS
 
   #!/usr/bin/env perl
-  use strict;
+  use v5.14;
   use warnings;
 
   use UV;

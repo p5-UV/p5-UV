@@ -1,12 +1,13 @@
 package UV::UDP;
 
+use v5.14;
+use warnings;
+use parent 'UV::Handle';
+
 our $VERSION = '2.000';
 
-use strict;
-use warnings;
 use Carp ();
 use Exporter qw(import);
-use parent 'UV::Handle';
 
 our @EXPORT_OK = (@UV::UDP::EXPORT_XS,);
 
@@ -30,7 +31,7 @@ UV::UDP - UDP socket handles in libuv
 =head1 SYNOPSIS
 
     #!/usr/bin/perl
-    use strict;
+    use v5.14;
     use warnings;
 
     use Socket;

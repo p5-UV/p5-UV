@@ -1,10 +1,11 @@
 package UV;
 
+use v5.14;
+use warnings;
+
 our $VERSION = '2.000';
 our $XS_VERSION = $VERSION;
 
-use strict;
-use warnings;
 use Carp ();
 use Exporter qw(import);
 require XSLoader;
@@ -110,7 +111,7 @@ UV - Perl interface to libuv
 =head1 SYNOPSIS
 
   #!/usr/bin/env perl
-  use strict;
+  use v5.14;
   use warnings;
 
   use UV;

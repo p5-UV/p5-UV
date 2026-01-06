@@ -1,9 +1,10 @@
 package UV::Req;
 
+use v5.14;
+use warnings;
+
 our $VERSION = '2.000';
 
-use strict;
-use warnings;
 use UV ();
 
 # No pure-perl methods
@@ -19,7 +20,7 @@ UV::Req - An outstanding request in libuv
 =head1 SYNOPSIS
 
   #!/usr/bin/env perl
-  use strict;
+  use v5.14;
   use warnings;
 
   use UV;
