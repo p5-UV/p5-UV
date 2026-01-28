@@ -6,6 +6,7 @@ use parent 'UV::Handle';
 
 use Carp ();
 use Exporter qw(import);
+use Scalar::Util ();
 
 our @EXPORT_OK = (@UV::Poll::EXPORT_XS,);
 
@@ -16,7 +17,7 @@ sub _new_args {
         next if !defined($fd = delete $args->{$key});
 
         $is_socket = $key eq "socket";
-        if (CORE::ref($fd) eq 'GLOB' || CORE::ref($fd) =~ /^IO::Socket/) {
+        if (CORE::ref($fd) eq 'GLOB' || Scalar::Util::blessed($fd) && $fd->isa('IO::Handle') ) {
             $fd = fileno($fd);
             last;
         }
