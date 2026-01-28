@@ -1,4 +1,4 @@
-package UV::Pipe 2.001;
+package UV::Pipe 2.002;
 
 use v5.14;
 use warnings;

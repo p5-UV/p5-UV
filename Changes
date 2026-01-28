@@ -1,5 +1,9 @@
 Revision history for Perl extension UV
 
+2.002 2026-01-28
+    - Allow `UV::Poll` to operate on any blessed IO::Handle instance, not
+      just those who package name begins "IO::Socket"
+
 2.001 2026-01-06
     - Don't assert that `$loop->backend_timeout` is nonzero initially
       (fixes GH#40)
